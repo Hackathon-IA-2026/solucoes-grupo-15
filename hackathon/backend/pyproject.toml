@@ -1,0 +1,17 @@
+[project]
+name = "capiwatt-backend"
+version = "0.1.0"
+description = "CapiWatt Lens - modulo backend (scaffold TB1): API /v1/* e cliente HTTP para o ai."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: FastAPI usa Depends(...) como valor default por design (injecao de dependencia).
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
