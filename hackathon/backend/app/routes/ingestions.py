@@ -19,8 +19,13 @@ duplica linhas de relacao) - a chamada a ``ai.index`` para os mesmos
 relatorio, arquivo nao reescrito).
 
 ``ingestion_job_id`` e gerado aqui como um id simples (uuid4), mesmo
-sem tabela de "job" ainda - tickets futuros de notificacao (#24) devem
-reusar este identificador.
+sem tabela de "job" ainda - reusado por ``run_notifications``
+(app/notifications.py, Ticket 8, issue #24), chamada ao fim desta
+funcao para gerar notificacoes + digest de e-mail para os usuarios que
+ja escolheram ``notification_scope``. Ao contrario de ``relations``,
+essa chamada nao e opcional: roda sempre, depois do upsert de catalogo
+e relacoes - com zero usuarios de escopo escolhido (cenario dos testes
+dos Tickets 2-5/7/9) e um no-op seguro.
 """
 
 import uuid
@@ -39,6 +44,7 @@ from app.fixtures.relations_loader import (
     load_demo_relations,
 )
 from app.models import DocumentFamily, DocumentRelation, DocumentVersion
+from app.notifications import run_notifications
 
 router = APIRouter(prefix="/v1", tags=["ingestions"])
 
@@ -83,6 +89,8 @@ def run_ingestion(
     corpus, sem relacoes) - POST /v1/ingestions sempre passa a fixture
     de relacoes carregada (ver ``create_ingestion`` acima).
     """
+    ingestion_job_id = str(uuid.uuid4())
+
     reports_by_version = _index_corpus(corpus, ai_client)
 
     family_ids: set[str] = set()
@@ -99,10 +107,12 @@ def run_ingestion(
     if relations is not None:
         relations_count = run_relations_ingestion(relations, session=session)
 
+    run_notifications(corpus, session=session, ingestion_job_id=ingestion_job_id)
+
     session.flush()
 
     return IngestionResult(
-        ingestion_job_id=str(uuid.uuid4()),
+        ingestion_job_id=ingestion_job_id,
         families_count=len(family_ids),
         versions_count=len(version_ids),
         relations_count=relations_count,

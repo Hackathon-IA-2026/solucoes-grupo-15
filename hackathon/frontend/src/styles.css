@@ -140,6 +140,19 @@ mark { padding: 1px 3px; background: #f1d889; color: inherit; }
 .response-chain li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 13px; color: #5b695f; background: #e9ece3; font-family: "DM Mono", monospace; font-size: 11px; }
 .response-chain li svg { color: #a4773e; }
 
+.demo-user-picker { display: flex; align-items: center; gap: 10px; margin: 22px 0 6px; padding: 12px 14px; background: #eef1e8; border: 1px solid #d4d6cc; border-radius: 6px; }
+.demo-user-picker label { display: inline-flex; align-items: center; gap: 7px; color: #456552; font-size: 11px; font-weight: 800; }
+.demo-user-picker select { padding: 6px 9px; border: 1px solid #b9c2b7; border-radius: 4px; background: #fffef9; color: #1b2d24; font-size: 13px; font-weight: 700; }
+.scope-picker { max-width: 640px; }
+.scope-picker fieldset { margin: 18px 0; padding: 0; border: 0; display: grid; gap: 10px; }
+.scope-option { display: flex; align-items: flex-start; gap: 10px; padding: 13px 15px; background: #fffef9; border: 1px solid #d4d6cc; border-radius: 6px; font-size: 13px; line-height: 1.5; color: #33483a; }
+.scope-option input { margin-top: 3px; }
+.notification-card .notification-reasons { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.notification-card .notification-reasons li { color: #66766a; font-size: 12px; }
+.email-digest-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+.email-digest-item { padding: 16px 18px; background: #fffef9; border: 1px solid #d4d6cc; border-radius: 7px; }
+.email-digest-item pre { margin: 8px 0 0; white-space: pre-wrap; color: #33483a; font-family: "DM Mono", monospace; font-size: 12px; line-height: 1.6; }
+
 @media (max-width: 900px) {
   .topbar-inner { padding: 0 20px; gap: 16px; }
   .topbar-status > svg, .topbar-status > span { display: none; }

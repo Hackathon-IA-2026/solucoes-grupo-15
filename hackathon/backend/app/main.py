@@ -13,8 +13,11 @@ grafo de relacoes (ver app/routes/relations.py):
 GET /v1/documents/{node_id}/graph e GET /v1/processos/{processo_id}.
 Ticket 7 adiciona o feedback 👍/👎 sobre cards de resultado de busca
 (ver app/routes/feedback.py): POST /v1/feedback (persiste o voto) e
-GET /v1/feedback (lista para conferencia manual). A API /v1/* completa
-(notificacoes) pertence a tickets futuros.
+GET /v1/feedback (lista para conferencia manual). Ticket 8 adiciona
+notificacoes + previa de e-mail (ver app/routes/notifications.py):
+escolha de escopo por usuario, geracao de notificacao a partir da
+ingestao (app/notifications.py::run_notifications) e o port ``Mailer``
+(app/mailer.py).
 
 O engine/session factory do catalogo sao criados aqui a partir de
 Settings.database_url e guardados em app.state; testes substituem a
@@ -33,6 +36,7 @@ from app.routes.documents import router as documents_router
 from app.routes.feedback import router as feedback_router
 from app.routes.health import router as health_router
 from app.routes.ingestions import router as ingestions_router
+from app.routes.notifications import router as notifications_router
 from app.routes.relations import router as relations_router
 from app.routes.search import router as search_router
 
@@ -56,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(documents_router)
     app.include_router(relations_router)
     app.include_router(feedback_router)
+    app.include_router(notifications_router)
     return app
 
 

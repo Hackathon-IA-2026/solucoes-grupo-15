@@ -1,8 +1,9 @@
-import { Bolt, FileSearch, House, Search } from "lucide-react";
+import { Bell, Bolt, FileSearch, House, Search } from "lucide-react";
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 
 import { HealthBadge } from "./components/HealthBadge";
 import { FamilyPage } from "./pages/FamilyPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { ProcessoPage } from "./pages/ProcessoPage";
 import { SearchPage } from "./pages/SearchPage";
 
@@ -19,6 +20,11 @@ import { SearchPage } from "./pages/SearchPage";
  * data + cadeia responde_a + o mesmo painel "Relações"). O health
  * check cruzado continua existindo, agora so como indicador discreto
  * de rodape (HealthBadge).
+ *
+ * "/notificacoes" (Ticket 8, issue #24) leva a NotificationsPage -
+ * central de notificacoes + previa de digest de e-mail. Nao mexe em
+ * "/" nem na SearchPage (a busca continua a tela principal, decisao
+ * fechada no Ticket 3); so acrescenta um nav-link separado na topbar.
  */
 export function App() {
   return (
@@ -31,6 +37,7 @@ export function App() {
 function AppLayout() {
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const isNotifications = location.pathname.startsWith("/notificacoes");
 
   return (
     <div className="app-shell">
@@ -51,7 +58,14 @@ function AppLayout() {
               <Search size={16} />
               Consulta
             </Link>
-            {!isHome && (
+            <Link
+              className={isNotifications ? "nav-link active" : "nav-link"}
+              to="/notificacoes"
+            >
+              <Bell size={16} />
+              Notificações
+            </Link>
+            {!isHome && !isNotifications && (
               <Link className="nav-link" to="/">
                 <House size={16} />
                 Nova consulta
@@ -72,6 +86,7 @@ function AppLayout() {
           <Route path="/" element={<SearchPage />} />
           <Route path="/documents/:familyId" element={<FamilyPage />} />
           <Route path="/processos/:processoId" element={<ProcessoPage />} />
+          <Route path="/notificacoes" element={<NotificationsPage />} />
         </Routes>
       </main>
     </div>

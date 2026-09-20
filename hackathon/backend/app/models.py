@@ -137,6 +137,116 @@ class Feedback(Base):
     )
 
 
+class NotificationScopePreference(Base):
+    """Escolha de escopo de notificacao de um usuario (TB1 Ticket 8, issue #24).
+
+    ``user_id`` e uma string simples de usuario demo hardcoded
+    (``["carolina", "equipe"]`` no frontend, ver src/api/notifications.ts)
+    - nao existe autenticacao/sessao neste scaffold (fora de escopo de
+    toda a spec #16); qualquer string e aceita aqui. Sem valor padrao
+    para ``scope`` (decisao fechada em u3-frequency.md): enquanto nao
+    existir linha para um ``user_id``, nenhuma notificacao e gerada
+    para ele (ver app/notifications.py::run_notifications).
+    """
+
+    __tablename__ = "notification_scope_preference"
+
+    user_id: Mapped[str] = mapped_column(String, primary_key=True)
+    scope: Mapped[str] = mapped_column(String, nullable=False)
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class Notification(Base):
+    """Uma notificacao gerada para um usuario (TB1 Ticket 8, issue #24).
+
+    Restricao unica ``(user_id, document_version_id)`` (i9-integration):
+    dedup de notificacao - reingerir o mesmo corpus_version nao cria
+    uma segunda linha para o mesmo par, ver
+    app/notifications.py::run_notifications, que registra
+    ``notification_suppressed`` nesse caso. ``reasons_json`` e uma
+    lista JSON serializada (``[{"type": "novo_documento"}]`` sempre; no
+    escopo ``ampla``, mais um item ``{"type": "correlato", ...}`` por
+    aresta ``confirmed`` de document_relations tocando a familia).
+    """
+
+    __tablename__ = "notification"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "document_version_id",
+            name="uq_notification_user_document_version",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    document_version_id: Mapped[str] = mapped_column(String, nullable=False)
+    family_id: Mapped[str] = mapped_column(String, nullable=False)
+    scope_effective: Mapped[str] = mapped_column(String, nullable=False)
+    reasons_json: Mapped[str] = mapped_column(String, nullable=False)
+    ingestion_job_id: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class NotificationEvent(Base):
+    """Evento do ciclo de vida de notificacao (TB1 Ticket 8, issue #24).
+
+    Vocabulario fechado em i6-telemetry.md: ``notification_generated``,
+    ``notification_suppressed``, ``email_digest_generated``,
+    ``notification_delivered_home``, ``notification_delivered_email``,
+    ``notification_opened``. Nenhuma chave estrangeira para
+    ``notification``/``email_digest`` (mesmo padrao de ``Feedback`` -
+    simplicidade > integridade referencial nesta fase demo);
+    ``payload_json`` guarda campos extras por tipo de evento (ex.
+    ``reason`` de supressao, ``adapter``/``status`` de entrega).
+    """
+
+    __tablename__ = "notification_event"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    event_type: Mapped[str] = mapped_column(String, nullable=False)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    document_version_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    notification_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    email_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    payload_json: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class EmailDigest(Base):
+    """Prevía de digest de e-mail por (usuario, job de ingestao) (TB1
+    Ticket 8, issue #24).
+
+    Gravada pelo adapter ``PreviewMailer`` (app/mailer.py) - ``email_id``
+    e deterministico (``f"{user_id}:{ingestion_job_id}"``), o que da a
+    idempotencia por ``email_id`` exigida pelo port ``Mailer`` sem
+    precisar de logica extra: uma segunda chamada com o mesmo
+    ``email_id`` acha a linha existente e nao duplica. Nao ha envio real
+    (sem SES, ver i9-integration.md) - ``rendered_body`` e exatamente o
+    que a pagina inicial exibe como previa.
+    """
+
+    __tablename__ = "email_digest"
+
+    email_id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    ingestion_job_id: Mapped[str] = mapped_column(String, nullable=False)
+    notification_ids_json: Mapped[str] = mapped_column(String, nullable=False)
+    rendered_body: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class SearchExecution(Base):
     """Registro de uma execucao de POST /v1/search (Ticket 9, issue #25).
 
