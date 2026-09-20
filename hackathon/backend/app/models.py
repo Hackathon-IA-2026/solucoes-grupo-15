@@ -18,7 +18,9 @@ de escopo. O no ``processo`` nao ganha tabela propria nesta issue - seu
 ``document_relations``).
 """
 
-from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
+import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -109,3 +111,27 @@ class DocumentRelation(Base):
     status: Mapped[str] = mapped_column(String, nullable=False)
     evidence_document_version: Mapped[str | None] = mapped_column(String, nullable=True)
     evidence_locator: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class Feedback(Base):
+    """Um voto 👍/👎 num resultado de busca (Ticket 7, issue #23).
+
+    Liga o voto ao ``request_id`` da chamada de POST /v1/search que
+    produziu o card avaliado e ao ``family_id`` avaliado - nenhuma
+    chave estrangeira e declarada para nenhum dos dois (``request_id``
+    nao e persistido em nenhuma tabela; um ``family_id`` poderia em
+    tese ja ter saido do catalogo). Nenhum campo de
+    justificativa/comentario existe aqui, por decisao explicita da
+    issue. ``vote`` e validado como ``"up"``/``"down"`` na camada da
+    rota (Pydantic), nao aqui.
+    """
+
+    __tablename__ = "feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    request_id: Mapped[str] = mapped_column(String, nullable=False)
+    family_id: Mapped[str] = mapped_column(String, nullable=False)
+    vote: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

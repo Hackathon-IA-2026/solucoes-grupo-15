@@ -11,8 +11,10 @@ cabecalho + linha do tempo de versoes + texto extraido da versao
 selecionada, para a pagina de familia do frontend. Ticket 5 adiciona o
 grafo de relacoes (ver app/routes/relations.py):
 GET /v1/documents/{node_id}/graph e GET /v1/processos/{processo_id}.
-A API /v1/* completa (notificacoes, feedback) pertence a tickets
-futuros.
+Ticket 7 adiciona o feedback 👍/👎 sobre cards de resultado de busca
+(ver app/routes/feedback.py): POST /v1/feedback (persiste o voto) e
+GET /v1/feedback (lista para conferencia manual). A API /v1/* completa
+(notificacoes) pertence a tickets futuros.
 
 O engine/session factory do catalogo sao criados aqui a partir de
 Settings.database_url e guardados em app.state; testes substituem a
@@ -28,6 +30,7 @@ from fastapi import FastAPI
 from app.config import get_settings
 from app.db import Base, make_engine, make_session_factory
 from app.routes.documents import router as documents_router
+from app.routes.feedback import router as feedback_router
 from app.routes.health import router as health_router
 from app.routes.ingestions import router as ingestions_router
 from app.routes.relations import router as relations_router
@@ -52,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(search_router)
     app.include_router(documents_router)
     app.include_router(relations_router)
+    app.include_router(feedback_router)
     return app
 
 

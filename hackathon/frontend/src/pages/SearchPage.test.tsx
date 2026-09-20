@@ -16,6 +16,32 @@ function clickSuggestion(name: RegExp) {
   fireEvent.click(screen.getByRole("button", { name }));
 }
 
+const SEARCH_ENVELOPE_WITH_ONE_RESULT = {
+  request_id: "r1",
+  data_mode: "demo",
+  corpus_version: "demo-v1",
+  model_version: "fixture-demo",
+  ranking_version: "demo-ranking-v1",
+  results: [
+    {
+      family_id: "fam-auto-0007",
+      face: {
+        document_version: "docver-auto-0007-v2",
+        version_date: "2024-04-18",
+        document_type: "auto_de_infracao",
+      },
+      matched_chunks: [
+        {
+          document_version: "docver-auto-0007-v2",
+          excerpt: "trecho novo",
+          score: 0.9,
+          is_latest: true,
+        },
+      ],
+    },
+  ],
+};
+
 describe("SearchPage", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -138,5 +164,77 @@ describe("SearchPage", () => {
     await waitFor(() =>
       expect(screen.getByText(/não foi possível concluir a busca/i)).toBeInTheDocument(),
     );
+  });
+
+  it("envia POST /v1/feedback com request_id, family_id e o voto ao clicar 👍", async () => {
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/v1/search") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => SEARCH_ENVELOPE_WITH_ONE_RESULT,
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          id: 1,
+          request_id: "r1",
+          family_id: "fam-auto-0007",
+          vote: "up",
+          created_at: "2026-09-20T00:00:00Z",
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderSearchPage();
+    clickSuggestion(/auto de infração retificado/i);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /votar positivamente/i })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /votar positivamente/i }));
+
+    await waitFor(() => expect(screen.getByText(/obrigado pelo feedback/i)).toBeInTheDocument());
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/v1/feedback",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ request_id: "r1", family_id: "fam-auto-0007", vote: "up" }),
+      }),
+    );
+    expect(screen.getByRole("button", { name: /votar positivamente/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /votar negativamente/i })).toBeDisabled();
+  });
+
+  it("mostra mensagem de erro simples quando o envio de feedback falha, sem travar a página", async () => {
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/v1/search") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => SEARCH_ENVELOPE_WITH_ONE_RESULT,
+        });
+      }
+      return Promise.reject(new Error("network error"));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderSearchPage();
+    clickSuggestion(/auto de infração retificado/i);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /votar negativamente/i })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /votar negativamente/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/não foi possível registrar o feedback/i)).toBeInTheDocument(),
+    );
+    // A pagina de busca continua funcional - os botoes de voto nao ficam
+    // travados num estado "submitting" permanente.
+    expect(screen.getByRole("button", { name: /votar negativamente/i })).not.toBeDisabled();
   });
 });

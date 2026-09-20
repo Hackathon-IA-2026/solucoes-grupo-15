@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { searchDocuments, type SearchEnvelope } from "../api/search";
 import { DemoBanner } from "../components/DemoBanner";
+import { FeedbackButtons } from "../components/FeedbackButtons";
 
 /**
  * Tela principal do frontend a partir do Ticket 3 (TB1, issue #19).
@@ -16,6 +17,9 @@ import { DemoBanner } from "../components/DemoBanner";
  * declaradas naquele fixture (correspondencia e sempre exata, sem fuzzy
  * matching) - existem so para o usuario nao precisar adivinhar o texto
  * exato; o dado em si continua vindo so da fixture.
+ *
+ * Cada card de resultado tambem tem os botoes 👍/👎 do Ticket 7 (issue
+ * #23) - ver components/FeedbackButtons.tsx.
  */
 const SUGGESTED_QUERIES = [
   "padrão de continuidade do fornecimento",
@@ -108,6 +112,10 @@ export function SearchPage() {
                       </li>
                     ))}
                   </ul>
+                  <FeedbackButtons
+                    requestId={state.envelope.request_id}
+                    familyId={result.family_id}
+                  />
                 </article>
               </li>
             ))}
