@@ -29,8 +29,16 @@ reinventada aqui), ``ranking_version`` (constante nova desta issue,
 ``RANKING_VERSION`` abaixo - nao ha ranking real, so identifica esta
 versao de codigo/agrupamento para reprodutibilidade futura, issue #16
 secao "Versionamento e reprodutibilidade").
+
+Ticket 9 (issue #25, reprodutibilidade) acrescenta a persistencia de
+``SearchExecution`` (app/models.py) a cada chamada: alem do envelope
+final, grava os hits CRUS devolvidos por ``ai_client.search`` (antes
+do agrupamento por familia) - e o "vetor da consulta preservado" desta
+fase demo, que ``app/replay.py::replay_search`` usa para reexecutar a
+busca offline, sem chamar o ai de novo (ver i7-reproducibility).
 """
 
+import json
 import uuid
 
 from fastapi import APIRouter, Depends
@@ -42,7 +50,7 @@ from app.catalog import select_face_version
 from app.clients.ai_client import AiClient, AiSearchHit, get_ai_client
 from app.config import get_settings
 from app.db import get_db_session
-from app.models import DocumentVersion
+from app.models import DocumentVersion, SearchExecution
 
 router = APIRouter(prefix="/v1", tags=["search"])
 
@@ -95,7 +103,7 @@ def search(
     ai_response = ai_client.search(payload.query, top_k=payload.top_k)
     results, corpus_version = _group_by_family(ai_response.hits, session)
 
-    return SearchEnvelope(
+    envelope = SearchEnvelope(
         request_id=str(uuid.uuid4()),
         data_mode="demo",
         corpus_version=corpus_version,
@@ -103,6 +111,42 @@ def search(
         ranking_version=RANKING_VERSION,
         results=results,
     )
+
+    _persist_search_execution(
+        envelope, query=payload.query, raw_hits=ai_response.hits, session=session
+    )
+
+    return envelope
+
+
+def _persist_search_execution(
+    envelope: SearchEnvelope,
+    *,
+    query: str,
+    raw_hits: list[AiSearchHit],
+    session: Session,
+) -> None:
+    """Grava o registro de execucao desta busca (Ticket 9, issue #25).
+
+    ``raw_hits`` sao os hits CRUS devolvidos pelo ai, antes do
+    agrupamento por familia - e esse valor, nao ``envelope.results``,
+    que ``app/replay.py::replay_search`` reusa para reexecutar a busca
+    offline (ver docstring do modulo).
+    """
+    session.add(
+        SearchExecution(
+            request_id=envelope.request_id,
+            query=query,
+            data_mode=envelope.data_mode,
+            corpus_version=envelope.corpus_version,
+            model_version=envelope.model_version,
+            ranking_version=envelope.ranking_version,
+            raw_hits_json=json.dumps([hit.model_dump() for hit in raw_hits]),
+            response_json=envelope.model_dump_json(),
+            code_reference=get_settings().code_reference,
+        )
+    )
+    session.flush()
 
 
 def _group_by_family(

@@ -8,6 +8,7 @@ Docker, ver tests/conftest.py), populado via ``run_ingestion``
 usados nos hits fake existam no catalogo.
 """
 
+import json
 import uuid
 
 from fastapi.testclient import TestClient
@@ -23,6 +24,7 @@ from app.clients.ai_client import (
 from app.db import Base, get_db_session, make_engine, make_session_factory
 from app.fixtures.loader import load_demo_corpus
 from app.main import create_app
+from app.models import SearchExecution
 from app.routes.ingestions import run_ingestion
 
 
@@ -254,3 +256,49 @@ def test_search_returns_empty_results_and_full_envelope_when_ai_returns_no_hits(
     # corpus_version do corpus fixture ("demo-v1").
     assert body["corpus_version"] == "demo-v1"
     assert uuid.UUID(body["request_id"])
+
+
+def test_search_persists_a_search_execution_with_all_fields(database_url: str) -> None:
+    """Seam 1 do Ticket 9 (issue #25): POST /v1/search grava SearchExecution.
+
+    Confere que a linha criada tem todos os campos do contrato,
+    incluindo os hits CRUS (antes do agrupamento) e o envelope final
+    serializado - insumos que app/replay.py::replay_search usa depois.
+    """
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="trecho na versao antiga",
+            score=0.7,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "peca sobre auto de infracao"})
+    body = response.json()
+
+    session_factory = make_session_factory(make_engine(database_url))
+    with session_factory() as session:
+        execution = session.get(SearchExecution, body["request_id"])
+
+    assert execution is not None
+    assert execution.request_id == body["request_id"]
+    assert execution.query == "peca sobre auto de infracao"
+    assert execution.data_mode == body["data_mode"] == "demo"
+    assert execution.corpus_version == body["corpus_version"]
+    assert execution.model_version == body["model_version"]
+    assert execution.ranking_version == body["ranking_version"]
+    assert execution.code_reference  # Settings.code_reference: nao vazio, ver config.py
+    assert execution.created_at is not None
+
+    raw_hits = json.loads(execution.raw_hits_json)
+    assert raw_hits == [
+        {
+            "family_id": "fam-auto-0007",
+            "document_version": "docver-auto-0007-v1",
+            "excerpt": "trecho na versao antiga",
+            "score": 0.7,
+        }
+    ]
+    assert json.loads(execution.response_json) == body

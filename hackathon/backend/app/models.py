@@ -135,3 +135,45 @@ class Feedback(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class SearchExecution(Base):
+    """Registro de uma execucao de POST /v1/search (Ticket 9, issue #25).
+
+    Existe para satisfazer i7-reproducibility
+    (requirements/perspec-me/capiwatt-lens-hackathon/concerns/i7-reproducibility.md):
+    "Reexecutar significa rodar novamente a recuperacao e o ranking
+    sobre o corpus preservado, usando o vetor da consulta registrada;
+    consultar a resposta salva nao satisfaz esse requisito." Nesta fase
+    demo (sem embeddings reais), "o corpus/vetor da consulta
+    preservado" e ``raw_hits_json``: os hits CRUS devolvidos por
+    ``AiClient.search`` (ver app/clients/ai_client.py::AiSearchHit),
+    gravados ANTES do agrupamento por familia em app/routes/search.py -
+    e o que ``app/replay.py::replay_search`` recomputa contra o
+    catalogo atual, sem nunca chamar o ai de novo.
+
+    ``response_json`` guarda o envelope final (``SearchEnvelope``) so
+    para auditoria/comparacao manual - ``replay_search`` NAO devolve
+    esse valor como sua resposta recomputada, so o usa para montar
+    ``ReplayResult.original_response`` e comparar com o que foi
+    recomputado (``ReplayResult.matches``).
+
+    ``code_reference`` vem de ``Settings.code_reference`` (ver
+    app/config.py) - a referencia de commit/ambiente no momento da
+    busca, para auditoria.
+    """
+
+    __tablename__ = "search_execution"
+
+    request_id: Mapped[str] = mapped_column(String, primary_key=True)
+    query: Mapped[str] = mapped_column(String, nullable=False)
+    data_mode: Mapped[str] = mapped_column(String, nullable=False)
+    corpus_version: Mapped[str] = mapped_column(String, nullable=False)
+    model_version: Mapped[str] = mapped_column(String, nullable=False)
+    ranking_version: Mapped[str] = mapped_column(String, nullable=False)
+    raw_hits_json: Mapped[str] = mapped_column(String, nullable=False)
+    response_json: Mapped[str] = mapped_column(String, nullable=False)
+    code_reference: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
