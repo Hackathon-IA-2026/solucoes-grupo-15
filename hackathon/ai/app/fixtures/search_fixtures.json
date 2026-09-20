@@ -1,0 +1,48 @@
+{
+  "provisional": true,
+  "disclaimer": "Fixture de busca demo/provisoria para o TB1 (CapiWatt Lens). Nao ha busca vetorial real, embeddings ou ranking - cada chave e uma consulta em string EXATA (sem fuzzy matching, sem NLP) mapeada a uma lista ordenada e fixa de hits. Os document_version/family_id usados aqui apontam para o corpus fixture da issue #18 (app/fixtures/demo_corpus.json, no modulo backend) - nao representam o caso real da Carolina (issue #14, ainda bloqueada).",
+  "queries": {
+    "padrão de continuidade do fornecimento": [
+      {
+        "family_id": "fam-auto-0007",
+        "document_version": "docver-auto-0007-v1",
+        "excerpt": "descumprimento do padrao de continuidade do fornecimento no periodo de apuracao informado",
+        "score": 0.82
+      }
+    ],
+    "auto de infração retificado": [
+      {
+        "family_id": "fam-auto-0007",
+        "document_version": "docver-auto-0007-v1",
+        "excerpt": "Auto de Infracao no 0007/2024 (ficticio). A fiscalizada e autuada por descumprimento do padrao de continuidade do fornecimento",
+        "score": 0.74
+      },
+      {
+        "family_id": "fam-auto-0007",
+        "document_version": "docver-auto-0007-v2",
+        "excerpt": "versao retificada. Corrige o periodo de apuracao citado na versao anterior, mantida a autuacao por descumprimento do padrao de continuidade",
+        "score": 0.91
+      }
+    ],
+    "processo sei 48500.001234/2024-11": [
+      {
+        "family_id": "fam-defesa-0007",
+        "document_version": "docver-defesa-0007-v1",
+        "excerpt": "Peticao de defesa (ficticia) apresentada nos autos do processo SEI 48500.001234/2024-11, em face do Auto de Infracao no 0007/2024",
+        "score": 0.88
+      },
+      {
+        "family_id": "fam-decisao-0007",
+        "document_version": "docver-decisao-0007-v1",
+        "excerpt": "Decisao (ficticia) proferida no processo SEI 48500.001234/2024-11. Apos analise da defesa apresentada, mantem-se a autuacao",
+        "score": 0.85
+      },
+      {
+        "family_id": "fam-auto-0007",
+        "document_version": "docver-auto-0007-v2",
+        "excerpt": "Fica facultado o exercicio do direito de defesa no prazo regulamentar, nos termos do processo SEI 48500.001234/2024-11",
+        "score": 0.79
+      }
+    ]
+  }
+}

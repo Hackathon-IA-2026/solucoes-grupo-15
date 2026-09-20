@@ -1,52 +1,33 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import { fetchBackendHealth, type BackendHealth } from "./api/health";
-
-type HealthStatus =
-  | { kind: "loading" }
-  | { kind: "ok"; health: BackendHealth }
-  | { kind: "error" };
+import { HealthBadge } from "./components/HealthBadge";
+import { FamilyPlaceholderPage } from "./pages/FamilyPlaceholderPage";
+import { SearchPage } from "./pages/SearchPage";
 
 /**
- * Tela unica deste ticket: mostra o resultado do health check cruzado
- * (backend -> ai) consumindo so a API /v1/health do backend.
+ * Shell de roteamento do frontend (TB1 Ticket 3, issue #19).
+ *
+ * A busca (SearchPage) e a tela principal em "/" - substitui a tela de
+ * health check que era o conteudo principal ate o Ticket 2.
+ * "/documents/:familyId" fica registrada mas sem pagina real ainda (so
+ * um placeholder - Ticket #20 pendura o conteudo la). O health check
+ * cruzado continua existindo, agora so como indicador discreto de
+ * rodape (HealthBadge).
  */
 export function App() {
-  const [status, setStatus] = useState<HealthStatus>({ kind: "loading" });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetchBackendHealth()
-      .then((health) => {
-        if (!cancelled) {
-          setStatus({ kind: "ok", health });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setStatus({ kind: "error" });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
-    <main>
-      <h1>CapiWatt Lens</h1>
-      <section aria-label="status do sistema">
-        {status.kind === "loading" && <p>Verificando status...</p>}
-        {status.kind === "ok" && (
-          <p>
-            backend: {status.health.backend}, ai: {status.health.ai}
-          </p>
-        )}
-        {status.kind === "error" && <p>Não foi possível consultar o backend.</p>}
-      </section>
-    </main>
+    <BrowserRouter>
+      <main>
+        <h1>CapiWatt Lens</h1>
+        <Routes>
+          <Route path="/" element={<SearchPage />} />
+          <Route path="/documents/:familyId" element={<FamilyPlaceholderPage />} />
+        </Routes>
+      </main>
+      <footer>
+        <HealthBadge />
+      </footer>
+    </BrowserRouter>
   );
 }
 

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "CapiWatt Lens - modulo frontend (scaffold TB1): tela de status consumindo GET /v1/health do backend.",
+  "description": "CapiWatt Lens - modulo frontend (TB1 Ticket 3): pagina de busca (POST /v1/search) como tela principal, com roteador client-side (react-router-dom).",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",

@@ -2,10 +2,13 @@
 
 Invariante de arquitetura (vale desde o Ticket 1): o backend nunca
 importa o modulo ai diretamente, so fala com ele por HTTP contra
-/internal/v1/*. Ticket 2 adiciona ``index`` (contrato do port
-VectorService, issue #16); as demais operacoes (search,
-similar_families, reassign_family, delete/reindex) ficam para tickets
-futuros.
+/internal/v1/*. Ticket 2 adicionou ``index`` (contrato do port
+VectorService, issue #16). Ticket 3 adiciona ``search`` (issue #19):
+o backend so repassa a ``query``/``top_k`` - o ai resolve sozinho
+contra o proprio fixture declarativo e devolve hits crus, ainda nao
+agrupados por familia (o agrupamento e feito em
+app/routes/search.py). As demais operacoes (similar_families,
+reassign_family, delete/reindex) ficam para tickets futuros.
 """
 
 from dataclasses import dataclass
@@ -35,6 +38,28 @@ class IndexReport(BaseModel):
     document_version: str
     extracted_text_locator: str
     chunks_indexed: int
+    model_version: str
+
+
+class AiSearchHit(BaseModel):
+    """Um hit cru devolvido por POST /internal/v1/search.
+
+    Ainda nao agrupado por familia - o agrupamento por ``family_id``
+    (face = versao mais recente, chunks etiquetados por versao) e
+    responsabilidade exclusiva do backend (app/routes/search.py),
+    nunca deste cliente nem do ai.
+    """
+
+    family_id: str
+    document_version: str
+    excerpt: str
+    score: float
+
+
+class AiSearchResponse(BaseModel):
+    """Espelha a resposta de POST /internal/v1/search."""
+
+    hits: list[AiSearchHit]
     model_version: str
 
 
@@ -78,6 +103,27 @@ class AiClient:
         )
         response.raise_for_status()
         return [IndexReport(**report) for report in response.json()["reports"]]
+
+    def search(self, query: str, top_k: int | None = None) -> AiSearchResponse:
+        """Chama POST /internal/v1/search no ai e devolve os hits crus.
+
+        So repassa ``query``/``top_k`` - o ai resolve sozinho contra o
+        proprio fixture declarativo (nao ha payload de dados de busca
+        aqui, ao contrario de ``index``). Como ``index``, propaga
+        erros HTTP/rede - quem busca (POST /v1/search) precisa saber
+        se a chamada ao ai falhou, em vez de devolver um envelope de
+        busca incompleto/enganoso.
+        """
+        payload: dict[str, object] = {"query": query}
+        if top_k is not None:
+            payload["top_k"] = top_k
+        response = httpx.post(
+            f"{self._base_url}/internal/v1/search",
+            json=payload,
+            timeout=self._timeout,
+        )
+        response.raise_for_status()
+        return AiSearchResponse(**response.json())
 
 
 def get_ai_client() -> AiClient:

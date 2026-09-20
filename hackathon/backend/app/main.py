@@ -1,11 +1,12 @@
 """Ponto de entrada do app FastAPI do modulo backend.
 
 Ticket 1 (TB1) implementou o health check publico (/v1/health). Ticket
-2 adiciona o catalogo documental (document_family, document_version) em
+2 adicionou o catalogo documental (document_family, document_version) em
 Postgres e POST /v1/ingestions, que le o corpus de fixtures demo e
-popula o catalogo via AiClient.index (ver app/routes/ingestions.py). A
-API /v1/* completa (busca, grafo, notificacoes, feedback) pertence a
-tickets futuros.
+popula o catalogo via AiClient.index (ver app/routes/ingestions.py).
+Ticket 3 adiciona POST /v1/search (ver app/routes/search.py): agrupa
+por familia os hits crus devolvidos por AiClient.search. A API /v1/*
+completa (grafo, notificacoes, feedback) pertence a tickets futuros.
 
 O engine/session factory do catalogo sao criados aqui a partir de
 Settings.database_url e guardados em app.state; testes substituem a
@@ -22,6 +23,7 @@ from app.config import get_settings
 from app.db import Base, make_engine, make_session_factory
 from app.routes.health import router as health_router
 from app.routes.ingestions import router as ingestions_router
+from app.routes.search import router as search_router
 
 
 @asynccontextmanager
@@ -39,6 +41,7 @@ def create_app() -> FastAPI:
     app.state.db_session_factory = make_session_factory(engine)
     app.include_router(health_router)
     app.include_router(ingestions_router)
+    app.include_router(search_router)
     return app
 
 
