@@ -16,6 +16,7 @@ class Settings:
     ai_base_url: str
     embedder: str
     mailer: str
+    database_url: str
 
 
 @lru_cache
@@ -24,4 +25,8 @@ def get_settings() -> Settings:
         ai_base_url=os.environ.get("AI_BASE_URL", "http://ai:8000"),
         embedder=os.environ.get("EMBEDDER", "fake"),
         mailer=os.environ.get("MAILER", "preview"),
+        database_url=os.environ.get(
+            "DATABASE_URL",
+            "postgresql+psycopg://capiwatt:capiwatt@postgres:5432/capiwatt",
+        ),
     )

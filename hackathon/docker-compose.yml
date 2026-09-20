@@ -67,8 +67,9 @@ services:
       - opensearch-data:/usr/share/opensearch/data
 
 volumes:
-  # Compartilhado entre backend e ai: originais e texto extraido. Sem uso
-  # real neste ticket (nenhum job de ingestao ainda grava nele).
+  # Compartilhado entre backend e ai: originais e texto extraido. Desde
+  # o Ticket 2, POST /v1/ingestions (backend) + POST /internal/v1/index
+  # (ai) gravam aqui o texto "extraido" de cada document_version.
   documents-data:
   postgres-data:
   opensearch-data:

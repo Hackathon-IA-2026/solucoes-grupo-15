@@ -1,0 +1,57 @@
+{
+  "provisional": true,
+  "disclaimer": "Corpus fixture demo/provisorio para o TB1 (CapiWatt Lens). Documentos, numeros de processo e textos sao FICTICIOS - nao representam o caso real da Carolina (issue #14, ainda bloqueada). Ninguem deve tratar este arquivo como dado real. family_id/document_version/version_date sao atribuidos diretamente pela fixture: nenhuma regra de chave explicita (tipo + identificador oficial) e derivada deles nesta issue.",
+  "corpus_version": "demo-v1",
+  "documents": [
+    {
+      "document_id": "auto-0007",
+      "document_version": "docver-auto-0007-v1",
+      "family_id": "fam-auto-0007",
+      "version_date": "2024-03-04",
+      "version_date_source": "publication",
+      "document_type": "auto_de_infracao",
+      "processo_numero": "48500.001234/2024-11",
+      "text": "Auto de Infracao no 0007/2024 (ficticio). A fiscalizada e autuada por descumprimento do padrao de continuidade do fornecimento no periodo de apuracao informado.\n\nFica facultado o exercicio do direito de defesa no prazo regulamentar, nos termos do processo SEI 48500.001234/2024-11."
+    },
+    {
+      "document_id": "auto-0007",
+      "document_version": "docver-auto-0007-v2",
+      "family_id": "fam-auto-0007",
+      "version_date": "2024-04-18",
+      "version_date_source": "publication",
+      "document_type": "auto_de_infracao",
+      "processo_numero": "48500.001234/2024-11",
+      "text": "Auto de Infracao no 0007/2024 (ficticio) - versao retificada. Corrige o periodo de apuracao citado na versao anterior, mantida a autuacao por descumprimento do padrao de continuidade.\n\nFica facultado o exercicio do direito de defesa no prazo regulamentar, nos termos do processo SEI 48500.001234/2024-11, a contar da ciencia desta retificacao."
+    },
+    {
+      "document_id": "defesa-0007",
+      "document_version": "docver-defesa-0007-v1",
+      "family_id": "fam-defesa-0007",
+      "version_date": "2024-03-20",
+      "version_date_source": "collection",
+      "document_type": "peticao_defesa",
+      "processo_numero": "48500.001234/2024-11",
+      "text": "Peticao de defesa (ficticia) apresentada nos autos do processo SEI 48500.001234/2024-11, em face do Auto de Infracao no 0007/2024.\n\nAlega-se, em sintese, causa excludente de responsabilidade e requer-se o arquivamento do feito."
+    },
+    {
+      "document_id": "decisao-0007",
+      "document_version": "docver-decisao-0007-v1",
+      "family_id": "fam-decisao-0007",
+      "version_date": "2024-05-02",
+      "version_date_source": "publication",
+      "document_type": "decisao",
+      "processo_numero": "48500.001234/2024-11",
+      "text": "Decisao (ficticia) proferida no processo SEI 48500.001234/2024-11.\n\nApos analise da defesa apresentada, mantem-se a autuacao constante do Auto de Infracao no 0007/2024 (versao retificada), aplicando-se a penalidade prevista na norma correlata REN-1000/2021 (ficticia).\n\nCabe recurso no prazo regulamentar."
+    },
+    {
+      "document_id": "norma-1000",
+      "document_version": "docver-norma-1000-v1",
+      "family_id": "fam-norma-1000",
+      "version_date": "2021-11-10",
+      "version_date_source": "publication",
+      "document_type": "norma",
+      "processo_numero": null,
+      "text": "Resolucao Normativa no 1000/2021 (ficticia). Estabelece os padroes de continuidade do fornecimento de energia eletrica utilizados como referencia nas fiscalizacoes.\n\nEsta norma correlata e citada na Decisao do processo SEI 48500.001234/2024-11 apenas para fins de demonstracao do fluxo de ingestao."
+    }
+  ]
+}
