@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -129,7 +129,11 @@ describe("NotificationsPage", () => {
       ),
     );
 
-    await waitFor(() => expect(screen.getByText(/auto_de_infracao/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        within(screen.getByLabelText(/lista de notificações/i)).getByText(/auto_de_infracao/i),
+      ).toBeInTheDocument(),
+    );
     expect(screen.getByText(/você tem 1 novo/i)).toBeInTheDocument();
   });
 
@@ -145,7 +149,11 @@ describe("NotificationsPage", () => {
 
     renderPage();
 
-    await waitFor(() => expect(screen.getByText(/auto-0007/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        within(screen.getByLabelText(/lista de notificações/i)).getByText(/auto-0007/i),
+      ).toBeInTheDocument(),
+    );
     expect(screen.getByText(/você tem 1 novo/i)).toBeInTheDocument();
   });
 
