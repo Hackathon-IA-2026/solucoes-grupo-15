@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { CalendarDays, FileText, FolderTree, GitBranch, Landmark, Layers3 } from "lucide-react";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import {
   DocumentNotFoundError,
@@ -73,13 +74,13 @@ export function FamilyPage() {
   }, [familyId]);
 
   return (
-    <div>
+    <div className="page detail-page">
       <DemoBanner />
 
       <section aria-label="página de família">
-        {state.kind === "loading" && <p>Carregando...</p>}
-        {state.kind === "not-found" && <p>Família não encontrada.</p>}
-        {state.kind === "error" && <p>Não foi possível carregar o documento.</p>}
+        {state.kind === "loading" && <div className="loading-state"><span className="loading-spinner" aria-hidden="true" /> Carregando...</div>}
+        {state.kind === "not-found" && <div className="empty-state"><h2>Família não encontrada.</h2><Link to="/">Voltar à consulta</Link></div>}
+        {state.kind === "error" && <div className="empty-state error-state"><h2>Não foi possível carregar o documento.</h2><p>Tente novamente em alguns instantes.</p></div>}
         {state.kind === "result" && (
           <FamilyContent
             detail={state.detail}
@@ -151,18 +152,30 @@ function FamilyContent({
   const segments = buildHighlightedSegments(selected.text, chunksInSelectedVersion);
 
   return (
-    <div>
-      <header>
-        <h2>{detail.document_type}</h2>
-        <p>Identificador: {detail.document_id}</p>
-        {detail.processo_numero && <p>Processo: {detail.processo_numero}</p>}
-        <p>
-          Data ({dateSourceLabel}): {selected.version_date}
-        </p>
-      </header>
+    <div className="detail-layout">
+      <div className="detail-primary">
+        <header className="document-header">
+          <Link className="back-link" to="/">Consulta documental</Link>
+          <p className="eyebrow"><FileText size={15} /> Família documental</p>
+          <h1>
+            {formatDocumentType(detail.document_type)}
+            <span className="sr-only">{detail.document_type}</span>
+          </h1>
+          <div className="document-facts">
+            <span><FolderTree size={16} /> Identificador: {detail.document_id}</span>
+            {detail.processo_numero && (
+              <span>
+                <Landmark size={16} /> Processo: {detail.processo_numero}
+                <Link className="fact-action" to={`/processos/${encodeURIComponent(detail.processo_numero)}`}>Abrir processo</Link>
+              </span>
+            )}
+            <span><CalendarDays size={16} /> Data ({dateSourceLabel}): {selected.version_date}</span>
+          </div>
+        </header>
 
-      <nav aria-label="linha do tempo de versões">
-        <ul>
+        <nav className="version-timeline" aria-label="linha do tempo de versões">
+          <div className="section-heading"><div><p className="eyebrow"><Layers3 size={15} /> Histórico documental</p><h2>Versões registradas</h2></div><span>{detail.versions.length} versão{detail.versions.length > 1 ? "ões" : ""}</span></div>
+          <ul>
           {detail.versions.map((version: VersionSummary) => {
             const isSelected = version.document_version === selected.document_version;
             const hasRelevantChunkElsewhere = versionsWithChunkElsewhere.has(
@@ -175,35 +188,43 @@ function FamilyContent({
                   onClick={() => onSelectVersion(version.document_version)}
                   aria-current={isSelected ? "true" : undefined}
                 >
-                  {version.version_date} {isSelected ? "(versão selecionada)" : ""}
+                  <span>{version.version_date}</span><small>{isSelected ? "Versão selecionada" : "Ver versão"}</small>
                 </button>
-                {hasRelevantChunkElsewhere && <span> — trecho relevante aqui</span>}
+                {hasRelevantChunkElsewhere && <span className="relevant-flag">Trecho relevante aqui</span>}
               </li>
             );
           })}
-        </ul>
-      </nav>
+          </ul>
+        </nav>
 
-      <article aria-label="texto da versão selecionada" style={{ whiteSpace: "pre-wrap" }}>
-        {segments.map((segment, index) =>
-          segment.highlighted ? (
-            <span key={index}>
-              <mark>{segment.text}</mark>
-              <em>
-                {" "}
-                (trecho da busca —{" "}
-                {segment.chunk.is_latest ? "versão mais recente" : "não é a versão mais recente"})
-              </em>
-            </span>
-          ) : (
-            <span key={index}>{segment.text}</span>
-          ),
-        )}
-      </article>
+        <article className="document-text" aria-label="texto da versão selecionada">
+          <div className="section-heading"><div><p className="eyebrow"><FileText size={15} /> Conteúdo</p><h2>{selected.document_version}</h2></div><span>Fonte: {dateSourceLabel}</span></div>
+          <div className="document-body">
+            {segments.map((segment, index) =>
+              segment.highlighted ? (
+                <span key={index}>
+                  <mark>{segment.text}</mark>
+                  <em> Trecho da busca — {segment.chunk.is_latest ? "versão mais recente" : "não é a versão mais recente"}</em>
+                </span>
+              ) : (
+                <span key={index}>{segment.text}</span>
+              ),
+            )}
+          </div>
+        </article>
+      </div>
 
-      <RelationsPanel nodeId={detail.family_id} />
+      <aside className="detail-sidebar">
+        <div className="sidebar-title"><GitBranch size={17} /><span>Contexto conectado</span></div>
+        <RelationsPanel nodeId={detail.family_id} />
+      </aside>
     </div>
   );
+}
+
+function formatDocumentType(value: string) {
+  const readable = value.replaceAll("_", " ");
+  return `${readable.slice(0, 1).toUpperCase()}${readable.slice(1)}`;
 }
 
 export default FamilyPage;

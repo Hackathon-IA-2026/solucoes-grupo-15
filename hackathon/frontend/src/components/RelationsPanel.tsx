@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ArrowUpRight, CircleDot, Link2, Network } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { fetchGraph, GraphNodeNotFoundError, type Graph, type GraphEdge } from "../api/relations";
@@ -43,11 +44,12 @@ export function RelationsPanel({ nodeId }: { nodeId: string }) {
   }, [nodeId]);
 
   return (
-    <section aria-label="painel de relações">
-      <h3>Relações</h3>
-      {state.kind === "loading" && <p>Carregando relações...</p>}
-      {state.kind === "not-found" && <p>Nó não encontrado no grafo de relações.</p>}
-      {state.kind === "error" && <p>Não foi possível carregar as relações.</p>}
+    <section className="relations-panel" aria-label="painel de relações">
+      <h3><Network size={18} /> Relações</h3>
+      <p className="relations-description">Vizinhança declarada de um salto.</p>
+      {state.kind === "loading" && <p className="panel-status">Carregando relações...</p>}
+      {state.kind === "not-found" && <p className="panel-status">Nó não encontrado no grafo de relações.</p>}
+      {state.kind === "error" && <p className="panel-status">Não foi possível carregar as relações.</p>}
       {state.kind === "result" && state.graph.edges.length === 0 && (
         <p>Nenhuma relação registrada para este item.</p>
       )}
@@ -64,22 +66,17 @@ function RelationsGroups({ edges }: { edges: GraphEdge[] }) {
   return (
     <>
       {Object.entries(groups).map(([type, groupEdges]) => (
-        <div key={type} aria-label={`relações do tipo ${type}`}>
-          <h4>{type}</h4>
+        <div className="relation-group" key={type} aria-label={`relações do tipo ${type}`}>
+          <h4><Link2 size={14} /> {formatRelationType(type)}</h4>
           <ul>
             {groupEdges.map((edge) => (
               <li key={`${edge.type}-${edge.neighbor_kind}-${edge.neighbor_id}`}>
-                <NeighborLink edge={edge} />
-                <span>
-                  {" "}
-                  ({edge.origin}, {edge.status})
-                </span>
+                <CircleDot size={13} aria-hidden="true" />
+                <div><NeighborLink edge={edge} /><span className="relation-status">{edge.origin}, {edge.status}</span>
                 {edge.evidence && (
-                  <span>
-                    {" "}
-                    — evidência: {edge.evidence.locator} ({edge.evidence.document_version})
-                  </span>
+                  <span className="relation-evidence">Evidência: {edge.evidence.locator} ({edge.evidence.document_version})</span>
                 )}
+                </div>
               </li>
             ))}
           </ul>
@@ -94,7 +91,11 @@ function NeighborLink({ edge }: { edge: GraphEdge }) {
     edge.neighbor_kind === "processo"
       ? `/processos/${encodeURIComponent(edge.neighbor_id)}`
       : `/documents/${encodeURIComponent(edge.neighbor_id)}`;
-  return <Link to={to}>{edge.neighbor_id}</Link>;
+  return <Link to={to}>{edge.neighbor_id} <ArrowUpRight size={14} aria-hidden="true" /></Link>;
+}
+
+function formatRelationType(value: string) {
+  return value.replaceAll("_", " ");
 }
 
 function groupByType(edges: GraphEdge[]): Record<string, GraphEdge[]> {

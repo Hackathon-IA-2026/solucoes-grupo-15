@@ -1,4 +1,5 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Bolt, FileSearch, House, Search } from "lucide-react";
+import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 
 import { HealthBadge } from "./components/HealthBadge";
 import { FamilyPage } from "./pages/FamilyPage";
@@ -22,18 +23,58 @@ import { SearchPage } from "./pages/SearchPage";
 export function App() {
   return (
     <BrowserRouter>
-      <main>
-        <h1>CapiWatt Lens</h1>
+      <AppLayout />
+    </BrowserRouter>
+  );
+}
+
+function AppLayout() {
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="topbar-inner">
+          <Link className="brand" to="/" aria-label="CapiWatt Lens - início">
+            <span className="brand-mark" aria-hidden="true">
+              <Bolt size={20} strokeWidth={2.5} />
+            </span>
+            <span>
+              <strong>CapiWatt</strong>
+              <small>Lens</small>
+            </span>
+          </Link>
+
+          <nav className="main-nav" aria-label="Navegação principal">
+            <Link className={isHome ? "nav-link active" : "nav-link"} to="/">
+              <Search size={16} />
+              Consulta
+            </Link>
+            {!isHome && (
+              <Link className="nav-link" to="/">
+                <House size={16} />
+                Nova consulta
+              </Link>
+            )}
+          </nav>
+
+          <div className="topbar-status">
+            <FileSearch size={16} aria-hidden="true" />
+            <span>Base documental</span>
+            <HealthBadge />
+          </div>
+        </div>
+      </header>
+
+      <main className="app-content">
         <Routes>
           <Route path="/" element={<SearchPage />} />
           <Route path="/documents/:familyId" element={<FamilyPage />} />
           <Route path="/processos/:processoId" element={<ProcessoPage />} />
         </Routes>
       </main>
-      <footer>
-        <HealthBadge />
-      </footer>
-    </BrowserRouter>
+    </div>
   );
 }
 

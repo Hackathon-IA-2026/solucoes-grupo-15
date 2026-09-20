@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { submitFeedback, type Vote } from "../api/feedback";
 
@@ -40,25 +41,32 @@ export function FeedbackButtons({
   const disabled = state.kind === "submitting" || state.kind === "done";
 
   return (
-    <div aria-label="feedback sobre este resultado">
+    <div className="feedback-control" aria-label="feedback sobre este resultado">
+      <span>Este resultado ajudou?</span>
       <button
+        className="icon-button positive"
         type="button"
         aria-label="votar positivamente"
+        title="Resultado útil"
         disabled={disabled}
         onClick={() => vote("up")}
       >
-        👍
+        <ThumbsUp size={16} aria-hidden="true" />
       </button>
       <button
+        className="icon-button negative"
         type="button"
         aria-label="votar negativamente"
+        title="Resultado não útil"
         disabled={disabled}
         onClick={() => vote("down")}
       >
-        👎
+        <ThumbsDown size={16} aria-hidden="true" />
       </button>
-      {state.kind === "done" && <p>Obrigado pelo feedback</p>}
-      {state.kind === "error" && <p>Não foi possível registrar o feedback.</p>}
+      {state.kind === "done" && <small className="feedback-message">Obrigado pelo feedback</small>}
+      {state.kind === "error" && (
+        <small className="feedback-message error">Não foi possível registrar o feedback.</small>
+      )}
     </div>
   );
 }

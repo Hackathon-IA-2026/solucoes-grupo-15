@@ -8,11 +8,15 @@
  */
 export function DemoBanner() {
   return (
-    <p role="status" aria-label="aviso de dados demo">
-      Dados de demonstração/fixture — este corpus é fictício, não representa
-      casos reais e não deve ser tratado como tal.
-    </p>
+    <aside className="demo-banner" role="status" aria-label="aviso de dados demo">
+      <FlaskConical size={17} aria-hidden="true" />
+      <span>
+        <strong>Ambiente de demonstração.</strong> Este corpus é fictício, não representa casos
+        reais e não deve ser tratado como tal.
+      </span>
+    </aside>
   );
 }
 
 export default DemoBanner;
+import { FlaskConical } from "lucide-react";

@@ -38,10 +38,13 @@ export function HealthBadge() {
   }, []);
 
   return (
-    <p aria-label="status do sistema">
-      {status.kind === "loading" && "Verificando status..."}
-      {status.kind === "ok" && `backend: ${status.health.backend}, ai: ${status.health.ai}`}
-      {status.kind === "error" && "Não foi possível consultar o backend."}
+    <p className={`health-badge ${status.kind}`} aria-label="status do sistema">
+      <span className="health-dot" aria-hidden="true" />
+      <span className="health-copy">
+        {status.kind === "loading" && "Verificando status..."}
+        {status.kind === "ok" && `backend: ${status.health.backend}, ai: ${status.health.ai}`}
+        {status.kind === "error" && "Não foi possível consultar o backend."}
+      </span>
     </p>
   );
 }
