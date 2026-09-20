@@ -1,0 +1,532 @@
+#################### CapiWatt — check_aws_capabilities ####################
+DATA (UTC): 2026-09-18T23:11:45Z
+AWS_PROFILE definido?            não
+AWS_ACCESS_KEY_ID definido?      sim
+AWS_SESSION_TOKEN definido?      sim  (sim => credenciais temporárias)
+AWS_DEFAULT_REGION:              us-east-1
+
+==================================================================
+SERVIÇO : AWS CLI
+REGIÃO  : global
+COMANDO : aws --version
+COMPROVA: versão da CLI (comandos bedrock*/sesv2 exigem CLI v2 recente)
+------------------------------------------------------------------
+aws-cli/2.36.49 Python/3.14.6 Linux/6.8.0-79-generic exe/x86_64.ubuntu.22
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : STS
+REGIÃO  : global
+COMANDO : aws sts get-caller-identity --output json
+COMPROVA: credenciais válidas; conta e ARN da identidade ativa (usuário ou role assumida)
+------------------------------------------------------------------
+{
+    "UserId": "AROAX4QJ3S3IVUPPEMS44:Participant",
+    "Account": "542260303569",
+    "Arn": "arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant"
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+Identidade usada na simulação de políticas: arn:aws:iam::542260303569:role/WSParticipantRole
+
+==================================================================
+SERVIÇO : IAM
+REGIÃO  : global
+COMANDO : aws iam get-user --output json
+COMPROVA: se a identidade é um usuário IAM (falha esperada quando é role/credencial temporária)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (ValidationError) when calling the GetUser operation: Must specify userName when calling with non-User credentials
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : IAM (simulação)
+REGIÃO  : global
+COMANDO : aws iam simulate-principal-policy --policy-source-arn arn:aws:iam::542260303569:role/WSParticipantRole --action-names bedrock:ListFoundationModels bedrock:GetFoundationModel bedrock:InvokeModel bedrock:InvokeModelWithResponseStream ses:SendEmail ses:SendRawEmail ses:GetAccount ses:CreateEmailIdentity ses:ListEmailIdentities logs:DescribeLogGroups logs:CreateLogGroup logs:PutLogEvents s3:ListAllMyBuckets s3:CreateBucket s3:PutObject iam:CreateUser iam:CreateAccessKey iam:CreateRole iam:AttachUserPolicy --query EvaluationResults[].{acao:EvalActionName,decisao:EvalDecision} --output table
+COMPROVA: quais ações do MVP a política da identidade permite (sem SCP)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDenied) when calling the SimulatePrincipalPolicy operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: iam:SimulatePrincipalPolicy on resource: arn:aws:iam::542260303569:role/WSParticipantRole because no identity-based policy allows the iam:SimulatePrincipalPolicy action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : Bedrock
+REGIÃO  : us-east-1
+COMANDO : aws bedrock list-foundation-models --region us-east-1 --by-output-modality EMBEDDING --query modelSummaries[].{id:modelId,provider:providerName,status:modelLifecycle.status} --output table
+COMPROVA: serviço acessível e modelos de EMBEDDING listáveis nesta região (listar ≠ invocar)
+------------------------------------------------------------------
+----------------------------------------------------------------------
+|                        ListFoundationModels                        |
++-------------------------------------------+-------------+----------+
+|                    id                     |  provider   | status   |
++-------------------------------------------+-------------+----------+
+|  amazon.nova-2-multimodal-embeddings-v1:0 |  Amazon     |  ACTIVE  |
+|  twelvelabs.marengo-embed-3-0-v1:0        |  TwelveLabs |  ACTIVE  |
+|  twelvelabs.marengo-embed-2-7-v1:0        |  TwelveLabs |  LEGACY  |
+|  cohere.embed-v4:0                        |  Cohere     |  ACTIVE  |
+|  amazon.titan-embed-g1-text-02            |  Amazon     |  ACTIVE  |
+|  amazon.titan-embed-text-v1:2:8k          |  Amazon     |  ACTIVE  |
+|  amazon.titan-embed-text-v1               |  Amazon     |  ACTIVE  |
+|  amazon.titan-embed-text-v2:0:8k          |  Amazon     |  ACTIVE  |
+|  amazon.titan-embed-text-v2:0             |  Amazon     |  ACTIVE  |
+|  amazon.titan-embed-image-v1:0            |  Amazon     |  ACTIVE  |
+|  amazon.titan-embed-image-v1              |  Amazon     |  ACTIVE  |
+|  cohere.embed-english-v3:0:512            |  Cohere     |  ACTIVE  |
+|  cohere.embed-english-v3                  |  Cohere     |  ACTIVE  |
+|  cohere.embed-multilingual-v3:0:512       |  Cohere     |  ACTIVE  |
+|  cohere.embed-multilingual-v3             |  Cohere     |  ACTIVE  |
++-------------------------------------------+-------------+----------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/modelo amazon.titan-embed-text-v2:0
+REGIÃO  : us-east-1
+COMANDO : aws bedrock get-foundation-model --region us-east-1 --model-identifier amazon.titan-embed-text-v2:0 --query modelDetails.{id:modelId,status:modelLifecycle.status,inference:inferenceTypesSupported} --output json
+COMPROVA: modelo existe nesta região e está ativo (não comprova entitlement nem invocação)
+------------------------------------------------------------------
+{
+    "id": "amazon.titan-embed-text-v2:0",
+    "status": "ACTIVE",
+    "inference": [
+        "ON_DEMAND"
+    ]
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/entitlement amazon.titan-embed-text-v2:0
+REGIÃO  : us-east-1
+COMANDO : aws bedrock get-foundation-model-availability --region us-east-1 --model-id amazon.titan-embed-text-v2:0 --output json
+COMPROVA: se a conta tem entitlement/acordo para o modelo (mais próximo de 'posso invocar' sem invocar)
+------------------------------------------------------------------
+{
+    "modelId": "amazon.titan-embed-text-v2",
+    "agreementAvailability": {
+        "status": "AVAILABLE"
+    },
+    "authorizationStatus": "AUTHORIZED",
+    "entitlementAvailability": "AVAILABLE",
+    "regionAvailability": "AVAILABLE"
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/modelo cohere.embed-multilingual-v3
+REGIÃO  : us-east-1
+COMANDO : aws bedrock get-foundation-model --region us-east-1 --model-identifier cohere.embed-multilingual-v3 --query modelDetails.{id:modelId,status:modelLifecycle.status,inference:inferenceTypesSupported} --output json
+COMPROVA: modelo existe nesta região e está ativo (não comprova entitlement nem invocação)
+------------------------------------------------------------------
+{
+    "id": "cohere.embed-multilingual-v3",
+    "status": "ACTIVE",
+    "inference": [
+        "ON_DEMAND"
+    ]
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/entitlement cohere.embed-multilingual-v3
+REGIÃO  : us-east-1
+COMANDO : aws bedrock get-foundation-model-availability --region us-east-1 --model-id cohere.embed-multilingual-v3 --output json
+COMPROVA: se a conta tem entitlement/acordo para o modelo (mais próximo de 'posso invocar' sem invocar)
+------------------------------------------------------------------
+{
+    "modelId": "cohere.embed-multilingual-v3",
+    "agreementAvailability": {
+        "status": "NOT_AVAILABLE"
+    },
+    "authorizationStatus": "AUTHORIZED",
+    "entitlementAvailability": "AVAILABLE",
+    "regionAvailability": "AVAILABLE"
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/modelo amazon.titan-embed-text-v1
+REGIÃO  : us-east-1
+COMANDO : aws bedrock get-foundation-model --region us-east-1 --model-identifier amazon.titan-embed-text-v1 --query modelDetails.{id:modelId,status:modelLifecycle.status,inference:inferenceTypesSupported} --output json
+COMPROVA: modelo existe nesta região e está ativo (não comprova entitlement nem invocação)
+------------------------------------------------------------------
+{
+    "id": "amazon.titan-embed-text-v1",
+    "status": "ACTIVE",
+    "inference": [
+        "ON_DEMAND"
+    ]
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/entitlement amazon.titan-embed-text-v1
+REGIÃO  : us-east-1
+COMANDO : aws bedrock get-foundation-model-availability --region us-east-1 --model-id amazon.titan-embed-text-v1 --output json
+COMPROVA: se a conta tem entitlement/acordo para o modelo (mais próximo de 'posso invocar' sem invocar)
+------------------------------------------------------------------
+{
+    "modelId": "amazon.titan-embed-text-v1",
+    "agreementAvailability": {
+        "status": "AVAILABLE"
+    },
+    "authorizationStatus": "AUTHORIZED",
+    "entitlementAvailability": "AVAILABLE",
+    "regionAvailability": "AVAILABLE"
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock
+REGIÃO  : us-west-2
+COMANDO : aws bedrock list-foundation-models --region us-west-2 --by-output-modality EMBEDDING --query modelSummaries[].{id:modelId,provider:providerName,status:modelLifecycle.status} --output table
+COMPROVA: serviço acessível e modelos de EMBEDDING listáveis nesta região (listar ≠ invocar)
+------------------------------------------------------------------
+--------------------------------------------------------------
+|                    ListFoundationModels                    |
++-------------------------------------+-----------+----------+
+|                 id                  | provider  | status   |
++-------------------------------------+-----------+----------+
+|  cohere.embed-v4:0                  |  Cohere   |  ACTIVE  |
+|  amazon.titan-embed-g1-text-02      |  Amazon   |  ACTIVE  |
+|  amazon.titan-embed-text-v1:2:8k    |  Amazon   |  ACTIVE  |
+|  amazon.titan-embed-text-v1         |  Amazon   |  ACTIVE  |
+|  amazon.titan-embed-text-v2:0       |  Amazon   |  ACTIVE  |
+|  amazon.titan-embed-image-v1:0      |  Amazon   |  ACTIVE  |
+|  amazon.titan-embed-image-v1        |  Amazon   |  ACTIVE  |
+|  cohere.embed-english-v3:0:512      |  Cohere   |  ACTIVE  |
+|  cohere.embed-english-v3            |  Cohere   |  ACTIVE  |
+|  cohere.embed-multilingual-v3:0:512 |  Cohere   |  ACTIVE  |
+|  cohere.embed-multilingual-v3       |  Cohere   |  ACTIVE  |
++-------------------------------------+-----------+----------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/modelo amazon.titan-embed-text-v2:0
+REGIÃO  : us-west-2
+COMANDO : aws bedrock get-foundation-model --region us-west-2 --model-identifier amazon.titan-embed-text-v2:0 --query modelDetails.{id:modelId,status:modelLifecycle.status,inference:inferenceTypesSupported} --output json
+COMPROVA: modelo existe nesta região e está ativo (não comprova entitlement nem invocação)
+------------------------------------------------------------------
+{
+    "id": "amazon.titan-embed-text-v2:0",
+    "status": "ACTIVE",
+    "inference": [
+        "ON_DEMAND"
+    ]
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/entitlement amazon.titan-embed-text-v2:0
+REGIÃO  : us-west-2
+COMANDO : aws bedrock get-foundation-model-availability --region us-west-2 --model-id amazon.titan-embed-text-v2:0 --output json
+COMPROVA: se a conta tem entitlement/acordo para o modelo (mais próximo de 'posso invocar' sem invocar)
+------------------------------------------------------------------
+{
+    "modelId": "amazon.titan-embed-text-v2",
+    "agreementAvailability": {
+        "status": "AVAILABLE"
+    },
+    "authorizationStatus": "AUTHORIZED",
+    "entitlementAvailability": "AVAILABLE",
+    "regionAvailability": "AVAILABLE"
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/modelo cohere.embed-multilingual-v3
+REGIÃO  : us-west-2
+COMANDO : aws bedrock get-foundation-model --region us-west-2 --model-identifier cohere.embed-multilingual-v3 --query modelDetails.{id:modelId,status:modelLifecycle.status,inference:inferenceTypesSupported} --output json
+COMPROVA: modelo existe nesta região e está ativo (não comprova entitlement nem invocação)
+------------------------------------------------------------------
+{
+    "id": "cohere.embed-multilingual-v3",
+    "status": "ACTIVE",
+    "inference": [
+        "ON_DEMAND"
+    ]
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/entitlement cohere.embed-multilingual-v3
+REGIÃO  : us-west-2
+COMANDO : aws bedrock get-foundation-model-availability --region us-west-2 --model-id cohere.embed-multilingual-v3 --output json
+COMPROVA: se a conta tem entitlement/acordo para o modelo (mais próximo de 'posso invocar' sem invocar)
+------------------------------------------------------------------
+{
+    "modelId": "cohere.embed-multilingual-v3",
+    "agreementAvailability": {
+        "status": "NOT_AVAILABLE"
+    },
+    "authorizationStatus": "AUTHORIZED",
+    "entitlementAvailability": "AVAILABLE",
+    "regionAvailability": "AVAILABLE"
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/modelo amazon.titan-embed-text-v1
+REGIÃO  : us-west-2
+COMANDO : aws bedrock get-foundation-model --region us-west-2 --model-identifier amazon.titan-embed-text-v1 --query modelDetails.{id:modelId,status:modelLifecycle.status,inference:inferenceTypesSupported} --output json
+COMPROVA: modelo existe nesta região e está ativo (não comprova entitlement nem invocação)
+------------------------------------------------------------------
+{
+    "id": "amazon.titan-embed-text-v1",
+    "status": "ACTIVE",
+    "inference": [
+        "ON_DEMAND"
+    ]
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Bedrock/entitlement amazon.titan-embed-text-v1
+REGIÃO  : us-west-2
+COMANDO : aws bedrock get-foundation-model-availability --region us-west-2 --model-id amazon.titan-embed-text-v1 --output json
+COMPROVA: se a conta tem entitlement/acordo para o modelo (mais próximo de 'posso invocar' sem invocar)
+------------------------------------------------------------------
+{
+    "modelId": "amazon.titan-embed-text-v1",
+    "agreementAvailability": {
+        "status": "AVAILABLE"
+    },
+    "authorizationStatus": "AUTHORIZED",
+    "entitlementAvailability": "AVAILABLE",
+    "regionAvailability": "AVAILABLE"
+}
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : SES v2
+REGIÃO  : us-east-1
+COMANDO : aws sesv2 get-account --region us-east-1 --output json
+COMPROVA: SES existe na conta; ProductionAccessEnabled=false => SANDBOX (só identidades verificadas)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the GetAccount operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: ses:GetAccount on resource: * because no identity-based policy allows the ses:GetAccount action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : SES v2
+REGIÃO  : us-east-1
+COMANDO : aws sesv2 list-email-identities --region us-east-1 --output table
+COMPROVA: identidades (e-mails/domínios) já verificadas nesta região
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the ListEmailIdentities operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: ses:ListEmailIdentities on resource: * because no identity-based policy allows the ses:ListEmailIdentities action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : SES v1
+REGIÃO  : us-east-1
+COMANDO : aws ses get-send-quota --region us-east-1 --output json
+COMPROVA: cota de envio (Max24HourSend/SentLast24Hours)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDenied) when calling the GetSendQuota operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: ses:GetSendQuota because no identity-based policy allows the ses:GetSendQuota action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : SES v2
+REGIÃO  : us-west-2
+COMANDO : aws sesv2 get-account --region us-west-2 --output json
+COMPROVA: SES existe na conta; ProductionAccessEnabled=false => SANDBOX (só identidades verificadas)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the GetAccount operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: ses:GetAccount on resource: * because no identity-based policy allows the ses:GetAccount action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : SES v2
+REGIÃO  : us-west-2
+COMANDO : aws sesv2 list-email-identities --region us-west-2 --output table
+COMPROVA: identidades (e-mails/domínios) já verificadas nesta região
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the ListEmailIdentities operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: ses:ListEmailIdentities on resource: * because no identity-based policy allows the ses:ListEmailIdentities action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : SES v1
+REGIÃO  : us-west-2
+COMANDO : aws ses get-send-quota --region us-west-2 --output json
+COMPROVA: cota de envio (Max24HourSend/SentLast24Hours)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDenied) when calling the GetSendQuota operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: ses:GetSendQuota because no identity-based policy allows the ses:GetSendQuota action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : CloudWatch Logs
+REGIÃO  : us-east-1
+COMANDO : aws logs describe-log-groups --region us-east-1 --limit 5 --output table
+COMPROVA: leitura de log groups (não comprova escrita)
+------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|                                                                                                                                                                                                                                  DescribeLogGroups                                                                                                                                                                                                                                 |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|  nextToken                                                         |  /aws/lambda/workshop-resources-ec2-DefaultVpcLookupLambda-AnbffaYQDwMR                                                                                                                                                                                                                                                                                                                                       |
++--------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+||                                                                                                                                                                                                                                     logGroups                                                                                                                                                                                                                                    ||
+|+------------------------------------------------------------------------------------------------------------------------------+-----------------------------------+----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------+----------------+------------------------------------------------------------------------------+--------------------+--------------+|
+||                                                              arn                                                             | bearerTokenAuthenticationEnabled  | creationTime   | deletionProtectionEnabled  |                                                         logGroupArn                                                         | logGroupClass  |                                logGroupName                                  | metricFilterCount  | storedBytes  ||
+|+------------------------------------------------------------------------------------------------------------------------------+-----------------------------------+----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------+----------------+------------------------------------------------------------------------------+--------------------+--------------+|
+||  arn:aws:logs:us-east-1:542260303569:log-group:/aws/application-signals/data:*                                               |  False                            |  1789737353497 |  False                     |  arn:aws:logs:us-east-1:542260303569:log-group:/aws/application-signals/data                                                |  STANDARD      |  /aws/application-signals/data                                               |  0                 |  0           ||
+||  arn:aws:logs:us-east-1:542260303569:log-group:/aws/lambda/workshop-resources-ec2-BedrockCostTrackerLambda-oqE13diAFWwE:*    |  False                            |  1789737820146 |  False                     |  arn:aws:logs:us-east-1:542260303569:log-group:/aws/lambda/workshop-resources-ec2-BedrockCostTrackerLambda-oqE13diAFWwE     |  STANDARD      |  /aws/lambda/workshop-resources-ec2-BedrockCostTrackerLambda-oqE13diAFWwE    |  0                 |  0           ||
+||  arn:aws:logs:us-east-1:542260303569:log-group:/aws/lambda/workshop-resources-ec2-CheckSSMDocLambda-M08wDqcQ4JfG:*           |  False                            |  1789737974104 |  False                     |  arn:aws:logs:us-east-1:542260303569:log-group:/aws/lambda/workshop-resources-ec2-CheckSSMDocLambda-M08wDqcQ4JfG            |  STANDARD      |  /aws/lambda/workshop-resources-ec2-CheckSSMDocLambda-M08wDqcQ4JfG           |  0                 |  0           ||
+||  arn:aws:logs:us-east-1:542260303569:log-group:/aws/lambda/workshop-resources-ec2-CodeEditorHealthCheckLambda-3MSekkPrHdWx:* |  False                            |  1789737801042 |  False                     |  arn:aws:logs:us-east-1:542260303569:log-group:/aws/lambda/workshop-resources-ec2-CodeEditorHealthCheckLambda-3MSekkPrHdWx  |  STANDARD ... [saída truncada em 6000 caracteres]
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : CloudWatch Logs
+REGIÃO  : us-west-2
+COMANDO : aws logs describe-log-groups --region us-west-2 --limit 5 --output table
+COMPROVA: leitura de log groups (não comprova escrita)
+------------------------------------------------------------------
+-------------------
+|DescribeLogGroups|
++-----------------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : S3
+REGIÃO  : global
+COMANDO : aws s3api list-buckets --query Buckets[].Name --output table
+COMPROVA: listar buckets (não comprova leitura/gravação de objetos)
+------------------------------------------------------------------
+-------------------------------------------------
+|                  ListBuckets                  |
++-----------------------------------------------+
+|  agentcore-542260303569                       |
+|  agentcore-memory-payload-542260303569        |
+|  cdk-hnb659fds-assets-542260303569-us-west-2  |
++-----------------------------------------------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Lambda (M4)
+REGIÃO  : us-east-1
+COMANDO : aws lambda list-functions --region us-east-1 --max-items 3 --query Functions[].FunctionName --output table
+COMPROVA: listar funções (não comprova criar/invocar)
+------------------------------------------------------------------
+------------------------------------------------------------------
+|                          ListFunctions                         |
++----------------------------------------------------------------+
+|  workshop-resources-ec2-SecretPlaintextLambda-32MfO8WtSKTD     |
+|  workshop-resources-ec2-BedrockCostTrackerLambda-oqE13diAFWwE  |
+|  workshop-resources-ec2-CheckSSMDocLambda-M08wDqcQ4JfG         |
++----------------------------------------------------------------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : DynamoDB (alternativa)
+REGIÃO  : us-east-1
+COMANDO : aws dynamodb list-tables --region us-east-1 --output table
+COMPROVA: listar tabelas (não comprova criar/gravar)
+------------------------------------------------------------------
+------------
+|ListTables|
++----------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : OpenSearch Serverless (M4)
+REGIÃO  : us-east-1
+COMANDO : aws opensearchserverless list-collections --region us-east-1 --output table
+COMPROVA: listar coleções (não comprova criar)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the ListCollections operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: aoss:ListCollections on resource: arn:aws:aoss:us-east-1:542260303569:collection/* because no identity-based policy allows the aoss:ListCollections action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : Bedrock AgentCore (não usado)
+REGIÃO  : us-east-1
+COMANDO : aws bedrock-agentcore-control list-agent-runtimes --region us-east-1 --output table
+COMPROVA: serviço presente no Workshop; só informativo
+------------------------------------------------------------------
+-------------------
+|ListAgentRuntimes|
++-----------------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : Lambda (M4)
+REGIÃO  : us-west-2
+COMANDO : aws lambda list-functions --region us-west-2 --max-items 3 --query Functions[].FunctionName --output table
+COMPROVA: listar funções (não comprova criar/invocar)
+------------------------------------------------------------------
+---------------------------------------
+|            ListFunctions            |
++-------------------------------------+
+|  WSConcurrencyCurtailer-DO-NOT-USE  |
++-------------------------------------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : DynamoDB (alternativa)
+REGIÃO  : us-west-2
+COMANDO : aws dynamodb list-tables --region us-west-2 --output table
+COMPROVA: listar tabelas (não comprova criar/gravar)
+------------------------------------------------------------------
+------------
+|ListTables|
++----------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+==================================================================
+SERVIÇO : OpenSearch Serverless (M4)
+REGIÃO  : us-west-2
+COMANDO : aws opensearchserverless list-collections --region us-west-2 --output table
+COMPROVA: listar coleções (não comprova criar)
+------------------------------------------------------------------
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the ListCollections operation: User: arn:aws:sts::542260303569:assumed-role/WSParticipantRole/Participant is not authorized to perform: aoss:ListCollections on resource: arn:aws:aoss:us-west-2:542260303569:collection/* because no identity-based policy allows the aoss:ListCollections action
+------------------------------------------------------------------
+RESULTADO: exit=254 FALHOU
+
+==================================================================
+SERVIÇO : Bedrock AgentCore (não usado)
+REGIÃO  : us-west-2
+COMANDO : aws bedrock-agentcore-control list-agent-runtimes --region us-west-2 --output table
+COMPROVA: serviço presente no Workshop; só informativo
+------------------------------------------------------------------
+-------------------
+|ListAgentRuntimes|
++-----------------+
+------------------------------------------------------------------
+RESULTADO: exit=0 OK
+
+#################### FIM — copie tudo acima e cole na conversa ####################

@@ -6,10 +6,14 @@ status: partial
 topics:
   - issue-6 — O que dispara uma notificação (novo documento? mudança em processo acompanhado?) e o que ela contém na página inicial e no e-mail?
   - issue-7 — Como a entrega de e-mail via SES lida com frequência e deduplicação?
-updated_at: 2026-09-18
+updated_at: 2026-09-20
 ---
 
 ## Current resolution
+
+**Autoridade de disponibilidade (Eduardo, 2026-09-20):** [Ambiente AWS — serviços disponíveis](../../../../hackathon/docs/Ambiente%20AWS%20-%20serviços%20disponíveis.md) prevalece sobre hipóteses do plano e diagnósticos anteriores quanto a serviços, regiões e permissões. Diagnósticos datados permanecem evidência histórica; disponibilidade não equivale à validação funcional do fluxo da aplicação.
+
+**Revisão da issue-7 (2026-09-20, aceita por Eduardo):** manter eventos em Postgres local. `notification_delivered_email` com `adapter: preview` comprova geração da prévia, não entrega em caixa postal; a interface deve preservar essa distinção. CloudWatch e demais serviços de observabilidade estão disponíveis conforme o documento, mas não foram selecionados para o primeiro ciclo.
 
 ### Base da issue-6
 
@@ -42,6 +46,8 @@ Abertura de e-mail é medida **só pelo clique no link com token** — sem pixel
 
 ## Confirmed facts
 
+- 2026-09-20 (Eduardo): confirmou o corte local proposto e determinou que o documento AWS é a autoridade para disponibilidade de serviços. Os diagnósticos de 2026-09-18 abaixo são históricos.
+
 - [[d14-data-operations-modeling]]: ingestão já emite lista de referências explícitas e lista de vizinhos por família ao final do job — fonte do evento de disparo de notificação.
 - 2026-09-18 (issue-6): gatilho = qualquer documento novo indexado (família nova ou versão nova); escopo por usuário estrita/ampla sem padrão; conteúdo linka direto para trecho/versão; notificação estritamente informativa.
 - 2026-09-18 (issue-8 / [[i2-model-serving]]): sem envio real de e-mail no 1º ciclo; único adapter ativo é a prévia na página inicial.
@@ -49,11 +55,15 @@ Abertura de e-mail é medida **só pelo clique no link com token** — sem pixel
 
 ## Decisions
 
+- 2026-09-20 (issue-7, Eduardo): mantida telemetria local e explicitada a diferença entre prévia gerada e e-mail enviado.
+
 - 2026-09-18 (issue-6): eventos `notification_generated`, `notification_delivered_home`/`_email`, `notification_opened`/`_clicked` existem desde o TB1.
 - 2026-09-18 (issue-7): acrescentados `notification_suppressed` (com motivo) e `email_digest_generated`; `notification_delivered_email` carrega `adapter` e `email_id`.
 - 2026-09-18 (issue-7): abertura de e-mail medida por clique em link com token; sem pixel.
 
 ## Derived requirements and constraints
+
+- Para `adapter: preview`, resultado e interface não devem declarar entrega real de e-mail.
 
 - `notification_generated` carrega o escopo efetivo do usuário e, no escopo ampla, os ids dos correlatos incluídos, para deduplicação e futuras análises de uso.
 - Eventos de entrega distintos por canal permitem auditar as entregas. A issue-7 concretiza a prevenção de duplicações no backend, antes de `Mailer.send`, idempotente por `email_id`; os eventos registram o resultado dessa política.
@@ -70,6 +80,9 @@ Abertura de e-mail é medida **só pelo clique no link com token** — sem pixel
 
 ## Evidence
 
+- [Ambiente AWS — serviços disponíveis](../../../../hackathon/docs/Ambiente%20AWS%20-%20serviços%20disponíveis.md), lido em 2026-09-20.
+- Eduardo, 2026-09-20: “vamos seguir as sugestões” e “trate esse documento como autoridade para disponibilidade de serviços aws”.
+
 - [[d14-data-operations-modeling]] (eventos de ingestão já existentes).
 - Resposta de Eduardo, rodada 2 da issue #6 (2026-09-18): "aceito sugestões" (para os três eventos de telemetria propostos).
 - Comentários de resolução das issues [#6](https://github.com/EricRLeao1311/CapiWatt/issues/6) e [#7](https://github.com/EricRLeao1311/CapiWatt/issues/7), seções "Telemetria".
@@ -77,6 +90,8 @@ Abertura de e-mail é medida **só pelo clique no link com token** — sem pixel
 - `hackathon/scripts/check_aws_capabilities.out` l.317–334 (SES negado; observação sobre sandbox).
 
 ## Topic history
+
+- issue-7 (2026-09-20): revisão de disponibilidade aceita por Eduardo; inventário AWS incorporado como autoridade, corte local preservado. Mantidas as demais decisões desta página.
 
 - issue-6: definiu os eventos base do ciclo de notificação (gerada, entregue home/e-mail, aberta/clicada); página original incorporada do commit `4f0e08a` de Eric.
 - issue-7: acrescentou `notification_suppressed` e `email_digest_generated`, `adapter`/`email_id` na entrega por e-mail e abertura por clique com token. Sua versão local foi combinada com a base da issue-6.
