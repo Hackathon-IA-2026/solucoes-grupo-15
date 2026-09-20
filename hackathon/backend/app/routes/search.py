@@ -38,6 +38,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.catalog import select_face_version
 from app.clients.ai_client import AiClient, AiSearchHit, get_ai_client
 from app.config import get_settings
 from app.db import get_db_session
@@ -129,7 +130,7 @@ def _group_by_family(
             # em vez de quebrar a busca inteira.
             continue
 
-        face_version = max(versions, key=lambda v: v.version_date)
+        face_version = select_face_version(versions)
         if corpus_version is None:
             corpus_version = face_version.corpus_version
 

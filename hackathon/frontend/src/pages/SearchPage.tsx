@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 
 import { searchDocuments, type SearchEnvelope } from "../api/search";
+import { DemoBanner } from "../components/DemoBanner";
 
 /**
  * Tela principal do frontend a partir do Ticket 3 (TB1, issue #19).
@@ -52,10 +53,7 @@ export function SearchPage() {
 
   return (
     <div>
-      <p role="status" aria-label="aviso de dados demo">
-        Dados de demonstração/fixture — este corpus é fictício, não representa
-        casos reais e não deve ser tratado como tal.
-      </p>
+      <DemoBanner />
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="search-query">Buscar</label>
@@ -91,7 +89,12 @@ export function SearchPage() {
                     {result.face.document_type} — {result.face.document_version}
                   </h3>
                   <p>Data da versão vigente: {result.face.version_date}</p>
-                  <Link to={`/documents/${result.family_id}`}>Ver família</Link>
+                  <Link
+                    to={`/documents/${result.family_id}`}
+                    state={{ matchedChunks: result.matched_chunks }}
+                  >
+                    Ver família
+                  </Link>
                   <ul>
                     {result.matched_chunks.map((chunk) => (
                       <li key={chunk.document_version}>

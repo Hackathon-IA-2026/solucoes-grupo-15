@@ -35,7 +35,11 @@ class DocumentVersion(Base):
     ou de chave explicita e aplicada aqui. ``processo_numero`` e o dado
     bruto do processo SEI ao qual a peca pertence, se houver; nenhuma
     tabela ``processo`` ou relacao e criada nesta issue (Ticket 5,
-    issue #21).
+    issue #21). ``document_id`` (Ticket 4, issue #20) e o identificador
+    cru do documento na fixture (ex. "auto-0007", compartilhado entre
+    as versoes da mesma familia) - usado so como identificador de
+    exibicao na pagina de familia, sem nenhuma regra de formatacao por
+    tipo documental (isso pertence as issues #10-#14).
     """
 
     __tablename__ = "document_version"
@@ -44,6 +48,7 @@ class DocumentVersion(Base):
     family_id: Mapped[str] = mapped_column(
         ForeignKey("document_family.family_id"), nullable=False
     )
+    document_id: Mapped[str] = mapped_column(String, nullable=False)
     version_date: Mapped[str] = mapped_column(String, nullable=False)
     version_date_source: Mapped[str] = mapped_column(String, nullable=False)
     document_type: Mapped[str] = mapped_column(String, nullable=False)

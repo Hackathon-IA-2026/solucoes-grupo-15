@@ -101,6 +101,7 @@ def _upsert_version(
         session.add(version)
 
     version.family_id = doc.family_id
+    version.document_id = doc.document_id
     version.version_date = doc.version_date
     version.version_date_source = doc.version_date_source
     version.document_type = doc.document_type
