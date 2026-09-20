@@ -1,0 +1,75 @@
+{
+  "provisional": true,
+  "disclaimer": "Fixture de relacoes demo/provisoria para o TB1 (CapiWatt Lens, Ticket 5, issue #21). As arestas abaixo sao declaradas a mao para exercitar o grafo com o corpus fixture (app/fixtures/demo_corpus.json) - NENHUMA vem de um reconhecedor de padrao textual/regex/NER (isso pertence as issues #10-#14, ainda bloqueadas). Toda aresta aqui nasce origin=explicit, status=confirmed; nenhuma sugestao de similaridade/fusao e declarada (Ticket opcional #22, fora desta leva).",
+  "relations": [
+    {
+      "source_id": "fam-auto-0007",
+      "source_kind": "family",
+      "target_id": "48500.001234/2024-11",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "fam-defesa-0007",
+      "source_kind": "family",
+      "target_id": "48500.001234/2024-11",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "fam-decisao-0007",
+      "source_kind": "family",
+      "target_id": "48500.001234/2024-11",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "fam-defesa-0007",
+      "source_kind": "family",
+      "target_id": "fam-auto-0007",
+      "target_kind": "family",
+      "type": "responde_a",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": {
+        "document_version": "docver-defesa-0007-v1",
+        "locator": "trecho inicial da petição — cita 'em face do Auto de Infração nº 0007/2024'"
+      }
+    },
+    {
+      "source_id": "fam-norma-1000",
+      "source_kind": "family",
+      "target_id": "fam-decisao-0007",
+      "target_kind": "family",
+      "type": "regula",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": {
+        "document_version": "docver-decisao-0007-v1",
+        "locator": "trecho de fundamentação da penalidade — cita 'norma correlata REN-1000/2021'"
+      }
+    },
+    {
+      "source_id": "fam-decisao-0007",
+      "source_kind": "family",
+      "target_id": "fam-auto-0007",
+      "target_kind": "family",
+      "type": "referencia",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": {
+        "document_version": "docver-decisao-0007-v1",
+        "locator": "trecho de manutenção da autuação — cita 'Auto de Infração nº 0007/2024 (versão retificada)'"
+      }
+    }
+  ]
+}

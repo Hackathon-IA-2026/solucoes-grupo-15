@@ -39,6 +39,23 @@ const OLD_VERSION_DETAIL_BODY = {
   },
 };
 
+// FamilyPage renderiza RelationsPanel (Ticket 5, issue #21), que faz
+// sua propria chamada a GET /v1/documents/{familyId}/graph - resposta
+// vazia por padrao, os testes deste arquivo nao exercitam o painel de
+// relacoes (isso e coberto por RelationsPanel.test.tsx).
+const EMPTY_GRAPH_BODY = { node_id: "fam-auto-0007", node_kind: "family", edges: [] };
+
+function mockDocumentAndGraphFetch(
+  detailByUrl: (url: string) => unknown,
+): ReturnType<typeof vi.fn> {
+  return vi.fn().mockImplementation((url: string) => {
+    if (url.includes("/graph")) {
+      return Promise.resolve(jsonResponse(EMPTY_GRAPH_BODY));
+    }
+    return Promise.resolve(jsonResponse(detailByUrl(url)));
+  });
+}
+
 function renderFamilyPage(options?: {
   matchedChunks?: unknown[];
   familyId?: string;
@@ -78,7 +95,7 @@ describe("FamilyPage", () => {
   });
 
   it("mostra estado de carregamento e depois o cabeçalho da versão mais recente", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(DETAIL_BODY)));
+    vi.stubGlobal("fetch", mockDocumentAndGraphFetch(() => DETAIL_BODY));
 
     renderFamilyPage();
 
@@ -91,7 +108,7 @@ describe("FamilyPage", () => {
   });
 
   it("busca sem parametro de versao (pega a mais recente por padrao)", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(DETAIL_BODY));
+    const fetchMock = mockDocumentAndGraphFetch(() => DETAIL_BODY);
     vi.stubGlobal("fetch", fetchMock);
 
     renderFamilyPage();
@@ -124,7 +141,7 @@ describe("FamilyPage", () => {
   });
 
   it("destaca o trecho da busca quando matchedChunks aponta para a versão selecionada", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(DETAIL_BODY)));
+    vi.stubGlobal("fetch", mockDocumentAndGraphFetch(() => DETAIL_BODY));
 
     renderFamilyPage({
       matchedChunks: [
@@ -143,12 +160,9 @@ describe("FamilyPage", () => {
   });
 
   it("troca de versão pela linha do tempo atualiza o texto exibido", async () => {
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
-      if (url.includes("version=docver-auto-0007-v1")) {
-        return Promise.resolve(jsonResponse(OLD_VERSION_DETAIL_BODY));
-      }
-      return Promise.resolve(jsonResponse(DETAIL_BODY));
-    });
+    const fetchMock = mockDocumentAndGraphFetch((url) =>
+      url.includes("version=docver-auto-0007-v1") ? OLD_VERSION_DETAIL_BODY : DETAIL_BODY,
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     renderFamilyPage();
@@ -168,7 +182,7 @@ describe("FamilyPage", () => {
   });
 
   it("marca a linha do tempo quando há trecho casado numa versão não selecionada", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(DETAIL_BODY)));
+    vi.stubGlobal("fetch", mockDocumentAndGraphFetch(() => DETAIL_BODY));
 
     renderFamilyPage({
       matchedChunks: [
@@ -188,12 +202,47 @@ describe("FamilyPage", () => {
   });
 
   it("funciona sem matchedChunks no state (acesso direto), sem nenhum destaque", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(DETAIL_BODY)));
+    vi.stubGlobal("fetch", mockDocumentAndGraphFetch(() => DETAIL_BODY));
 
     renderFamilyPage();
 
     await waitFor(() => expect(screen.getByText("auto_de_infracao")).toBeInTheDocument());
     expect(screen.queryByText(/trecho da busca/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/trecho relevante aqui/i)).not.toBeInTheDocument();
+  });
+
+  it("renderiza o painel de Relações (Ticket 5) buscando o grafo da família", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/graph")) {
+        return Promise.resolve(
+          jsonResponse({
+            node_id: "fam-auto-0007",
+            node_kind: "family",
+            edges: [
+              {
+                type: "pertence_ao_processo",
+                origin: "explicit",
+                status: "confirmed",
+                neighbor_id: "48500.001234/2024-11",
+                neighbor_kind: "processo",
+                evidence: null,
+              },
+            ],
+          }),
+        );
+      }
+      return Promise.resolve(jsonResponse(DETAIL_BODY));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderFamilyPage();
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/v1/documents/fam-auto-0007/graph"),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("48500.001234/2024-11")).toBeInTheDocument(),
+    );
+    expect(screen.getByLabelText("painel de relações")).toBeInTheDocument();
   });
 });

@@ -1,14 +1,24 @@
-"""Modelos ORM do catalogo documental (TB1 Ticket 2, issue #18).
+"""Modelos ORM do catalogo documental.
 
-Escopo desta issue: so ``document_family`` e ``document_version``,
+``document_family``/``document_version`` vem do Ticket 2 (issue #18):
 exatamente como o corpus de fixtures demo declara (ver
-app/fixtures/demo_corpus.json). Nenhuma tabela de processo, relacao ou
-sugestao de fusao e criada aqui - pertencem a tickets futuros (#21 e
-outros; ver decisao d4-data-dictionary: processo SEI nao e familia,
-fica fora de escopo).
+app/fixtures/demo_corpus.json). Nenhuma regra de classificacao ou de
+chave explicita e aplicada aqui.
+
+``document_relations`` (Ticket 5, issue #21) guarda as arestas do
+grafo de relacoes (peca->processo, familia->familia, norma->peca)
+declaradas literalmente pela fixture de relacoes
+(app/fixtures/demo_relations.json) - nenhum reconhecedor de padrao
+textual roda aqui. Nesta issue toda aresta nasce ``origin="explicit"``,
+``status="confirmed"``; sugestao de similaridade/fusao (``score``,
+``decided_by``, ``decided_at``) fica para o Ticket opcional #22, fora
+de escopo. O no ``processo`` nao ganha tabela propria nesta issue - seu
+``id`` e o ``processo_numero`` cru ja gravado em ``DocumentVersion``
+(ver ``target_id``/``source_id`` com ``*_kind == "processo"`` em
+``document_relations``).
 """
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -58,3 +68,44 @@ class DocumentVersion(Base):
     model_version: Mapped[str] = mapped_column(String, nullable=False)
 
     family: Mapped["DocumentFamily"] = relationship(back_populates="versions")
+
+
+class DocumentRelation(Base):
+    """Uma aresta do grafo de relacoes (Ticket 5, issue #21).
+
+    Chave natural unica ``(source_id, source_kind, target_id,
+    target_kind, type)`` - reingerir a fixture de relacoes faz upsert
+    por essa chave, nunca duplica linha (ver
+    app/routes/ingestions.py::run_relations_ingestion). ``source_kind``/
+    ``target_kind`` sao ``"family"`` ou ``"processo"``; ``type`` e um
+    dos sete do vocabulario fechado em d14-data-operations-modeling
+    (``pertence_ao_processo``, ``referencia``, ``revoga``, ``altera``,
+    ``responde_a``, ``regula``, ``similar_a`` - este ultimo nao usado
+    nesta issue). ``evidence_document_version``/``evidence_locator``
+    ficam nulos quando a fixture nao declara evidencia (ex.:
+    ``pertence_ao_processo``, que vem do metadado ``processo_numero``,
+    nao de um trecho de texto).
+    """
+
+    __tablename__ = "document_relations"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_id",
+            "source_kind",
+            "target_id",
+            "target_kind",
+            "type",
+            name="uq_document_relations_natural_key",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_id: Mapped[str] = mapped_column(String, nullable=False)
+    source_kind: Mapped[str] = mapped_column(String, nullable=False)
+    target_id: Mapped[str] = mapped_column(String, nullable=False)
+    target_kind: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[str] = mapped_column(String, nullable=False)
+    origin: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False)
+    evidence_document_version: Mapped[str | None] = mapped_column(String, nullable=True)
+    evidence_locator: Mapped[str | None] = mapped_column(String, nullable=True)

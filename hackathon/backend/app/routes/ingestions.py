@@ -1,15 +1,22 @@
-"""Rota publica de ingestao do corpus fixture demo (TB1 Ticket 2, issue #18).
+"""Rota publica de ingestao do corpus fixture demo (TB1 Ticket 2, issue #18;
+relacoes adicionadas no Ticket 5, issue #21).
 
 POST /v1/ingestions le o corpus de fixtures demo (app/fixtures/demo_corpus.json,
 marcado "provisional": true - nunca dado real, ver
 app/fixtures/loader.py), monta o payload para ``AiClient.index(...)`` e
 faz upsert do catalogo (``document_family``, ``document_version``) no
-Postgres a partir dos ``IndexReport``s devolvidos.
+Postgres a partir dos ``IndexReport``s devolvidos. Na mesma chamada,
+tambem le a fixture de relacoes (app/fixtures/demo_relations.json,
+Ticket 5) e faz upsert de ``document_relations`` - nenhuma extracao de
+padrao textual roda aqui, as arestas vem literalmente da fixture (ver
+app/fixtures/relations_loader.py).
 
 Idempotencia: reingerir a mesma fixture faz upsert por PK (nao duplica
-linhas) e a chamada a ``ai.index`` para os mesmos ``document_version``
-bate no caminho idempotente do ai (mesmo relatorio, arquivo nao
-reescrito).
+linhas de catalogo) e por chave natural
+``(source_id, source_kind, target_id, target_kind, type)`` (nao
+duplica linhas de relacao) - a chamada a ``ai.index`` para os mesmos
+``document_version`` bate no caminho idempotente do ai (mesmo
+relatorio, arquivo nao reescrito).
 
 ``ingestion_job_id`` e gerado aqui como um id simples (uuid4), mesmo
 sem tabela de "job" ainda - tickets futuros de notificacao (#24) devem
@@ -20,12 +27,18 @@ import uuid
 from dataclasses import dataclass
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.ai_client import AiClient, IndexDocumentPayload, IndexReport, get_ai_client
 from app.db import get_db_session
 from app.fixtures.loader import FixtureCorpus, FixtureDocumentVersion, load_demo_corpus
-from app.models import DocumentFamily, DocumentVersion
+from app.fixtures.relations_loader import (
+    FixtureRelation,
+    FixtureRelations,
+    load_demo_relations,
+)
+from app.models import DocumentFamily, DocumentRelation, DocumentVersion
 
 router = APIRouter(prefix="/v1", tags=["ingestions"])
 
@@ -35,6 +48,7 @@ class IngestionResult:
     ingestion_job_id: str
     families_count: int
     versions_count: int
+    relations_count: int
 
 
 @router.post("/ingestions")
@@ -43,17 +57,32 @@ def create_ingestion(
     session: Session = Depends(get_db_session),
 ) -> dict[str, str | int]:
     corpus = load_demo_corpus()
-    result = run_ingestion(corpus, ai_client=ai_client, session=session)
+    relations = load_demo_relations()
+    result = run_ingestion(
+        corpus, ai_client=ai_client, session=session, relations=relations
+    )
     return {
         "ingestion_job_id": result.ingestion_job_id,
         "families_count": result.families_count,
         "versions_count": result.versions_count,
+        "relations_count": result.relations_count,
     }
 
 
 def run_ingestion(
-    corpus: FixtureCorpus, *, ai_client: AiClient, session: Session
+    corpus: FixtureCorpus,
+    *,
+    ai_client: AiClient,
+    session: Session,
+    relations: FixtureRelations | None = None,
 ) -> IngestionResult:
+    """Ingere o corpus documental e, opcionalmente, as relacoes.
+
+    ``relations`` e opcional (``None`` por padrao) so para nao quebrar
+    os chamadores dos Tickets 2-4 (testes existentes que ingerem so o
+    corpus, sem relacoes) - POST /v1/ingestions sempre passa a fixture
+    de relacoes carregada (ver ``create_ingestion`` acima).
+    """
     reports_by_version = _index_corpus(corpus, ai_client)
 
     family_ids: set[str] = set()
@@ -66,13 +95,59 @@ def run_ingestion(
         family_ids.add(doc.family_id)
         version_ids.add(doc.document_version)
 
+    relations_count = 0
+    if relations is not None:
+        relations_count = run_relations_ingestion(relations, session=session)
+
     session.flush()
 
     return IngestionResult(
         ingestion_job_id=str(uuid.uuid4()),
         families_count=len(family_ids),
         versions_count=len(version_ids),
+        relations_count=relations_count,
     )
+
+
+def run_relations_ingestion(relations: FixtureRelations, *, session: Session) -> int:
+    """Faz upsert das arestas declaradas pela fixture de relacoes.
+
+    Upsert pela chave natural ``(source_id, source_kind, target_id,
+    target_kind, type)`` - unica em ``document_relations`` (ver
+    ``models.py``). Reingerir a mesma fixture nao duplica linhas.
+    """
+    for rel in relations.relations:
+        _upsert_relation(session, rel)
+    session.flush()
+    return len(relations.relations)
+
+
+def _upsert_relation(session: Session, rel: FixtureRelation) -> None:
+    existing = session.scalar(
+        select(DocumentRelation).where(
+            DocumentRelation.source_id == rel.source_id,
+            DocumentRelation.source_kind == rel.source_kind,
+            DocumentRelation.target_id == rel.target_id,
+            DocumentRelation.target_kind == rel.target_kind,
+            DocumentRelation.type == rel.type,
+        )
+    )
+    if existing is None:
+        existing = DocumentRelation(
+            source_id=rel.source_id,
+            source_kind=rel.source_kind,
+            target_id=rel.target_id,
+            target_kind=rel.target_kind,
+            type=rel.type,
+        )
+        session.add(existing)
+
+    existing.origin = rel.origin
+    existing.status = rel.status
+    existing.evidence_document_version = (
+        rel.evidence.document_version if rel.evidence is not None else None
+    )
+    existing.evidence_locator = rel.evidence.locator if rel.evidence is not None else None
 
 
 def _index_corpus(corpus: FixtureCorpus, ai_client: AiClient) -> dict[str, IndexReport]:

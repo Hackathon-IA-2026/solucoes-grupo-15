@@ -8,8 +8,11 @@ Ticket 3 adiciona POST /v1/search (ver app/routes/search.py): agrupa
 por familia os hits crus devolvidos por AiClient.search. Ticket 4
 adiciona GET /v1/documents/{family_id} (ver app/routes/documents.py):
 cabecalho + linha do tempo de versoes + texto extraido da versao
-selecionada, para a pagina de familia do frontend. A API /v1/*
-completa (grafo, notificacoes, feedback) pertence a tickets futuros.
+selecionada, para a pagina de familia do frontend. Ticket 5 adiciona o
+grafo de relacoes (ver app/routes/relations.py):
+GET /v1/documents/{node_id}/graph e GET /v1/processos/{processo_id}.
+A API /v1/* completa (notificacoes, feedback) pertence a tickets
+futuros.
 
 O engine/session factory do catalogo sao criados aqui a partir de
 Settings.database_url e guardados em app.state; testes substituem a
@@ -27,6 +30,7 @@ from app.db import Base, make_engine, make_session_factory
 from app.routes.documents import router as documents_router
 from app.routes.health import router as health_router
 from app.routes.ingestions import router as ingestions_router
+from app.routes.relations import router as relations_router
 from app.routes.search import router as search_router
 
 
@@ -47,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(ingestions_router)
     app.include_router(search_router)
     app.include_router(documents_router)
+    app.include_router(relations_router)
     return app
 
 

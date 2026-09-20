@@ -9,6 +9,7 @@ import {
 } from "../api/documents";
 import type { MatchedChunk } from "../api/search";
 import { DemoBanner } from "../components/DemoBanner";
+import { RelationsPanel } from "../components/RelationsPanel";
 
 /**
  * Pagina de familia/documento (TB1 Ticket 4, issue #20).
@@ -25,6 +26,10 @@ import { DemoBanner } from "../components/DemoBanner";
  * pagina direto (refresh, link colado) e um caminho valido: o state
  * fica vazio e a pagina funciona igual, so sem nenhum destaque no
  * texto - nao e erro.
+ *
+ * Ticket 5 (issue #21) adiciona o painel "Relações" (RelationsPanel,
+ * ../components/RelationsPanel.tsx) ao final da pagina, centrado em
+ * `detail.family_id` - sem remover nada do que ja existia.
  */
 
 type LocationState = {
@@ -195,6 +200,8 @@ function FamilyContent({
           ),
         )}
       </article>
+
+      <RelationsPanel nodeId={detail.family_id} />
     </div>
   );
 }
