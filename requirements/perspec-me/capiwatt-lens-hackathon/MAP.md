@@ -17,6 +17,8 @@ _Counts are of Concerns touched under this Map, by current `status` on their Res
 
 ## Links
 
+- Autoridade de disponibilidade AWS: [Ambiente AWS — serviços disponíveis](../../../hackathon/docs/Ambiente%20AWS%20-%20serviços%20disponíveis.md), confirmada por Eduardo em 2026-09-20. Revisão das issues #7/#8 preserva o corte local; I2, I6, I7, I9 e I11 foram atualizadas sem alterar seus estados nem as contagens acima. Diagnósticos anteriores são evidência histórica; o inventário prevalece em divergências de disponibilidade.
+
 - Wayfinder map issue: [CapiWatt Lens — Caso 1 (Carolina): mapa de decisões](https://github.com/EricRLeao1311/CapiWatt/issues/1) — Destination, Notes, Decisions so far, Fog (Not yet specified), and Out of scope live there, not here.
 - Topics: child issues of the map issue carrying `resolver: perspec-me`; Frontier = open, unblocked, unassigned children (live `gh` query, never a local list).
 - Delivery gate: [Carolina entrega o caso 1: detalhamento, documentos e gabarito de priorização](https://github.com/EricRLeao1311/CapiWatt/issues/14) (`wayfinder:task`) — blocks the four case-dependent Topics via native issue dependencies.

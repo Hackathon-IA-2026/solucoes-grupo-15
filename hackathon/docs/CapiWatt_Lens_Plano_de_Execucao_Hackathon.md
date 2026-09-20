@@ -7,6 +7,8 @@ CAPIWATT LENS
 
 16 setembro 2026
 
+> Revisão de disponibilidade (2026-09-20): [Ambiente AWS — serviços disponíveis](Ambiente%20AWS%20-%20serviços%20disponíveis.md) é a autoridade sobre serviços, regiões e permissões e prevalece sobre as hipóteses AWS deste plano. As decisões consolidadas de [notificações (#7)](https://github.com/EricRLeao1311/CapiWatt/issues/7) e [ambiente (#8)](https://github.com/EricRLeao1311/CapiWatt/issues/8) mantêm Compose local + embeddings Bedrock + prévia de e-mail (SES indisponível). A implantação posterior deve respeitar o inventário; as menções a API Gateway novo e OpenSearch Serverless neste plano não comprovam sua disponibilidade.
+
 Vamos desenvolver o CapiWatt Lens em **três frentes técnicas**, com contratos comuns e entregas que atravessem interface, backend e recuperação de documentos. O primeiro resultado será um caso real funcionando localmente; a implantação na AWS virá depois da integração desse fluxo.
 
 A meta do hackathon é uma **prova de conceito rumo ao TRL 3**, com dados reais, fontes verificáveis e ranking por perfil. Cada incremento terá um responsável, um critério de conclusão e uma avaliação registrada. A avaliação de Carolina no escritório integra o plano desde a preparação. \[1, slides 5 e 11\]
