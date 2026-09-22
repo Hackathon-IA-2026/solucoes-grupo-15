@@ -6,14 +6,15 @@ Destination confirmed by Eduardo on 2026-09-18 (revision 2, after the 2026-09-17
 
 ## Perspective resolution
 
-_Counts are of Concerns touched under this Map, by current `status` on their Resolution page. Last refreshed 2026-09-22 (issue #10 resolution integrated)._
+_Counts are of Concerns touched under this Map, by current `status` on their Resolution page. Last refreshed 2026-09-22 (issue #11 resolved)._
 
 | Perspective | unexamined | open | partial | resolved | deferred | not-applicable | superseded | Perspective page |
 |---|---|---|---|---|---|---|---|---|
+| O — System Objectives | 0 | 0 | 0 | 1 | 0 | 0 | 0 | _(none yet)_ |
 | U — User Experience | 0 | 0 | 3 | 1 | 0 | 0 | 0 | _(none yet)_ |
 | I — Infrastructure | 0 | 0 | 7 | 1 | 0 | 0 | 0 | _(none yet)_ |
-| M — Model | 0 | 0 | 0 | 1 | 0 | 0 | 0 | _(none yet)_ |
-| D — Data | 0 | 0 | 3 | 2 | 0 | 0 | 0 | _(none yet)_ |
+| M — Model | 0 | 0 | 0 | 2 | 0 | 0 | 0 | _(none yet)_ |
+| D — Data | 0 | 0 | 3 | 3 | 0 | 0 | 0 | _(none yet)_ |
 
 ## Links
 
