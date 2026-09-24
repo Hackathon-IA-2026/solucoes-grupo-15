@@ -1,96 +1,61 @@
-import { Bell, Bolt, FileSearch, House, Search } from "lucide-react";
-import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 
-import { HealthBadge } from "./components/HealthBadge";
+import { AppShell } from "./components/layout/AppShell";
+import { SessionProvider, useSession } from "./features/auth/SessionContext";
+import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { FamilyPage } from "./pages/FamilyPage";
+import { LoginPage } from "./pages/LoginPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { PersonaPage } from "./pages/PersonaPage";
 import { ProcessoPage } from "./pages/ProcessoPage";
 import { SearchPage } from "./pages/SearchPage";
 
-/**
- * Shell de roteamento do frontend (TB1 Ticket 3, issue #19; Ticket 4,
- * issue #20 pendura a pagina real de familia; Ticket 5, issue #21
- * pendura a pagina de processo SEI).
- *
- * A busca (SearchPage) e a tela principal em "/" - substitui a tela de
- * health check que era o conteudo principal ate o Ticket 2.
- * "/documents/:familyId" leva a FamilyPage (cabecalho + linha do tempo
- * de versoes + texto com trechos destacados + painel "Relações").
- * "/processos/:processoId" leva a ProcessoPage (pecas do processo por
- * data + cadeia responde_a + o mesmo painel "Relações"). O health
- * check cruzado continua existindo, agora so como indicador discreto
- * de rodape (HealthBadge).
- *
- * "/notificacoes" (Ticket 8, issue #24) leva a NotificationsPage -
- * central de notificacoes + previa de digest de e-mail. Nao mexe em
- * "/" nem na SearchPage (a busca continua a tela principal, decisao
- * fechada no Ticket 3); so acrescenta um nav-link separado na topbar.
- */
 export function App() {
   return (
-    <BrowserRouter>
-      <AppLayout />
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <SessionProvider>
+        <Routes>
+          <Route path="/" element={<EntryRedirect />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<RequireSession />}>
+            <Route path="/escolher-perfil" element={<PersonaPage />} />
+            <Route element={<RequirePersona />}>
+              <Route element={<AppShell />}>
+                <Route path="/explorar" element={<SearchPage />} />
+                <Route path="/meus-processos" element={<ComingSoonPage title="Meus Processos" description="Acompanhamento de processos, prazos e alertas em preparação." />} />
+                <Route path="/familias" element={<ComingSoonPage title="Famílias" description="Navegação por macrotemas regulatórios em preparação." />} />
+                <Route path="/mapas-relacoes" element={<ComingSoonPage title="Mapas e Relações" description="Visão conectada entre processos, documentos e normas em preparação." />} />
+                <Route path="/parecer-conclusivo" element={<ComingSoonPage title="Parecer Conclusivo" description="Síntese jurídica estruturada em preparação." />} />
+                <Route path="/notificacoes" element={<ComingSoonPage title="Notificações" description="Central de alertas processuais em preparação." />} />
+                <Route path="/meu-perfil" element={<ComingSoonPage title="Meu perfil" description="Preferências da usuária e da persona ativa." />} />
+                <Route path="/configuracoes" element={<ComingSoonPage title="Configurações" description="Preferências do CapiWatt Lens." />} />
+              </Route>
+            </Route>
+          </Route>
+          <Route path="/consulta-api" element={<SearchPage />} />
+          <Route path="/integracoes/notificacoes" element={<NotificationsPage />} />
+          <Route path="/documents/:familyId" element={<FamilyPage />} />
+          <Route path="/processos/:processoId" element={<ProcessoPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </SessionProvider>
     </BrowserRouter>
   );
 }
 
-function AppLayout() {
-  const location = useLocation();
-  const isHome = location.pathname === "/";
-  const isNotifications = location.pathname.startsWith("/notificacoes");
+function EntryRedirect() {
+  const { user, activePersona } = useSession();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!activePersona) return <Navigate to="/escolher-perfil" replace />;
+  return <Navigate to="/explorar" replace />;
+}
 
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="topbar-inner">
-          <Link className="brand" to="/" aria-label="CapiWatt Lens - início">
-            <span className="brand-mark" aria-hidden="true">
-              <Bolt size={20} strokeWidth={2.5} />
-            </span>
-            <span>
-              <strong>CapiWatt</strong>
-              <small>Lens</small>
-            </span>
-          </Link>
+function RequireSession() {
+  return useSession().user ? <Outlet /> : <Navigate to="/login" replace />;
+}
 
-          <nav className="main-nav" aria-label="Navegação principal">
-            <Link className={isHome ? "nav-link active" : "nav-link"} to="/">
-              <Search size={16} />
-              Consulta
-            </Link>
-            <Link
-              className={isNotifications ? "nav-link active" : "nav-link"}
-              to="/notificacoes"
-            >
-              <Bell size={16} />
-              Notificações
-            </Link>
-            {!isHome && !isNotifications && (
-              <Link className="nav-link" to="/">
-                <House size={16} />
-                Nova consulta
-              </Link>
-            )}
-          </nav>
-
-          <div className="topbar-status">
-            <FileSearch size={16} aria-hidden="true" />
-            <span>Base documental</span>
-            <HealthBadge />
-          </div>
-        </div>
-      </header>
-
-      <main className="app-content">
-        <Routes>
-          <Route path="/" element={<SearchPage />} />
-          <Route path="/documents/:familyId" element={<FamilyPage />} />
-          <Route path="/processos/:processoId" element={<ProcessoPage />} />
-          <Route path="/notificacoes" element={<NotificationsPage />} />
-        </Routes>
-      </main>
-    </div>
-  );
+function RequirePersona() {
+  return useSession().activePersona ? <Outlet /> : <Navigate to="/escolher-perfil" replace />;
 }
 
 export default App;

@@ -1,34 +1,41 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
 
-import App from "./App";
+import { App } from "./App";
 
 describe("App", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
+  beforeEach(() => {
+    window.localStorage.clear();
+    window.history.pushState({}, "", "/");
   });
 
-  it("mostra o status do backend e do ai quando o health check responde", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ backend: "ok", ai: "ok" }),
-      }),
-    );
-
+  it("conduz do login para a escolha de persona e para o shell do produto", async () => {
     render(<App />);
 
-    await waitFor(() => expect(screen.getByText(/backend: ok, ai: ok/i)).toBeInTheDocument());
+    expect(await screen.findByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
+
+    expect(await screen.findByRole("heading", { name: /como você quer usar/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /advogados/i })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+
+    await waitFor(() => expect(window.location.pathname).toBe("/explorar"));
+    expect(screen.getByRole("navigation", { name: /navegação principal do produto/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /meus processos/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /notificações/i })).toBeInTheDocument();
   });
 
-  it("mostra um estado de erro quando o health check falha", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
-
+  it("mantém sair dentro do menu da conta e encerra a sessão", async () => {
+    window.localStorage.setItem("capiwatt-lens:mock-session", JSON.stringify({
+      user: { id: "carolina", name: "Carolina", firstName: "Carol", initials: "CA", email: "carolina@capiwatt.demo" },
+      activePersona: "advocacia",
+    }));
     render(<App />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/não foi possível consultar o backend/i)).toBeInTheDocument(),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: /Carol/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /sair/i }));
+
+    await waitFor(() => expect(window.location.pathname).toBe("/login"));
+    expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
   });
 });
