@@ -1,0 +1,54 @@
+import type { ProcessDashboard } from "../types/product";
+
+export const mockProcessDashboard: ProcessDashboard = {
+  processes: [
+    {
+      id: "48500.901433/2024-53",
+      subject: "Fiscalização do atendimento às solicitações de conexão de MMGD",
+      agency: "ANEEL",
+      origin: "Superintendência de Fiscalização Técnica",
+      updatedAt: "24/09/2026 14:32",
+      unread: 3,
+      status: "Novo documento",
+      tags: ["MMGD", "Fiscalização", "Coelba"],
+      favorite: true,
+    },
+    {
+      id: "48500.900192/2024-25",
+      subject: "Acompanhamento regulatório de acesso à rede de distribuição",
+      agency: "ANEEL",
+      origin: "Diretoria",
+      updatedAt: "24/09/2026 10:18",
+      unread: 1,
+      status: "Prazo próximo",
+      tags: ["Conexão", "Prazo"],
+    },
+    {
+      id: "48500.004024/2017-80",
+      subject: "Fiscalização dos procedimentos de conexão de microgeração",
+      agency: "ANEEL",
+      origin: "Superintendência de Fiscalização",
+      updatedAt: "23/09/2026 18:47",
+      unread: 5,
+      status: "Em análise",
+      tags: ["MMGD", "Enel Ceará"],
+      favorite: true,
+    },
+    {
+      id: "48500.000639/2019-07",
+      subject: "Fiscalização de pedidos de conexão e conduta da distribuidora",
+      agency: "ANEEL",
+      origin: "Diretoria",
+      updatedAt: "22/09/2026 11:03",
+      unread: 0,
+      status: "Arquivado",
+      tags: ["MMGD", "Cemig"],
+    },
+  ],
+  activity: [
+    { id: "activity-1", label: "Novo voto juntado", processNumber: "48500.901433/2024-53", time: "há 2 horas" },
+    { id: "activity-2", label: "Despacho publicado", processNumber: "48500.900192/2024-25", time: "há 4 horas" },
+    { id: "activity-3", label: "Novo documento", processNumber: "48500.004024/2017-80", time: "há 1 dia" },
+    { id: "activity-4", label: "Processo arquivado", processNumber: "48500.000639/2019-07", time: "há 2 dias" },
+  ],
+};

@@ -1,0 +1,28 @@
+:root {
+  --navy-950: #031226;
+  --navy-900: #061a36;
+  --navy-800: #0a2b4d;
+  --navy-700: #113e69;
+  --blue-500: #2f80ed;
+  --blue-300: #8ebeff;
+  --yellow-500: #ffc400;
+  --yellow-400: #ffd54a;
+  --green-500: #20b76b;
+  --green-100: #ddf5e8;
+  --orange-500: #ff8a00;
+  --orange-100: #ffead1;
+  --red-500: #ef5350;
+  --red-100: #fde2e2;
+  --purple-500: #7a5af8;
+  --purple-100: #eee9ff;
+  --cyan-500: #16a6bd;
+  --page: #f7fafe;
+  --card: #ffffff;
+  --border: #d9e3ef;
+  --text: #0a1f44;
+  --text-secondary: #66758d;
+  --text-muted: #8a96aa;
+  --shadow-card: 0 8px 24px rgba(7, 35, 70, 0.08);
+  --shadow-soft: 0 4px 12px rgba(7, 35, 70, 0.05);
+  --focus: 0 0 0 4px rgba(47, 128, 237, 0.18);
+}
