@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 import { AppShell } from "./components/layout/AppShell";
 import { SessionProvider, useSession } from "./features/auth/SessionContext";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { ExplorePage } from "./pages/ExplorePage";
 import { FamilyPage } from "./pages/FamilyPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
@@ -21,7 +22,7 @@ export function App() {
             <Route path="/escolher-perfil" element={<PersonaPage />} />
             <Route element={<RequirePersona />}>
               <Route element={<AppShell />}>
-                <Route path="/explorar" element={<SearchPage />} />
+                <Route path="/explorar" element={<ExplorePage />} />
                 <Route path="/meus-processos" element={<ComingSoonPage title="Meus Processos" description="Acompanhamento de processos, prazos e alertas em preparação." />} />
                 <Route path="/familias" element={<ComingSoonPage title="Famílias" description="Navegação por macrotemas regulatórios em preparação." />} />
                 <Route path="/mapas-relacoes" element={<ComingSoonPage title="Mapas e Relações" description="Visão conectada entre processos, documentos e normas em preparação." />} />
