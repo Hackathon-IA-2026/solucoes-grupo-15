@@ -18,6 +18,11 @@ describe("páginas do produto", () => {
     expect(screen.queryByText("Fiscalização do atendimento às solicitações de conexão de MMGD")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /ver processo/i }));
     expect(screen.getByRole("dialog")).toHaveTextContent("Fiscalização de pedidos de conexão");
+    fireEvent.click(screen.getByRole("button", { name: /abrir documentos/i }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Auto de Infração");
+    fireEvent.click(screen.getByRole("button", { name: /parar de acompanhar/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByText("Fiscalização de pedidos de conexão e conduta da distribuidora")).not.toBeInTheDocument();
   });
 
   it("lista e pesquisa famílias regulatórias", async () => {

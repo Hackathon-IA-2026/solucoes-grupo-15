@@ -11,6 +11,7 @@ export const mockProcessDashboard: ProcessDashboard = {
       unread: 3,
       status: "Novo documento",
       tags: ["MMGD", "Fiscalização", "Coelba"],
+      documents: ["Auto de Infração", "Recurso administrativo", "Voto da Diretoria"],
       favorite: true,
     },
     {
@@ -22,6 +23,7 @@ export const mockProcessDashboard: ProcessDashboard = {
       unread: 1,
       status: "Prazo próximo",
       tags: ["Conexão", "Prazo"],
+      documents: ["Nota Técnica", "Despacho", "Memória de reunião"],
     },
     {
       id: "48500.004024/2017-80",
@@ -32,6 +34,7 @@ export const mockProcessDashboard: ProcessDashboard = {
       unread: 5,
       status: "Em análise",
       tags: ["MMGD", "Enel Ceará"],
+      documents: ["Auto de Infração", "Recurso", "Nota Técnica", "Voto"],
       favorite: true,
     },
     {
@@ -43,6 +46,7 @@ export const mockProcessDashboard: ProcessDashboard = {
       unread: 0,
       status: "Arquivado",
       tags: ["MMGD", "Cemig"],
+      documents: ["Auto de Infração", "Recurso", "Voto"],
     },
   ],
   activity: [

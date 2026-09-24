@@ -72,6 +72,7 @@ export type TrackedProcess = {
   unread: number;
   status: "Novo documento" | "Prazo próximo" | "Em análise" | "Arquivado";
   tags: string[];
+  documents: string[];
   favorite?: boolean;
 };
 
