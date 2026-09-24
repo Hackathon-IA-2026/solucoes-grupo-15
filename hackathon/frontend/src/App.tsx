@@ -4,12 +4,17 @@ import { AppShell } from "./components/layout/AppShell";
 import { SessionProvider, useSession } from "./features/auth/SessionContext";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { ExplorePage } from "./pages/ExplorePage";
+import { FamiliesPage } from "./pages/FamiliesPage";
 import { FamilyPage } from "./pages/FamilyPage";
 import { LoginPage } from "./pages/LoginPage";
+import { MyProcessesPage } from "./pages/MyProcessesPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { PersonaPage } from "./pages/PersonaPage";
+import { ProductNotificationsPage } from "./pages/ProductNotificationsPage";
 import { ProcessoPage } from "./pages/ProcessoPage";
+import { RelationsMapPage } from "./pages/RelationsMapPage";
 import { SearchPage } from "./pages/SearchPage";
+import { OpinionPage } from "./pages/OpinionPage";
 
 export function App() {
   return (
@@ -23,11 +28,11 @@ export function App() {
             <Route element={<RequirePersona />}>
               <Route element={<AppShell />}>
                 <Route path="/explorar" element={<ExplorePage />} />
-                <Route path="/meus-processos" element={<ComingSoonPage title="Meus Processos" description="Acompanhamento de processos, prazos e alertas em preparação." />} />
-                <Route path="/familias" element={<ComingSoonPage title="Famílias" description="Navegação por macrotemas regulatórios em preparação." />} />
-                <Route path="/mapas-relacoes" element={<ComingSoonPage title="Mapas e Relações" description="Visão conectada entre processos, documentos e normas em preparação." />} />
-                <Route path="/parecer-conclusivo" element={<ComingSoonPage title="Parecer Conclusivo" description="Síntese jurídica estruturada em preparação." />} />
-                <Route path="/notificacoes" element={<ComingSoonPage title="Notificações" description="Central de alertas processuais em preparação." />} />
+                <Route path="/meus-processos" element={<MyProcessesPage />} />
+                <Route path="/familias" element={<FamiliesPage />} />
+                <Route path="/mapas-relacoes" element={<RelationsMapPage />} />
+                <Route path="/parecer-conclusivo" element={<OpinionPage />} />
+                <Route path="/notificacoes" element={<ProductNotificationsPage />} />
                 <Route path="/meu-perfil" element={<ComingSoonPage title="Meu perfil" description="Preferências da usuária e da persona ativa." />} />
                 <Route path="/configuracoes" element={<ComingSoonPage title="Configurações" description="Preferências do CapiWatt Lens." />} />
               </Route>
