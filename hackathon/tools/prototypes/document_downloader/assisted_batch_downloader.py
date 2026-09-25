@@ -50,6 +50,7 @@ def main() -> int:
         print_search_instructions(args, results_page)
         wait_for_file(results_page, "results page")
 
+    require_saved_file(results_page, "pagina de resultados")
     hits = parse_results_page(results_page)
     selected_hits = hits[: args.limit_families]
     if not selected_hits:
@@ -63,13 +64,14 @@ def main() -> int:
     manifests = []
     for hit in selected_hits:
         page_path = process_page_path(pages_dir, hit.process_number)
-        if not page_path.exists():
+        if not page_path.is_file():
             if hit.href:
                 webbrowser.open(hit.href)
             print("")
             print(f"Save/copy the process page for {hit.process_number} to:")
             print(page_path)
             wait_for_file(page_path, f"process page {hit.process_number}")
+        require_saved_file(page_path, f"pagina do processo {hit.process_number}")
         raw = page_path.read_text(encoding="utf-8")
         manifests.append(discover(raw, args.source_system, "process"))
 
@@ -173,13 +175,22 @@ def print_search_instructions(args: argparse.Namespace, results_page: Path) -> N
 
 
 def wait_for_file(path: Path, label: str) -> None:
-    while not path.exists():
+    while not path.is_file():
         answer = input(
             f"Pressione Enter quando o arquivo de {label} existir, "
             "ou digite q para cancelar: "
         ).strip().lower()
         if answer == "q":
             raise SystemExit(f"Cancelled waiting for {path}")
+
+
+def require_saved_file(path: Path, label: str) -> Path:
+    if path.is_file():
+        return path
+    raise SystemExit(
+        f"Arquivo da {label} nao encontrado: {path}\n"
+        "Salve ou copie a pagina oficial nesse caminho e execute novamente."
+    )
 
 
 def parse_results_page(path: Path) -> list[ProcessHit]:

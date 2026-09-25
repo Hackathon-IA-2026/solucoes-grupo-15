@@ -159,6 +159,10 @@ For the real run:
 If a selected process page is missing in `--pages-dir`, the command tells you
 the exact filename to save before continuing.
 
+When using `--no-open-browser`, the page files must already exist. If one is
+missing, the command stops with the expected path and an instruction to save it;
+it does not emit a Python traceback.
+
 ## Notes
 
 - Output is scratch data. It belongs under `hackathon/.prototype-downloads/`.
