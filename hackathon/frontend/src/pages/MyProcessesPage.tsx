@@ -1,56 +1,49 @@
-import { Bell, BellRing, Eye, FileText, FolderKanban, Search, Star, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Eye, FileText, FolderKanban, RefreshCw, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
+import { fetchProcessos, type ProcessoSummary } from "../api/processos";
 import { PageHero } from "../components/layout/PageHero";
-import { appRepository } from "../services/appRepository";
-import type { ProcessDashboard, TrackedProcess } from "../types/product";
+
+type ProcessState =
+  | { kind: "loading" }
+  | { kind: "ready"; processes: ProcessoSummary[] }
+  | { kind: "error" };
 
 export function MyProcessesPage() {
-  const [data, setData] = useState<ProcessDashboard | null>(null);
+  const navigate = useNavigate();
+  const [state, setState] = useState<ProcessState>({ kind: "loading" });
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("Todos");
-  const [selected, setSelected] = useState<TrackedProcess | null>(null);
-  const [showDocuments, setShowDocuments] = useState(false);
-  const [hiddenProcesses, setHiddenProcesses] = useState<string[]>([]);
-  const [alerts, setAlerts] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    appRepository.getProcessDashboard().then(setData);
+  const load = useCallback(() => {
+    setState({ kind: "loading" });
+    fetchProcessos()
+      .then((processes) => setState({ kind: "ready", processes }))
+      .catch(() => setState({ kind: "error" }));
   }, []);
 
-  const processes = useMemo(
-    () =>
-      (data?.processes ?? []).filter((process) => {
-        const matchesQuery = `${process.id} ${process.subject} ${process.agency} ${process.tags.join(" ")}`
-          .toLowerCase()
-          .includes(query.toLowerCase());
-        const matchesFilter =
-          filter === "Todos" ||
-          (filter === "Novas atualizações" && process.unread > 0) ||
-          (filter === "Prazo próximo" && process.status === "Prazo próximo") ||
-          (filter === "Favoritos" && process.favorite);
-        return matchesQuery && matchesFilter && !hiddenProcesses.includes(process.id);
-      }),
-    [data, query, filter, hiddenProcesses],
-  );
+  useEffect(load, [load]);
 
-  const openProcess = (process: TrackedProcess) => {
-    setSelected(process);
-    setShowDocuments(false);
-  };
-
-  const stopFollowing = (processId: string) => {
-    setHiddenProcesses((current) => [...current, processId]);
-    setSelected(null);
-  };
+  const processes = useMemo(() => {
+    if (state.kind !== "ready") return [];
+    const normalizedQuery = query.trim().toLocaleLowerCase("pt-BR");
+    if (!normalizedQuery) return state.processes;
+    return state.processes.filter((process) =>
+      [process.processo_id, process.latest_document_id, ...process.document_types]
+        .join(" ")
+        .toLocaleLowerCase("pt-BR")
+        .includes(normalizedQuery),
+    );
+  }, [query, state]);
 
   return (
     <div className="product-page">
       <PageHero
         icon={FolderKanban}
         title="Meus Processos"
-        description="Acompanhe processos SEI, prazos e documentos novos sem consulta manual diária."
+        description="Consulte os processos e as peças documentais disponíveis no corpus demonstrativo."
       />
+
       <div className="page-toolbar">
         <div className="toolbar-search">
           <Search size={18} />
@@ -58,40 +51,47 @@ export function MyProcessesPage() {
             aria-label="Buscar processos"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar por número, assunto ou órgão..."
+            placeholder="Buscar por processo ou tipo de documento..."
           />
-        </div>
-        <div className="segmented-control">
-          {["Todos", "Novas atualizações", "Prazo próximo", "Favoritos"].map((item) => (
-            <button type="button" className={filter === item ? "active" : ""} key={item} onClick={() => setFilter(item)}>
-              {item}
-            </button>
-          ))}
         </div>
       </div>
 
-      {!data ? (
-        <PageSkeleton />
-      ) : (
+      {state.kind === "loading" && <PageSkeleton />}
+      {state.kind === "error" && (
+        <div className="product-empty">
+          <FileText size={28} />
+          <h3>Não foi possível carregar os processos.</h3>
+          <p>Confira a conexão com o backend e tente novamente.</p>
+          <button className="yellow-button" type="button" onClick={load}>
+            <RefreshCw size={17} /> Tentar novamente
+          </button>
+        </div>
+      )}
+      {state.kind === "ready" && (
         <div className="dashboard-layout">
           <section className="data-panel">
             <div className="process-table process-table-head">
-              <span>Processo / assunto</span><span>Órgão / origem</span><span>Última atualização</span><span>Status</span><span>Ações</span>
+              <span>Processo</span><span>Origem</span><span>Último andamento</span><span>Peças</span><span>Ação</span>
             </div>
             {processes.length === 0 ? (
-              <EmptyState text="Nenhum processo acompanhado com esses filtros." />
+              <EmptyState hasQuery={Boolean(query.trim())} />
             ) : (
               processes.map((process) => (
-                <article className="process-table process-row" key={process.id}>
-                  <div><strong>{process.id} {process.favorite && <Star size={14} fill="currentColor" />}</strong><p>{process.subject}</p><small>{process.tags.join(" · ")}</small></div>
-                  <div><strong>{process.agency}</strong><small>{process.origin}</small></div>
-                  <div><strong>{process.updatedAt.split(" ")[0]}</strong><small>{process.updatedAt.split(" ")[1]}</small></div>
-                  <div><span className={`process-status ${statusTone(process.status)}`}>{process.status}</span>{process.unread > 0 && <small>{process.unread} não lida(s)</small>}</div>
+                <article className="process-table process-row" key={process.processo_id}>
+                  <div>
+                    <strong>{process.processo_id}</strong>
+                    <p>{formatDocumentType(process.latest_document_type)} mais recente</p>
+                    <small>{process.document_types.map(formatDocumentType).join(" · ")}</small>
+                  </div>
+                  <div><strong>ANEEL</strong><small>Corpus demonstrativo</small></div>
+                  <div><strong>{formatDate(process.latest_movement_at)}</strong><small>{process.latest_document_id}</small></div>
+                  <div><strong>{process.pieces_count} peças documentais</strong><small>Famílias vinculadas</small></div>
                   <div className="row-actions">
-                    <button type="button" onClick={() => openProcess(process)}><Eye size={15} /> Ver processo</button>
-                    <button type="button" onClick={() => setAlerts((current) => ({ ...current, [process.id]: !current[process.id] }))}>
-                      {alerts[process.id] ? <BellRing size={15} /> : <Bell size={15} />}
-                      {alerts[process.id] ? "Alertas ativos" : "Gerenciar alertas"}
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/processos/${encodeURIComponent(process.processo_id)}`)}
+                    >
+                      <Eye size={15} /> Ver processo
                     </button>
                   </div>
                 </article>
@@ -99,53 +99,41 @@ export function MyProcessesPage() {
             )}
           </section>
           <aside className="summary-sidebar">
-            <h2>Resumo dos processos</h2>
+            <h2>Catálogo demonstrativo</h2>
             <div className="summary-metrics">
-              <span><FileText /><strong>{data.processes.length - hiddenProcesses.length}</strong><small>acompanhados</small></span>
-              <span><Bell /><strong>{data.processes.filter((process) => process.unread > 0 && !hiddenProcesses.includes(process.id)).length}</strong><small>com atualização</small></span>
+              <span><FolderKanban /><strong>{state.processes.length}</strong><small>processos</small></span>
+              <span><FileText /><strong>{state.processes.reduce((total, process) => total + process.pieces_count, 0)}</strong><small>peças</small></span>
             </div>
-            <h3>Atividade recente</h3>
-            <ol>{data.activity.map((activity) => <li key={activity.id}><span /><div><strong>{activity.label}</strong><small>{activity.processNumber}</small></div><time>{activity.time}</time></li>)}</ol>
+            <p>Estes dados vêm das famílias e relações declarativas carregadas pela fixture local.</p>
           </aside>
-        </div>
-      )}
-
-      {selected && (
-        <div className="product-modal-backdrop" role="presentation" onMouseDown={() => setSelected(null)}>
-          <section className="product-modal" role="dialog" aria-modal="true" aria-labelledby="process-detail-title" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => setSelected(null)} aria-label="Fechar"><X /></button>
-            <FolderKanban size={28} />
-            <h2 id="process-detail-title">{selected.id}</h2>
-            <p>{selected.subject}</p>
-            <dl className="detail-list">
-              <div><dt>Órgão</dt><dd>{selected.agency}</dd></div><div><dt>Origem</dt><dd>{selected.origin}</dd></div>
-              <div><dt>Última atualização</dt><dd>{selected.updatedAt}</dd></div><div><dt>Status</dt><dd>{selected.status}</dd></div>
-            </dl>
-            {showDocuments && (
-              <div className="process-document-list">
-                <h3>Documentos disponíveis</h3>
-                {selected.documents.map((document) => <span key={document}><FileText size={16} /> {document}</span>)}
-              </div>
-            )}
-            <div className="modal-actions">
-              <button className="yellow-button" type="button" onClick={() => setShowDocuments(true)}><FileText size={18} /> Abrir documentos</button>
-              <button className="danger-outline-button" type="button" onClick={() => stopFollowing(selected.id)}><X size={17} /> Parar de acompanhar</button>
-            </div>
-          </section>
         </div>
       )}
     </div>
   );
 }
 
-function statusTone(status: TrackedProcess["status"]) {
-  return status === "Arquivado" ? "green" : status === "Prazo próximo" ? "orange" : "blue";
+function formatDocumentType(value: string) {
+  return value
+    .split("_")
+    .map((part) => `${part.slice(0, 1).toLocaleUpperCase("pt-BR")}${part.slice(1)}`)
+    .join(" ");
+}
+
+function formatDate(value: string) {
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 function PageSkeleton() {
-  return <div className="data-panel"><div className="skeleton wide" />{[1, 2, 3, 4].map((item) => <div className="skeleton table-row" key={item} />)}</div>;
+  return <div className="data-panel"><div className="skeleton wide" />{[1, 2, 3].map((item) => <div className="skeleton table-row" key={item} />)}</div>;
 }
 
-function EmptyState({ text }: { text: string }) {
-  return <div className="product-empty"><FileText size={28} /><h3>{text}</h3><p>Ajuste a busca ou os filtros para ver outros resultados.</p></div>;
+function EmptyState({ hasQuery }: { hasQuery: boolean }) {
+  return (
+    <div className="product-empty">
+      <FileText size={28} />
+      <h3>{hasQuery ? "Nenhum processo corresponde à busca." : "Nenhum processo disponível."}</h3>
+      <p>{hasQuery ? "Revise o número ou o tipo de documento pesquisado." : "O corpus demo ainda não possui relações processuais."}</p>
+    </div>
+  );
 }

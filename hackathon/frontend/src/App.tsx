@@ -36,6 +36,7 @@ export function App() {
                   <Route path="/parecer-conclusivo" element={<OpinionPage />} />
                   <Route path="/notificacoes" element={<ProductNotificationsPage />} />
                   <Route path="/documents/:familyId" element={<FamilyPage />} />
+                  <Route path="/processos/:processoId" element={<ProcessoPage />} />
                   <Route path="/meu-perfil" element={<ComingSoonPage title="Meu perfil" description="Preferências da usuária e da persona ativa." />} />
                   <Route path="/configuracoes" element={<ComingSoonPage title="Configurações" description="Preferências do CapiWatt Lens." />} />
                 </Route>
@@ -43,7 +44,6 @@ export function App() {
             </Route>
             <Route path="/consulta-api" element={<SearchPage />} />
             <Route path="/integracoes/notificacoes" element={<NotificationsPage />} />
-            <Route path="/processos/:processoId" element={<ProcessoPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </DemoDataProvider>

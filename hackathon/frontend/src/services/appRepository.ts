@@ -29,7 +29,7 @@ export class MockAppRepository implements AppRepository {
     return { ...mockExploreData, query };
   }
 
-  async findGapEvidence() {
+  async findGapEvidence(query: string) {
     await wait(900);
     const evidenceResult = {
       ...mockExploreData.results[3],
@@ -41,6 +41,7 @@ export class MockAppRepository implements AppRepository {
     };
     return {
       ...mockExploreData,
+      query,
       coverage: 88,
       results: [...mockExploreData.results.slice(0, 3), evidenceResult],
       gaps: mockExploreData.gaps.map((gap, index) =>

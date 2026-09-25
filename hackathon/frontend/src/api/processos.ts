@@ -28,10 +28,27 @@ export type Processo = {
   responde_a: RespondeAEdge[];
 };
 
+export type ProcessoSummary = {
+  processo_id: string;
+  latest_movement_at: string;
+  latest_document_type: string;
+  latest_document_id: string;
+  pieces_count: number;
+  document_types: string[];
+};
+
 /**
  * Sinaliza especificamente o 404 de "processo nao encontrado".
  */
 export class ProcessoNotFoundError extends Error {}
+
+export async function fetchProcessos(): Promise<ProcessoSummary[]> {
+  const response = await fetch("/v1/processos");
+  if (!response.ok) {
+    throw new Error(`Consulta de processos falhou com status ${response.status}`);
+  }
+  return (await response.json()) as ProcessoSummary[];
+}
 
 export async function fetchProcesso(processoId: string): Promise<Processo> {
   const response = await fetch(`/v1/processos/${encodeURIComponent(processoId)}`);

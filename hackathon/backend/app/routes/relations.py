@@ -84,6 +84,15 @@ class ProcessoOut(BaseModel):
     responde_a: list[RespondeAEdgeOut]
 
 
+class ProcessoSummaryOut(BaseModel):
+    processo_id: str
+    latest_movement_at: str
+    latest_document_type: str
+    latest_document_id: str
+    pieces_count: int
+    document_types: list[str]
+
+
 @router.get("/documents/{node_id:path}/graph", response_model=GraphOut)
 def get_graph(node_id: str, session: Session = Depends(get_db_session)) -> GraphOut:
     node_kind = _resolve_node_kind(session, node_id)
@@ -103,6 +112,43 @@ def get_graph(node_id: str, session: Session = Depends(get_db_session)) -> Graph
         node_id=node_id,
         node_kind=node_kind,
         edges=[_to_graph_edge(edge, node_id) for edge in edges],
+    )
+
+
+@router.get("/processos", response_model=list[ProcessoSummaryOut])
+def list_processos(session: Session = Depends(get_db_session)) -> list[ProcessoSummaryOut]:
+    membership_edges = session.scalars(
+        select(DocumentRelation).where(
+            DocumentRelation.type == "pertence_ao_processo",
+            DocumentRelation.target_kind == "processo",
+        )
+    ).all()
+
+    families_by_process: dict[str, list[str]] = {}
+    for edge in membership_edges:
+        families_by_process.setdefault(edge.target_id, []).append(edge.source_id)
+
+    summaries: list[ProcessoSummaryOut] = []
+    for processo_id, family_ids in families_by_process.items():
+        pieces = _pieces_for_families(session, family_ids)
+        if not pieces:
+            continue
+        latest = max(pieces, key=lambda piece: piece.version_date)
+        summaries.append(
+            ProcessoSummaryOut(
+                processo_id=processo_id,
+                latest_movement_at=latest.version_date,
+                latest_document_type=latest.document_type,
+                latest_document_id=latest.document_id,
+                pieces_count=len(pieces),
+                document_types=sorted({piece.document_type for piece in pieces}),
+            )
+        )
+
+    return sorted(
+        summaries,
+        key=lambda item: (item.latest_movement_at, item.processo_id),
+        reverse=True,
     )
 
 

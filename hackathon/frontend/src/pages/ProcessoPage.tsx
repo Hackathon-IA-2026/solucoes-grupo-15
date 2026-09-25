@@ -49,7 +49,7 @@ export function ProcessoPage() {
 
       <section aria-label="página de processo">
         {state.kind === "loading" && <div className="loading-state"><span className="loading-spinner" aria-hidden="true" /> Carregando...</div>}
-        {state.kind === "not-found" && <div className="empty-state"><h2>Processo não encontrado.</h2><Link to="/">Voltar à consulta</Link></div>}
+        {state.kind === "not-found" && <div className="empty-state"><h2>Processo não encontrado.</h2><Link to="/meus-processos">Voltar aos processos</Link></div>}
         {state.kind === "error" && <div className="empty-state error-state"><h2>Não foi possível carregar o processo.</h2><p>Tente novamente em alguns instantes.</p></div>}
         {state.kind === "result" && <ProcessoContent processo={state.processo} />}
       </section>
@@ -62,7 +62,7 @@ function ProcessoContent({ processo }: { processo: Processo }) {
     <div className="detail-layout process-layout">
       <div className="detail-primary">
       <header className="document-header process-header">
-        <Link className="back-link" to="/">Consulta documental</Link>
+        <Link className="back-link" to="/meus-processos">Voltar aos processos</Link>
         <p className="eyebrow"><Landmark size={15} /> Processo administrativo</p>
         <h1>Processo {processo.processo_id}</h1>
         <p className="intro-copy">Linha documental e relações explícitas registradas para este processo.</p>

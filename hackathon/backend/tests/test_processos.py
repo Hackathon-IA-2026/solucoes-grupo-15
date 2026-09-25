@@ -1,4 +1,4 @@
-"""Contrato do endpoint publico da pagina de processo (TB1 Ticket 5, issue #21).
+"""Contratos do catalogo e da pagina de processo (issues #21 e #36).
 
 Seam testado: GET /v1/processos/{processo_id}. Roda contra um Postgres
 real de teste (container Docker, ver tests/conftest.py), populado via
@@ -90,6 +90,33 @@ def test_processo_lists_pieces_ordered_by_face_date(database_url: str) -> None:
         "2024-04-18",
         "2024-05-02",
     ]
+
+
+def test_processos_lists_catalog_summary_from_representative_faces(database_url: str) -> None:
+    client = _client(database_url)
+
+    response = client.get("/v1/processos")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "processo_id": PROCESSO_ID,
+            "latest_movement_at": "2024-05-02",
+            "latest_document_type": "decisao",
+            "latest_document_id": "decisao-0007",
+            "pieces_count": 3,
+            "document_types": ["auto_de_infracao", "decisao", "peticao"],
+        }
+    ]
+
+
+def test_processos_does_not_list_family_without_process_number(database_url: str) -> None:
+    client = _client(database_url)
+
+    response = client.get("/v1/processos")
+
+    assert response.status_code == 200
+    assert all(item["processo_id"] != "fam-norma-1000" for item in response.json())
 
 
 def test_processo_piece_includes_document_type_and_document_id(database_url: str) -> None:
