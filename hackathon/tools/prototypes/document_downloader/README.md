@@ -110,12 +110,18 @@ Use this when you want the first N process families from a theme/date filter.
 The command opens the official search page, tells you which filter to apply, then
 reads the saved results page and asks for each selected process page.
 
+Important: the command does not fill SEI/Sicnet fields by itself. It opens the
+official page and acts as a wizard. A person must choose the filter, solve
+captcha, run the search, and save/copy the resulting page to the path passed in
+`--results-page`.
+
 Offline sample:
 
 ```powershell
 python hackathon/tools/prototypes/document_downloader/baixar_lote_assistido.py `
   --source-system sei `
   --theme "Fiscalizacao da Distribuicao: Processo Administrativo Sancionador" `
+  --theme-field tipo-processo `
   --date-from 05/08/2026 `
   --date-to 05/08/2026 `
   --limit-families 3 `
@@ -131,6 +137,7 @@ Real assisted run:
 python hackathon/tools/prototypes/document_downloader/baixar_lote_assistido.py `
   --source-system sei `
   --theme "Fiscalização da Distribuição: Processo Administrativo Sancionador" `
+  --theme-field tipo-processo `
   --date-from 05/08/2026 `
   --date-to 05/08/2026 `
   --limit-families 3 `
@@ -139,9 +146,18 @@ python hackathon/tools/prototypes/document_downloader/baixar_lote_assistido.py `
   --out hackathon/.prototype-downloads/lote-agosto-05
 ```
 
-For the real run, solve captcha in the browser, save/copy the search results to
-`--results-page`, then press Enter. If a selected process page is missing in
-`--pages-dir`, the command tells you the exact filename to save before continuing.
+For the real run:
+
+1. In SEI, use `Tipo do Processo` for the theme when `--theme-field tipo-processo`.
+2. Alternatively, use `--theme-field texto-livre` to put the theme in
+   `Texto para Pesquisa`.
+3. Fill `Data entre` with `--date-from` and `--date-to`.
+4. Solve captcha and click `Pesquisar`.
+5. Save/copy the search results to `--results-page`.
+6. Return to the terminal and press Enter.
+
+If a selected process page is missing in `--pages-dir`, the command tells you
+the exact filename to save before continuing.
 
 ## Notes
 

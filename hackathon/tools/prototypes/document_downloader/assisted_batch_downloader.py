@@ -42,25 +42,18 @@ def main() -> int:
     output_root = resolve_path(args.out)
     results_page = resolve_path(args.results_page)
     pages_dir = resolve_path(args.pages_dir)
+    output_root.mkdir(parents=True, exist_ok=True)
+    pages_dir.mkdir(parents=True, exist_ok=True)
 
     if args.open_browser:
         webbrowser.open(search_url(args.source_system))
-        print("Browser opened.")
-        print("Fill the official search with:")
-        print(f"- theme: {args.theme}")
-        print(f"- date from: {args.date_from}")
-        print(f"- date to: {args.date_to}")
-        print("Solve captcha if it appears, run the search, then save/copy the results page.")
-        print(f"Expected results page file: {results_page}")
-        input("Press Enter here after the results page file exists...")
+        print_search_instructions(args, results_page)
+        wait_for_file(results_page, "results page")
 
     hits = parse_results_page(results_page)
     selected_hits = hits[: args.limit_families]
     if not selected_hits:
         raise SystemExit(f"No process numbers found in {results_page}")
-
-    output_root.mkdir(parents=True, exist_ok=True)
-    pages_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"processes found: {len(hits)}")
     print(f"families selected: {len(selected_hits)}")
@@ -76,7 +69,7 @@ def main() -> int:
             print("")
             print(f"Save/copy the process page for {hit.process_number} to:")
             print(page_path)
-            input("Press Enter here after the process page file exists...")
+            wait_for_file(page_path, f"process page {hit.process_number}")
         raw = page_path.read_text(encoding="utf-8")
         manifests.append(discover(raw, args.source_system, "process"))
 
@@ -116,6 +109,15 @@ def parse_args() -> argparse.Namespace:
         help="Official source to open and parse.",
     )
     parser.add_argument("--theme", required=True, help="Theme/filter used in the search.")
+    parser.add_argument(
+        "--theme-field",
+        default="tipo-processo",
+        choices=["tipo-processo", "texto-livre"],
+        help=(
+            "Where the theme should be applied manually in the official page: "
+            "Tipo do Processo dropdown or Texto para Pesquisa."
+        ),
+    )
     parser.add_argument("--date-from", required=True, help="Search start date.")
     parser.add_argument("--date-to", required=True, help="Search end date.")
     parser.add_argument(
@@ -144,6 +146,40 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Only print the plan.")
     parser.set_defaults(open_browser=True)
     return parser.parse_args()
+
+
+def print_search_instructions(args: argparse.Namespace, results_page: Path) -> None:
+    print("")
+    print("=== CapiWatt Lens - lote assistido ===")
+    print("O navegador foi aberto, mas este prototipo NAO preenche o SEI sozinho.")
+    print("Ele tambem NAO burla captcha. A etapa no site e humana/assistida.")
+    print("")
+    print("Na pagina do SEI, preencha assim:")
+    if args.theme_field == "tipo-processo":
+        print(f"1. Tipo do Processo: {args.theme}")
+        print("2. Deixe Texto para Pesquisa em branco, a menos que queira refinar.")
+    else:
+        print(f"1. Texto para Pesquisa: {args.theme}")
+        print("2. Deixe Tipo do Processo em branco, a menos que queira refinar.")
+    print(f"3. Data entre: {args.date_from} e {args.date_to}")
+    print("4. Resolva o captcha, se aparecer.")
+    print("5. Clique em Pesquisar.")
+    print("6. Quando os resultados aparecerem, salve/copie a pagina neste caminho:")
+    print(results_page)
+    print("")
+    print("Dica: se o SEI nao listar nada, tente usar --theme-field texto-livre")
+    print("ou ampliar o periodo. O script so consegue ler processos que aparecem")
+    print("na pagina de resultados salva.")
+
+
+def wait_for_file(path: Path, label: str) -> None:
+    while not path.exists():
+        answer = input(
+            f"Pressione Enter quando o arquivo de {label} existir, "
+            "ou digite q para cancelar: "
+        ).strip().lower()
+        if answer == "q":
+            raise SystemExit(f"Cancelled waiting for {path}")
 
 
 def parse_results_page(path: Path) -> list[ProcessHit]:
