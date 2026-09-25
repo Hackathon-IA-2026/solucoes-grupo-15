@@ -155,7 +155,7 @@ function FamilyContent({
     <div className="detail-layout">
       <div className="detail-primary">
         <header className="document-header">
-          <Link className="back-link" to="/">Consulta documental</Link>
+          <Link className="back-link" to="/explorar">Voltar à pesquisa</Link>
           <p className="eyebrow"><FileText size={15} /> Família documental</p>
           <h1>
             {formatDocumentType(detail.document_type)}

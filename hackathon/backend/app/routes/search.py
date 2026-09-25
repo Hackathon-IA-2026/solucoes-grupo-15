@@ -70,6 +70,8 @@ class SearchFace(BaseModel):
     document_version: str
     version_date: str
     document_type: str
+    document_id: str
+    processo_numero: str | None
 
 
 class MatchedChunk(BaseModel):
@@ -194,6 +196,8 @@ def _group_by_family(
                     document_version=face_version.document_version,
                     version_date=face_version.version_date,
                     document_type=face_version.document_type,
+                    document_id=face_version.document_id,
+                    processo_numero=face_version.processo_numero,
                 ),
                 matched_chunks=matched_chunks,
             )

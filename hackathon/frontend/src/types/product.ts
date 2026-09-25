@@ -18,17 +18,26 @@ export type SessionUser = {
 
 export type DocumentKey = {
   id: string;
+  familyId?: string;
   type: string;
   label: string;
   available: boolean;
+  matchedChunks?: Array<{
+    document_version: string;
+    excerpt: string;
+    score: number;
+    is_latest: boolean;
+  }>;
 };
 
 export type RankedPrecedent = {
   rank: number;
+  requestId?: string;
+  familyId?: string;
   processNumber: string;
   adherence: number;
   relevance: "Muito relevante" | "Relevante";
-  stance: "Precedente favorável" | "Precedente contrário" | "Em andamento";
+  stance: "Precedente favorável" | "Precedente contrário" | "Em andamento" | "Resultado documental";
   summary: string;
   theme: string;
   period: string;

@@ -139,6 +139,8 @@ def test_search_face_is_latest_version_even_when_matched_chunk_is_older(
     result = response.json()["results"][0]
     assert result["face"]["document_version"] == "docver-auto-0007-v2"
     assert result["face"]["version_date"] == "2024-04-18"
+    assert result["face"]["document_id"] == "auto-0007"
+    assert result["face"]["processo_numero"] == "48500.001234/2024-11"
     [chunk] = result["matched_chunks"]
     assert chunk["document_version"] == "docver-auto-0007-v1"
     assert chunk["is_latest"] is False

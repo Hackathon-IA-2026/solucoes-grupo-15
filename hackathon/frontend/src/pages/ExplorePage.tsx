@@ -1,6 +1,6 @@
 import { ArrowRight, BarChart3, FileSearch, Files, Info, Network, Search, Sparkles, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { ExploreLanding } from "../components/explore/ExploreLanding";
 import { CoveragePanel } from "../components/explore/CoveragePanel";
@@ -14,12 +14,12 @@ const tabs = ["Resultados e ranking", "Lacunas da pesquisa", "Análise por tema"
 
 export function ExplorePage() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const requestedQuery = params.get("q")?.trim() ?? "";
   const [query, setQuery] = useState(requestedQuery);
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>(tabs[0]);
   const [state, setState] = useState<ExploreState>(requestedQuery ? { kind: "loading" } : { kind: "idle" });
-  const [fillingGaps, setFillingGaps] = useState(false);
   const [explainerOpen, setExplainerOpen] = useState(false);
   const [documentProcess, setDocumentProcess] = useState<RankedPrecedent | null>(null);
 
@@ -42,12 +42,6 @@ export function ExplorePage() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     runSearch(query);
-  }
-
-  async function fillGaps() {
-    setFillingGaps(true);
-    try { setState({ kind: "result", data: await appRepository.findGapEvidence() }); }
-    finally { setFillingGaps(false); }
   }
 
   const data = state.kind === "result" ? state.data : null;
@@ -73,16 +67,16 @@ export function ExplorePage() {
         <div className="explore-layout">
           <section className="ranking-panel">
             <div className="panel-heading"><div><h2>{activeTab}</h2><p>{tabDescription(activeTab)}</p></div><button className="outline-button" type="button" onClick={() => setExplainerOpen(true)}><Info size={16} /> Como o ranking é calculado?</button></div>
-            {activeTab === "Resultados e ranking" && <div className="ranking-list">{data.results.map((result) => <RankingCard key={result.processNumber} result={result} onOpenDocuments={setDocumentProcess} />)}</div>}
-            {activeTab === "Lacunas da pesquisa" && <div className="tab-grid">{data.gaps.map((gap) => <article className="analysis-card" key={gap.id}><FileSearch size={22} /><h3>{gap.title}</h3><p>{gap.detail}</p><button type="button" onClick={fillGaps}>Buscar evidências <ArrowRight size={16} /></button></article>)}</div>}
+            {activeTab === "Resultados e ranking" && (data.results.length ? <div className="ranking-list">{data.results.map((result) => <RankingCard key={result.familyId ?? result.processNumber} result={result} onOpenDocuments={setDocumentProcess} />)}</div> : <div className="product-empty"><FileSearch size={28} /><h3>Nenhum resultado nesta fixture.</h3><p>Tente uma das consultas demonstrativas exibidas na página inicial.</p></div>)}
+            {activeTab === "Lacunas da pesquisa" && <div className="tab-grid">{data.gaps.map((gap) => <article className="analysis-card" key={gap.id}><FileSearch size={22} /><h3>{gap.title}</h3><p>{gap.detail}</p></article>)}</div>}
             {activeTab === "Análise por tema" && <div className="tab-grid">{data.metrics.map((metric) => <article className="analysis-card" key={metric.label}><BarChart3 size={22} /><h3>{metric.label}</h3><strong>{metric.value}%</strong><p>Cobertura de {metric.detail} na pesquisa atual.</p></article>)}</div>}
             {activeTab === "Documentos relacionados" && <div className="tab-grid">{data.results.slice(0, 3).map((result) => <article className="analysis-card" key={result.processNumber}><Network size={22} /><h3>{result.processNumber}</h3><p>{result.documents.map((document) => document.label).join(" · ")}</p><button type="button" onClick={() => setDocumentProcess(result)}>Abrir conjunto <ArrowRight size={16} /></button></article>)}</div>}
           </section>
-          <CoveragePanel data={data} fillingGaps={fillingGaps} onFillGaps={fillGaps} />
+          <CoveragePanel data={data} />
         </div>
       )}
       {explainerOpen && <div className="product-modal-backdrop" role="presentation" onMouseDown={() => setExplainerOpen(false)}><section className="product-modal" role="dialog" aria-modal="true" aria-labelledby="ranking-explainer-title" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" type="button" onClick={() => setExplainerOpen(false)} aria-label="Fechar"><X /></button><Info size={28} /><h2 id="ranking-explainer-title">Como o ranking é calculado?</h2><p>Nesta versão, o ranking é demonstrativo. Ele combina critérios definidos para validar a experiência antes da integração com inteligência real.</p><div className="criteria-grid">{["Aderência temática", "Similaridade jurídica", "Mesmo tipo de fiscalização", "Presença de decisão", "Recência", "Órgão e agente", "Documentos disponíveis", "Relevância regulatória"].map((item) => <span key={item}>{item}</span>)}</div></section></div>}
-      {documentProcess && <div className="product-modal-backdrop" role="presentation" onMouseDown={() => setDocumentProcess(null)}><section className="product-modal documents-modal" role="dialog" aria-modal="true" aria-labelledby="documents-title" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" type="button" onClick={() => setDocumentProcess(null)} aria-label="Fechar"><X /></button><Files size={28} /><h2 id="documents-title">Documentos-chave</h2><p>Processo SEI {documentProcess.processNumber}</p><div className="document-list">{documentProcess.documents.map((document) => <button type="button" key={document.id}><FileSearch size={19} /><span><strong>{document.label}</strong><small>PDF disponível no corpus demonstrativo</small></span><ArrowRight size={17} /></button>)}</div></section></div>}
+      {documentProcess && <div className="product-modal-backdrop" role="presentation" onMouseDown={() => setDocumentProcess(null)}><section className="product-modal documents-modal" role="dialog" aria-modal="true" aria-labelledby="documents-title" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" type="button" onClick={() => setDocumentProcess(null)} aria-label="Fechar"><X /></button><Files size={28} /><h2 id="documents-title">Documentos-chave</h2><p>Processo SEI {documentProcess.processNumber}</p><div className="document-list">{documentProcess.documents.map((document) => <button type="button" aria-label={`Abrir ${document.label}`} key={document.id} onClick={() => document.familyId && navigate(`/documents/${encodeURIComponent(document.familyId)}`, { state: { matchedChunks: document.matchedChunks ?? [] } })}><FileSearch size={19} /><span><strong>{document.label}</strong><small>Texto disponível no corpus demonstrativo</small></span><ArrowRight size={17} /></button>)}</div></section></div>}
     </div>
   );
 }

@@ -11,6 +11,8 @@ export type SearchFace = {
   document_version: string;
   version_date: string;
   document_type: string;
+  document_id: string;
+  processo_numero: string | null;
 };
 
 export type MatchedChunk = {
