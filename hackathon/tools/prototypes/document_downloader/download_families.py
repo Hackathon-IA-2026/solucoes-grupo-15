@@ -68,6 +68,9 @@ class SourceDocument:
             ]
         ).lower()
 
+    def is_metadata_only(self) -> bool:
+        return self.locator.startswith(("missing://", "metadata://"))
+
 
 def main() -> int:
     args = parse_args()
@@ -91,7 +94,8 @@ def main() -> int:
     results = download_all(families, output_root)
     write_outputs(results, output_root)
     print_summary(results, output_root)
-    return 0 if all(item["status"] == "downloaded" for item in results) else 2
+    ok_statuses = {"downloaded", "metadata_only"}
+    return 0 if all(item["status"] in ok_statuses for item in results) else 2
 
 
 def parse_args() -> argparse.Namespace:
@@ -206,15 +210,43 @@ def download_one(
     target_path = target_dir / source_filename(version.locator)
 
     try:
-        if version.locator.startswith(("http://", "https://")):
+        if version.is_metadata_only():
+            target_path.write_text(
+                json.dumps(
+                    {
+                        "family_id": family_id,
+                        "family_label": version.family_label,
+                        "document_type": version.document_type,
+                        "official_identifier": version.official_identifier,
+                        "process_number": version.process_number,
+                        "source_system": version.source_system,
+                        "version_id": version.version_id,
+                        "version_date": version.version_date,
+                        "version_date_source": version.version_date_source,
+                        "source_locator": version.locator,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            status = "metadata_only"
+            error = "source page did not expose a downloadable locator"
+            digest = None
+            size_bytes = target_path.stat().st_size
+        elif version.locator.startswith(("http://", "https://")):
             download_url(version.locator, target_path)
+            digest = sha256_file(target_path)
+            status = "downloaded"
+            error = None
+            size_bytes = target_path.stat().st_size
         else:
             source_path = resolve_path(version.locator)
             shutil.copy2(source_path, target_path)
-        digest = sha256_file(target_path)
-        status = "downloaded"
-        error = None
-        size_bytes = target_path.stat().st_size
+            digest = sha256_file(target_path)
+            status = "downloaded"
+            error = None
+            size_bytes = target_path.stat().st_size
     except (OSError, urllib.error.URLError, urllib.error.HTTPError) as exc:
         status = "failed"
         error = str(exc)
@@ -244,6 +276,8 @@ def source_filename(locator: str) -> str:
     if locator.startswith(("http://", "https://")):
         name = Path(urllib.parse.urlparse(locator).path).name
         return safe_name(name or "document.pdf")
+    if locator.startswith(("missing://", "metadata://")):
+        return "metadata-only.json"
     return safe_name(Path(locator).name)
 
 
@@ -336,8 +370,10 @@ def build_timeline(results: list[dict[str, Any]]) -> str:
 
 def print_summary(results: list[dict[str, Any]], output_root: Path) -> None:
     ok = sum(1 for item in results if item["status"] == "downloaded")
-    failed = len(results) - ok
+    metadata_only = sum(1 for item in results if item["status"] == "metadata_only")
+    failed = len(results) - ok - metadata_only
     print(f"\ndownloaded: {ok}")
+    print(f"metadata_only: {metadata_only}")
     print(f"failed: {failed}")
     print(f"output: {output_root}")
     print(f"manifest: {output_root / 'download_manifest.json'}")
