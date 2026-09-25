@@ -6,7 +6,8 @@ status: partial
 topics:
   - issue-3 — Como uma família de versões de um documento é identificada e agrupada num único objeto, na ingestão e no resultado da busca?
   - issue-5 — Como a interface expõe a exploração do grafo de relações e o objeto-documento com versões, a partir dos protótipos juridico_wallace?
-updated_at: 2026-09-18
+  - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
+updated_at: 2026-09-25
 ---
 
 ## Current resolution
@@ -14,6 +15,14 @@ updated_at: 2026-09-18
 No resultado da busca, **um card por família**. A "face" do card é **a versão mais recente da família** (decisão de Eduardo, 2026-09-18 — "certamente"), não a versão de melhor correspondência. O trecho que casou com a consulta é exibido com a **etiqueta da versão em que ocorreu** (ex.: "trecho na versão de 12/03/2024 — superada"), para que a evidência recuperada numa versão antiga não se perca nem seja confundida com o texto atual. O card expõe a lista/linha do tempo de versões da família.
 
 Isto refina o contrato da issue #2, que descrevia o hit como "versão de melhor correspondência + chunks": a `SearchResult` passa a carregar, por família, a versão mais recente (face) **e** os chunks que casaram, cada um com sua `document_version`. O agrupamento continua sendo obrigação do serviço vetorial (issue #2); a apresentação é da F1.
+
+**Carregamento lazy do resultado (issue-28, Eduardo, 2026-09-25).** A lista de resultados mostra **10 famílias por vez** e carrega as próximas 10 sob demanda. Os lotes são **acrescentados** ao fim da lista; nenhum card já exibido muda de posição quando o lote seguinte chega. A ordenação global é congelada na primeira chamada ([[i9-integration]]).
+
+A contagem exibida é o **total do conjunto congelado**, não o número de cards já carregados. Hoje a tela deriva o rótulo de `results.length` (`hackathon/frontend/src/pages/SearchPage.tsx:121`), o que passaria a mentir assim que a lista fosse parcial: diria "10 famílias encontradas" havendo 34. O envelope carrega `total`, e é ele que o rótulo usa.
+
+O gatilho de "carregar mais" precisa ser alcançável por teclado. Rolagem infinita sozinha esconde o rodapé e deixa o usuário sem alcançar o fim da página.
+
+Quando existir `corpus_version` mais recente que a do conjunto congelado, a interface avisa e oferece **refazer a busca**. Ela não injeta resultados novos na lista aberta — misturar corpora quebraria a ordem estável e o vínculo com `corpus_version` que a evidência precisa ter.
 
 Uma **sugestão de fusão pendente aparece na busca** (decisão de Eduardo, 2026-09-18): os dois cards continuam separados e cada um traz um aviso discreto "possível versão de <outra família>" com atalho para confirmar ou rejeitar. Quando `version_date` vem da data de coleta (sem data de publicação), o card marca a data como "coleta".
 
@@ -35,6 +44,10 @@ Confirmar uma aresta `similar_a` sugerida, ou uma sugestão de fusão de famíli
 
 ## Decisions
 
+- 2026-09-25 (issue-28, Eduardo): a lista de resultados carrega 10 famílias por vez, sob demanda; lotes são acrescentados e nunca reordenam o que já está na tela.
+- 2026-09-25 (issue-28, Eduardo): a contagem exibida vem de `total` no envelope, não do número de cards carregados; o gatilho de "carregar mais" é alcançável por teclado.
+- 2026-09-25 (issue-28, Eduardo): `corpus_version` mais recente gera aviso com ação de refazer a busca; a lista aberta nunca recebe resultados de outro corpus.
+
 - 2026-09-18 (issue-3): face do card = versão mais recente da família; trecho casado etiquetado pela sua versão.
 - 2026-09-18 (issue-3): sugestão pendente visível no card como aviso + atalho de confirmação, sem alterar o agrupamento; data de coleta marcada como tal quando usada como fallback.
 - 2026-09-18 (issue-5): sem tela de grafo global no TB1; a exploração é um painel "Relações" egocêntrico de um salto, recentrável, na página da família e na página do processo.
@@ -49,7 +62,7 @@ Confirmar uma aresta `similar_a` sugerida, ou uma sugestão de fusão de famíli
 - O card mostra aviso de sugestão de fusão pendente com ação de aceitar/rejeitar; a ação registra autoria.
 - A data exibida no card indica sua origem quando é data de coleta e não de publicação.
 - Abrir o card leva ao objeto-documento com a versão mais recente selecionada e as demais navegáveis.
-- A página da família consome `GET /v1/documents/{id}?version=` (plano, linha 129) para a versão selecionada e precisa de uma operação que liste as versões da família e outra que devolva as arestas de um nó com tipo, estado, evidência e score (contrato a detalhar na F3; o port do #2 já entrega `get_document` e os candidatos de relação).
+- A página da família consome `GET /v1/documents/{id}?version=` (plano, linha 129) para a versão selecionada e precisa de uma operação que liste as versões da família e outra que devolva as arestas de um nó com tipo, estado, evidência e score (contrato a detalhar na F3; a issue #15 tirou `get_document` do port — o backend serve metadados do próprio catálogo e o texto extraído pelo localizador, [[i4-storage]]; do port vêm só os candidatos de relação).
 - O painel "Relações" agrupa arestas por tipo (`pertence_ao_processo`, `referencia`, `revoga`, `altera`, `responde_a`, `regula`, `similar_a`) e distingue visualmente `confirmed`, `suggested` e pendente de alvo.
 - Clicar num nó vizinho navega para a página dele (família ou processo) com o painel recentrado; nenhuma tela mostra mais de um salto de uma vez.
 - A página do processo SEI lista as peças por data e desenha a cadeia `responde_a` entre elas.

@@ -8,7 +8,8 @@ topics:
   - issue-4 — Como as relações entre documentos são representadas (arestas, origem: metadado explícito vs. similaridade) e onde ficam armazenadas?
   - issue-15 — O backend (F3) deve ser dono também do armazenamento documental, junto das arestas, para que grafo e leitura de documentos não atravessem HTTP, dado um corpus da ordem de 100 documentos?
   - issue-8 — O que roda local e o que roda na AWS no primeiro ciclo, e como o ambiente local fala com Bedrock e SES (credenciais, custo)?
-updated_at: 2026-09-18
+  - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
+updated_at: 2026-09-25
 ---
 
 ## Current resolution
@@ -20,7 +21,7 @@ updated_at: 2026-09-18
 - O **backend (F3) é dono do catálogo documental**: famílias, versões, metadados (checksum, data de coleta, origem, `version_date`), localizador do original e do texto extraído (volume local / S3), nó `processo`, sugestões de fusão (#3), `document_relations` (#4) e feedback. Nós e arestas do grafo vivem no **mesmo store**; `GET /v1/documents/{id}` e `/v1/documents/{id}/graph` são servidos em processo, sem atravessar `/internal/v1/*`.
 - O **serviço vetorial (`ai`, F2) é dono só do derivado**: extração de texto, chunking, embeddings, índice vetorial, `references` e `similar_families`. O índice **nunca é fonte de verdade** — é reconstruível a partir do catálogo via `reindex` (#2). `family_id` e `document_version` aparecem no índice apenas como atributos de filtro.
 - Texto extraído: o `ai` extrai durante `index` e **escreve num localizador** (volume/S3) que o backend só registra no catálogo — não devolve o texto no `IndexReport`. Racional: OCR/Textract (Fog) produz artefatos grandes e fica do lado de F2.
-- **Escala não decide**: um corpus da ordem de 100 documentos (poucos milhares de chunks) é pequeno para qualquer componente — Bedrock, OpenSearch ou um SQLite no backend. O que decidiu foi coerência (nós e arestas juntos; uma só máquina de curadoria no backend) e custo de desenvolvimento no hackathon.
+- **Escala não decide**: um corpus da ordem de 100 documentos (poucos milhares de chunks) é pequeno para qualquer componente — Bedrock, OpenSearch ou um SQLite no backend. O número `~100` foi **superado pela issue-11** ([[d16-golden-dataset]], 2026-09-22): o corpus de avaliação do primeiro ciclo são 10 PDFs. A conclusão não muda, porque o corpus ficou menor. O que decidiu foi coerência (nós e arestas juntos; uma só máquina de curadoria no backend) e custo de desenvolvimento no hackathon.
 
 O que segue foi a resolução de issue-2/issue-4 e permanece válido onde não contradiz o acima (forma de `document_relations`, nó `processo`, interface própria do repositório de relações, S3/OpenSearch como destinos físicos).
 
@@ -53,6 +54,9 @@ Onde fisicamente: originais em volume local / S3 na AWS (plano linha 77); vetore
 - 2026-09-18 (issue-4): o serviço vetorial só entrega candidatos (`references` no resultado de `index`; `similar_families` no port); o backend é dono das arestas.
 
 ## Derived requirements and constraints
+
+- 2026-09-25 (issue-28): a hidratação do catálogo é **por lote**, não pelo conjunto inteiro. A lista ordenada congelada guarda só `family_id`; `face` e `matched_chunks` são resolvidos em `document_family`/`document_version` apenas para as 10 famílias do lote pedido. Um conjunto de 200 famílias não lê 200 faces para exibir as 10 primeiras.
+- 2026-09-25 (issue-28): a lista ordenada congelada é persistida junto do `SearchExecution` que a issue-9 já grava — não é estrutura nova, e herda a retenção e o `corpus_version` daquele registro ([[i7-reproducibility]]).
 
 - 2026-09-18 (issue-15): o catálogo do backend ganha as entidades `document_family` e `document_version` (metadados + `original_locator` + `extracted_text_locator`), no mesmo store de `document_relations` e das sugestões de fusão; store concreto continua na issue #8.
 - 2026-09-18 (issue-15): o índice vetorial é derivado — qualquer divergência entre índice e catálogo se resolve por `reindex(corpus_version)`, nunca pelo caminho inverso.

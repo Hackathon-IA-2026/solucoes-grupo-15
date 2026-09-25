@@ -25,6 +25,7 @@ A qualidade do ranking é medida, no corpus controlado de 10 PDFs, por `Recall@3
 - 2026-09-22 (issue-11): a avaliação usa o corpus reduzido e o Top 3 da Carolina, sem exigir igualdade exata da ordem dos resultados.
 - 2026-09-22 (issue-11, aceite de Eduardo): usar `Recall@3` por processo agregado, com gate mínimo de `2/3` e meta desejada de `3/3`.
 - 2026-09-22 (issue-11, aceite de Eduardo): manter a completude documental como gate obrigatório separado e métricas de precisão apenas como informação no corpus atual.
+- 2026-09-25 (sessão de verificação do mapa, Eduardo): a recência é preferência de utilidade, nunca gate nem componente de métrica. Razão decisiva: dois dos três processos-gabarito (`48500.004024/2017-80` e `48500.000639/2019-07`) têm mais de três anos — um gate de recência reprovaria o próprio gabarito.
 
 ## Derived requirements and constraints
 
@@ -35,6 +36,7 @@ A qualidade do ranking é medida, no corpus controlado de 10 PDFs, por `Recall@3
 - A execução passa no gate de recuperação quando pelo menos dois dos três processos-gabarito aparecem entre os três primeiros processos distintos; atingir os três é registrado como a meta completa.
 - A avaliação deve colapsar documentos, chunks e NUPs relacionados no identificador do processo agregado antes de calcular `Recall@3`.
 - `Precision@5` não é gate para este corpus, porque só existem três processos-gabarito e não há conjunto negativo representativo.
+- 2026-09-25: **a recência não é gate e não entra em nenhuma métrica.** A preferência por decisão nos últimos três anos ([[o7-user-goals]]) é critério de utilidade para a Carolina, não critério de aceitação da execução. Nenhuma métrica pondera, filtra ou penaliza por data.
 
 ## Open questions
 

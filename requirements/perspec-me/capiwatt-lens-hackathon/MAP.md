@@ -6,7 +6,7 @@ Destination confirmed by Eduardo on 2026-09-18 (revision 2, after the 2026-09-17
 
 ## Perspective resolution
 
-_Counts are of Concerns touched under this Map, by current `status` on their Resolution page. Last refreshed 2026-09-22 (issue #13 decisions persisted; M1 remains partial pending functional Titan access)._
+_Counts are of Concerns touched under this Map, by current `status` on their Resolution page. Last refreshed 2026-09-25 (issue #28 resolved into I9, U4 and I4 — all three stay `partial`, so counts are unchanged; sessão de verificação registrou em I2 a permissão de geração no Bedrock e a postura de exposição da #39; M1 remains partial pending functional Titan access)._
 
 | Perspective | unexamined | open | partial | resolved | deferred | not-applicable | superseded | Perspective page |
 |---|---|---|---|---|---|---|---|---|

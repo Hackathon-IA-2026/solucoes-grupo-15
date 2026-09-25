@@ -14,7 +14,7 @@ O que a manutenibilidade exige neste projeto é **o port trocável e a separaç�
 
 - A troca de Bedrock/OpenSearch por outro embedder/índice (ou a entrada de Neptune para o grafo) toca **um** lugar cada: o adapter atrás do port `VectorService` no `ai`, ou o repositório de relações atrás da interface própria no backend ([[i4-storage]], [[i9-integration]]). Nenhuma troca exige mover dados entre módulos, porque o índice é derivado e reconstruível.
 - A divisão "catálogo no backend / índice derivado no `ai`" reduz o que precisa ser mantido em sincronia entre módulos a dois atributos de filtro (`family_id`, `document_version`) com uma regra única de reconciliação: `reindex`.
-- Escala do corpus (~100 documentos — provavelmente só o corpus de avaliação, [[i4-storage]]) não impõe nenhuma decisão de manutenibilidade no primeiro ciclo; um crescimento por ingestão contínua (Fog) muda store físico (#8), não a divisão de responsabilidades.
+- Escala do corpus (~100 documentos — número superado pela issue-11: são 10 PDFs, [[d16-golden-dataset]]; e, de todo modo, só o corpus de avaliação, [[i4-storage]]) não impõe nenhuma decisão de manutenibilidade no primeiro ciclo; um crescimento por ingestão contínua (Fog) muda store físico (#8), não a divisão de responsabilidades.
 
 ## Confirmed facts
 

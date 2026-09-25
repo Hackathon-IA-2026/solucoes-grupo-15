@@ -26,7 +26,7 @@ O teto/créditos do workshop e o orçamento de implantação posterior permanece
 - 2026-09-18 (issue-8, diagnóstico): CloudWatch Logs, S3 (list), Lambda (list), DynamoDB (list, vazio) e Bedrock AgentCore acessíveis; **OpenSearch Serverless negado** (`aoss:ListCollections`). Existe uma Lambda `BedrockCostTrackerLambda` do workshop — o consumo de Bedrock é monitorado pelo organizador.
 - 2026-09-18 (issue-8, Eduardo): conta AWS = ambiente temporário do hackathon (Workshop Studio, 72 h). Nenhuma informação sobre créditos, teto de gasto ou SCPs além do que o Workshop Studio informa.
 - Plano (linha 88): F3 mantém o orçamento operacional.
-- Página I4 (issue-15): corpus de avaliação da ordem de 100 documentos.
+- Página I4 (issue-15): corpus de avaliação da ordem de 100 documentos. **Superado pela issue-11 ([[d16-golden-dataset]], 2026-09-22):** o corpus de avaliação do primeiro ciclo são os 10 PDFs de `hackathon/data/case-1-carolina-mmgd/`. O corpus ficou menor, então a hipótese de consumo só diminui.
 
 ## Decisions
 

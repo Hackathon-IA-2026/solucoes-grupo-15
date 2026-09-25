@@ -33,7 +33,7 @@ Eventos (issue-6, base; issue-7, complementos):
 
 | Evento | Registrado por | Campos mínimos |
 |---|---|---|
-| `notification_generated` | backend, ao indexar versão nova | `notification_id`, `user_id`, `document_version_id`, `family_id`, `scope_effective` (estrita/ampla), `reasons[]` (correlatos incluídos e seus tipos/estados), `ingestion_job_id` |
+| `notification_generated` | backend, ao indexar versão nova | `notification_id`, `user_id`, `document_version_id`, `family_id`, `scope_effective` (estrita/ampla), `reasons[]` (família gatilho e, no escopo ampla, correlatos incluídos, com seus tipos/estados — mesmo vocabulário de [[i9-integration]]), `ingestion_job_id` |
 | `notification_suppressed` | backend, no ponto de dedup | `user_id`, `document_version_id`, `reason` ∈ {`duplicate`, `already_notified_by_other_scope`}, `existing_notification_id` |
 | `email_digest_generated` | backend, ao fim do job | `email_id`, `user_id`, `ingestion_job_id`, `notification_count` |
 | `notification_delivered_home` | backend | `notification_id`, `user_id` |

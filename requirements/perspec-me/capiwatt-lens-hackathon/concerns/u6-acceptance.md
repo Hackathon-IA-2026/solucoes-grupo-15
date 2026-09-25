@@ -46,7 +46,7 @@ Este Concern fica `partial`: o que está resolvido é a credibilidade das relaç
 ## Open questions
 
 - O que a interface mostra sobre a qualidade do ranking em si (posição no gabarito, "alerta de lacuna" quando nada passa de um limiar): depende do #11 e do #12.
-- Quem pode aceitar ou rejeitar arestas e fusões (só a Carolina, qualquer usuário do piloto): depende dos perfis de usuário, ainda em Fog no mapa.
+- Quem pode aceitar ou rejeitar arestas e fusões, **quando existirem pessoas distintas** (só a Carolina, qualquer usuário do piloto): depende dos perfis de usuário, ainda em Fog no mapa. Isto **não contradiz** [[d4-data-dictionary]]: lá está a regra de curadoria pretendida ("qualquer usuário autenticado, com autoria registrada"); aqui está o que falta para aplicá-la a pessoas reais. No TB1 não há autenticação, e o autor registrado é o usuário demo único (2026-09-25).
 
 ## Evidence
 

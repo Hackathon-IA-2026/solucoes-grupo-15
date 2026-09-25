@@ -5,7 +5,8 @@ perspective: data
 status: partial
 topics:
   - issue-3 — Como uma família de versões de um documento é identificada e agrupada num único objeto, na ingestão e no resultado da busca?
-updated_at: 2026-09-18
+  - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
+updated_at: 2026-09-25
 ---
 
 ## Current resolution
@@ -35,7 +36,7 @@ Consistência aqui significa que **a mesma peça documental nunca aparece como d
 - Invariante: `document_version → family_id` é função; nenhuma versão em duas famílias.
 - Invariante: nunca gerar sugestão de fusão entre famílias com chaves explícitas diferentes.
 - Aceitar uma sugestão de fusão é uma operação auditável (quem, quando) e reversível o suficiente para o hackathon (ao menos registrada).
-- A `SearchResult` do serviço vetorial devolve cada família no máximo uma vez por consulta.
+- ~~A `SearchResult` do serviço vetorial devolve cada família no máximo uma vez por consulta.~~ **Relocado pela issue-28 (2026-09-25):** o agrupamento fica no `backend` ([[i9-integration]]), então o invariante é da resposta do `backend`, não do `SearchResult` do `ai`, que devolve hits crus por chunk. O invariante vale por **consulta inteira**, não por lote: uma família não pode aparecer no lote 1 e de novo no lote 2 — é o que o conjunto congelado garante.
 
 ## Open questions
 

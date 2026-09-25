@@ -31,6 +31,7 @@ O objetivo de qualidade para a pergunta principal é recuperar, no topo, os proc
 - O objetivo deve distinguir gate mínimo de meta desejada para que “dois precedentes úteis” não seja confundido com recuperação completa do gabarito.
 - A meta precisa ser verificável por execução e não depender de julgamento retroativo sobre a ordem.
 - O atendimento ao gate mínimo não pode ser apresentado como recuperação completa do gabarito; o relatório deve distinguir explicitamente `2/3` de `3/3`.
+- 2026-09-25: a preferência por decisão nos últimos três anos é **critério de utilidade, não objetivo mensurável**. Ela não entra no gate nem em métrica ([[m5-performance-metrics]]): dois dos três processos-gabarito são mais antigos que isso, então medí-la reprovaria o gabarito. A interface pode exibir a data para o advogado julgar; o sistema não ordena nem filtra por ela.
 
 ## Open questions
 

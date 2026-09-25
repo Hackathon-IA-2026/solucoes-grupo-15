@@ -17,6 +17,12 @@ updated_at: 2026-09-20
 
 O inventário lista Amazon Titan para embeddings; Titan V2 (`amazon.titan-embed-text-v2:0`) permanece candidato de trabalho, com escolha final na #13 e teste funcional pendente. Respostas de Sonnet 5 e GPT 6 Astra não comprovam a invocação de Titan. Credenciais temporárias do participante entram no Compose por variáveis de ambiente. A identidade do Code Editor é distinta e mais restrita; não se presume que permita embeddings.
 
+**Revisão de 2026-09-25 (Eduardo, sessão de verificação do mapa):** o Bedrock passa a incluir **modelos de geração**, não apenas embeddings. O inventário lista a família Claude (Sonnet 5, Opus 5, Haiku 4.5, Fable 5.1) e a família Nova, e registra que testes por amostragem com credenciais de participante **confirmaram resposta de Claude Sonnet 5** (inventário, linhas 24–27). A escolha do modelo de geração e o contrato do parecer **não são decididos aqui**: pertencem à issue #27 (`o3-ml-functionality`, `u8-cost`), em resolução. SNS continua fora **por escolha, não por indisponibilidade** — o inventário o lista em "Integração" (linha 12).
+
+Registre a assimetria: a geração está comprovada nesta conta, mas a invocação do Titan (embeddings) continua recusada com `Error 002` ([[m1-algorithm-model-selection]]). Um parecer que precisa citar evidência recuperada depende de a recuperação funcionar.
+
+**Exposição (2026-09-25):** a issue #39 ("Demonstração — publicar temporariamente por túnel HTTPS") está aberta e pode mudar a postura registrada em 2026-09-18 ("nenhuma URL pública é exigida"). **A decisão é da #39, não desta página.** Restrição que a #39 precisa pesar: não existe autenticação nem sessão no TB1 — `user_id` é uma string de usuário demo fixa (`hackathon/backend/app/models.py:143-148`).
+
 Regiões permitidas: `us-east-1` e `us-west-2`; padrão `us-east-1`. Provisionamento futuro exige CloudFormation/CDK. IAM permite papéis do time com passagem limitada a Bedrock, AgentCore, ECS, EC2 e EFS; Lambda/CodeBuild recebem `WSParticipantRole`. `AssumeRole` limita-se a `cdk-*`, `admin_persona`, `publisher_persona` e `consumer_persona`. Portanto, “sem IAM próprio” não descreve a disponibilidade atual.
 
 API Gateway permite somente invocar APIs existentes; ECR somente criar/consultar repositórios; EC2 consultar VPCs/subnets e gerenciar launch templates; Application Signals somente `StartDiscovery`. OpenSearch está disponível conforme o inventário; a modalidade Serverless não está explicitada, e o diagnóstico antigo de `aoss:ListCollections` não deve ser generalizado para OpenSearch. Implantação AWS permanece posterior.
@@ -38,6 +44,9 @@ API Gateway permite somente invocar APIs existentes; ECR somente criar/consultar
 
 ## Decisions
 
+- 2026-09-25 (sessão de verificação do mapa, Eduardo): o Bedrock inclui modelos de geração além de embeddings. A escolha do modelo e o contrato do parecer ficam na issue #27. SNS segue fora por escolha, não por indisponibilidade. Esta decisão **supersede** o trecho "LLM de geração" da linha abaixo, que registrava o escopo daquela revisão, não uma proibição permanente.
+- 2026-09-25 (sessão de verificação do mapa, Eduardo): o modelo de ator do TB1 não muda — usuário demo único, sem autenticação. A exposição por túnel HTTPS é decidida na issue #39.
+
 - 2026-09-20 (issue-8, Eduardo): aceitou manter o corte local e incorporar o documento AWS como autoridade de disponibilidade; nenhuma migração para AWS, adoção de SNS ou LLM de geração nesta revisão.
 
 - 2026-09-18 (issue-8, formulação inicial superada pela decisão de prévia e revisão de 2026-09-20): previa Bedrock e SES remotos; vigente: somente Bedrock remoto, sem recursos provisionados no primeiro ciclo.
@@ -58,6 +67,9 @@ API Gateway permite somente invocar APIs existentes; ECR somente criar/consultar
 - Precisa existir um adapter local/fake para o embedding (Demo API sem credenciais AWS, plano linha 98) — mesmo que o embedding "real" nunca rode local.
 
 ## Open questions
+
+- A issue #39 decide se e como a aplicação é exposta por túnel HTTPS. Enquanto ela não decidir, esta página não afirma exposição pública nem a exclui.
+- A escolha do modelo de geração e o contrato do parecer pertencem à issue #27, em resolução. Esta página só registra que a geração está permitida e disponível.
 
 - Revisão de 2026-09-20: permanecem o teste funcional do embedding, a escolha final em #13 e a implantação posterior. O inventário não detalha a modalidade Serverless; não há decisão de implantá-la neste ciclo.
 
