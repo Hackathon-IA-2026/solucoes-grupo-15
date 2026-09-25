@@ -1,0 +1,127 @@
+{
+  "schema_version": "prototype-document-downloader-v1",
+  "case_id": "case-1-carolina-mmgd",
+  "generated_from": "hackathon/data/case-1-carolina-mmgd/README.md",
+  "documents": [
+    {
+      "family_id": "fam-ai-enel-ce-0032-2018",
+      "family_label": "AI 0032/2018-SFE - Enel Ceara",
+      "document_type": "auto_infracao",
+      "official_identifier": "AI 0032/2018-SFE",
+      "process_number": "48500.004024/2017-80",
+      "source_system": "sicnet2",
+      "version_id": "ai-0032-2018-sfe-v1",
+      "version_date": "2018-01-01",
+      "version_date_source": "inventory_placeholder",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.004024-2017-80/auto-infracao-48500.004024-2017-80.pdf"
+    },
+    {
+      "family_id": "fam-recurso-enel-ce-ai-0032-2018",
+      "family_label": "Recurso contra AI 0032/2018-SFE - Enel Ceara",
+      "document_type": "recurso",
+      "official_identifier": "Carta Enel Ceara 011-RB-2019",
+      "process_number": "48500.004024/2017-80",
+      "source_system": "sicnet2",
+      "version_id": "recurso-enel-ce-ai-0032-2018-v1",
+      "version_date": "2019-01-01",
+      "version_date_source": "inventory_placeholder",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.004024-2017-80/recurso-48500.004024-2017-80.pdf"
+    },
+    {
+      "family_id": "fam-voto-enel-ce-48500-004024-2017-80",
+      "family_label": "Voto - Enel Ceara - 48500.004024/2017-80",
+      "document_type": "voto",
+      "official_identifier": "Voto do Diretor Efrain Pereira da Cruz",
+      "process_number": "48500.004024/2017-80",
+      "source_system": "sicnet2",
+      "version_id": "voto-enel-ce-48500-004024-2017-80-v1",
+      "version_date": "2019-01-01",
+      "version_date_source": "inventory_placeholder",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.004024-2017-80/voto-48500.004024-2017-80.pdf"
+    },
+    {
+      "family_id": "fam-ai-cemig-0017-2020",
+      "family_label": "AI 0017/2020-SFE - Cemig Distribuicao",
+      "document_type": "auto_infracao",
+      "official_identifier": "AI 0017/2020-SFE",
+      "process_number": "48500.000639/2019-07",
+      "source_system": "sicnet2",
+      "version_id": "ai-0017-2020-sfe-v1",
+      "version_date": "2020-01-01",
+      "version_date_source": "inventory_placeholder",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.000639-2019-07/auto-infracao-48500.000639-2019-07.pdf"
+    },
+    {
+      "family_id": "fam-recurso-cemig-ai-0017-2020",
+      "family_label": "Recurso contra AI 0017/2020-SFE - Cemig",
+      "document_type": "recurso",
+      "official_identifier": "Recurso administrativo Cemig",
+      "process_number": "48500.000639/2019-07",
+      "source_system": "sicnet2",
+      "version_id": "recurso-cemig-ai-0017-2020-v1",
+      "version_date": "2020-05-13",
+      "version_date_source": "document_inventory",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.000639-2019-07/recurso-48500.000639-2019-07.pdf"
+    },
+    {
+      "family_id": "fam-voto-cemig-48500-000639-2019-07",
+      "family_label": "Voto - Cemig - 48500.000639/2019-07",
+      "document_type": "voto",
+      "official_identifier": "Voto da 18a RPO",
+      "process_number": "48500.000639/2019-07",
+      "source_system": "sicnet2",
+      "version_id": "voto-cemig-48500-000639-2019-07-v1",
+      "version_date": "2023-05-30",
+      "version_date_source": "document_inventory",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.000639-2019-07/voto-48500.000639-2019-07.pdf"
+    },
+    {
+      "family_id": "fam-ai-coelba-0035-2025",
+      "family_label": "AI 0035/2025-SFT - Neoenergia Coelba",
+      "document_type": "auto_infracao",
+      "official_identifier": "AI 0035/2025-SFT",
+      "process_number": "48500.901433/2024-53",
+      "source_system": "sei",
+      "version_id": "ai-0035-2025-sft-exposicao-v1",
+      "version_date": "2025-01-01",
+      "version_date_source": "inventory_placeholder",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.901433-2024-53/auto-infracao-48500.901433-2024-53.pdf"
+    },
+    {
+      "family_id": "fam-voto-coelba-48500-901433-2024-53",
+      "family_label": "Voto - Neoenergia Coelba - 48500.901433/2024-53",
+      "document_type": "voto",
+      "official_identifier": "Voto do Diretor Fernando Mosna",
+      "process_number": "48500.901433/2024-53",
+      "source_system": "sei",
+      "version_id": "voto-coelba-48500-901433-2024-53-v1",
+      "version_date": "2025-01-01",
+      "version_date_source": "inventory_placeholder",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.901433-2024-53/voto-48500.901433-2024-53.pdf"
+    },
+    {
+      "family_id": "fam-recurso-coelba-ai-0035-2025",
+      "family_label": "Recurso contra AI 0035/2025-SFT - Neoenergia Coelba",
+      "document_type": "recurso",
+      "official_identifier": "Recurso administrativo Coelba",
+      "process_number": "48500.009907/2025-96",
+      "source_system": "sei",
+      "version_id": "recurso-coelba-ai-0035-2025-v1",
+      "version_date": "2025-03-20",
+      "version_date_source": "document_inventory",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.009907-2025-96/recurso-48500.009907-2025-96.pdf"
+    },
+    {
+      "family_id": "fam-recurso-coelba-ai-0035-2025",
+      "family_label": "Recurso contra AI 0035/2025-SFT - Neoenergia Coelba",
+      "document_type": "recurso",
+      "official_identifier": "Complementacao de recurso Coelba",
+      "process_number": "48500.017555/2025-42",
+      "source_system": "sei",
+      "version_id": "recurso-coelba-ai-0035-2025-v2",
+      "version_date": "2025-05-26",
+      "version_date_source": "document_inventory",
+      "locator": "hackathon/data/case-1-carolina-mmgd/48500.017555-2025-42/complementacao-recurso-48500.017555-2025-42.pdf"
+    }
+  ]
+}
