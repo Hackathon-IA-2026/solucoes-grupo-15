@@ -44,7 +44,7 @@ export function ProductNotificationsPage() {
           <Bell size={28} />
           <h3>Não foi possível carregar as notificações.</h3>
           <p>Confira os serviços locais e tente novamente.</p>
-          <button className="yellow-button" type="button" onClick={state.retry}>
+          <button className="yellow-button" type="button" onClick={() => void state.retry()}>
             <RefreshCw size={17} /> Tentar novamente
           </button>
         </div>

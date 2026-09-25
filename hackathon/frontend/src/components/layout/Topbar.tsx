@@ -14,6 +14,7 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
   const notificationState = useNotifications();
   const [accountOpen, setAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationOpenError, setNotificationOpenError] = useState(false);
   const [globalQuery, setGlobalQuery] = useState("");
   const unread = notificationState.kind === "ready"
     ? notificationState.notifications.filter((notification) => !notification.opened)
@@ -31,9 +32,14 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
   }
 
   async function openNotification(notificationId: number, familyId: string) {
-    await notificationState.openNotification(notificationId);
-    setNotificationsOpen(false);
-    navigate(`/documents/${encodeURIComponent(familyId)}`);
+    setNotificationOpenError(false);
+    try {
+      await notificationState.openNotification(notificationId);
+      setNotificationsOpen(false);
+      navigate(`/documents/${encodeURIComponent(familyId)}`);
+    } catch {
+      setNotificationOpenError(true);
+    }
   }
 
   return (
@@ -57,8 +63,9 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
               <header><div><strong>Notificações</strong><span>{unread.length ? `${unread.length} não lida${unread.length === 1 ? "" : "s"}` : notificationState.kind === "ready" ? "Tudo em dia" : "Configuração necessária"}</span></div></header>
               {notificationState.kind === "loading" && <p className="popover-empty"><LoaderCircle size={17} /> Carregando notificações...</p>}
               {notificationState.kind === "scope-required" && <p className="popover-empty"><Bell size={17} /> Escolha o escopo para ativar as notificações.</p>}
-              {notificationState.kind === "error" && <button className="popover-empty" type="button" onClick={notificationState.retry}><RefreshCw size={17} /> Tentar carregar novamente</button>}
+              {notificationState.kind === "error" && <button className="popover-empty" type="button" onClick={() => void notificationState.retry()}><RefreshCw size={17} /> Tentar carregar novamente</button>}
               {notificationState.kind === "ready" && (unread.length ? <div className="popover-list">{unread.slice(0, 3).map((notification) => <button type="button" className="popover-notification" key={notification.id} onClick={() => void openNotification(notification.id, notification.family_id)}><span className="popover-notification-icon"><Bell size={15} /></span><span><strong>{notification.document_id ?? notification.document_version_id}</strong><small>{notification.document_type ?? "Documento"} · {formatDate(notification.created_at)}</small></span><Check size={15} /></button>)}</div> : <p className="popover-empty"><Check size={17} /> Não há atualizações pendentes.</p>)}
+              {notificationOpenError && <p className="feedback-message error">Não foi possível abrir a notificação.</p>}
               <Link to="/notificacoes" onClick={() => setNotificationsOpen(false)}>Abrir central de notificações</Link>
             </section>
           )}

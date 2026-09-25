@@ -36,7 +36,7 @@ type NotificationsState =
 type NotificationsContextValue = NotificationsState & {
   chooseScope: (scope: NotificationScope) => Promise<void>;
   openNotification: (notificationId: number) => Promise<void>;
-  retry: () => void;
+  retry: () => Promise<void>;
 };
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
@@ -111,7 +111,16 @@ export function NotificationsProvider({ children }: PropsWithChildren) {
       : current);
   }, []);
 
-  const retry = useCallback(() => setAttempt((current) => current + 1), []);
+  const retry = useCallback(async () => {
+    if (!user) return;
+    setState({ kind: "loading" });
+    try {
+      await runDemoIngestion();
+      setAttempt((current) => current + 1);
+    } catch {
+      setState({ kind: "error" });
+    }
+  }, [user]);
   const value = useMemo<NotificationsContextValue>(
     () => ({ ...state, chooseScope, openNotification, retry }),
     [chooseScope, openNotification, retry, state],

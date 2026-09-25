@@ -36,12 +36,16 @@ describe("ProductNotificationsPage integrada", () => {
     );
   });
 
-  it("oferece nova tentativa quando a lista falha", async () => {
-    vi.stubGlobal("fetch", buildFetchMock(true));
+  it("reingere e se recupera quando a lista falha", async () => {
+    const fetchMock = buildFetchMock(true);
+    vi.stubGlobal("fetch", fetchMock);
     renderPage();
 
     expect(await screen.findByText(/não foi possível carregar as notificações/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /tentar novamente/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /tentar novamente/i }));
+
+    expect(await screen.findByText("auto-0007")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/v1/ingestions", { method: "POST" });
   });
 });
 
@@ -63,13 +67,18 @@ function renderPage() {
 }
 
 function buildFetchMock(failNotifications = false) {
+  let notificationCalls = 0;
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url === "/v1/health") return jsonResponse({ backend: "ok", ai: "ok" });
     if (url === "/v1/ingestions") return jsonResponse({ ingestion_job_id: "job-1", families_count: 4, versions_count: 5, relations_count: 5 });
     if (url.endsWith("/notification-scope")) return jsonResponse({ scope: "estrita" });
     if (url.endsWith("/email-digests")) return jsonResponse([{ email_id: "carolina:job-1", user_id: "carolina", ingestion_job_id: "job-1", notification_ids: [5], rendered_body: "Você tem 1 novo documento", created_at: "2024-05-02T12:00:00Z" }]);
-    if (url.endsWith("/notifications")) return failNotifications ? jsonResponse({}, 500) : jsonResponse([{ id: 5, user_id: "carolina", document_version_id: "docver-auto-0007-v2", family_id: "fam-auto-0007", document_type: "auto_de_infracao", document_id: "auto-0007", scope_effective: "estrita", reasons: [{ type: "novo_documento" }], ingestion_job_id: "job-1", created_at: "2024-05-02T12:00:00Z", opened: false }]);
+    if (url.endsWith("/notifications")) {
+      notificationCalls += 1;
+      if (failNotifications && notificationCalls === 1) return jsonResponse({}, 500);
+      return jsonResponse([{ id: 5, user_id: "carolina", document_version_id: "docver-auto-0007-v2", family_id: "fam-auto-0007", document_type: "auto_de_infracao", document_id: "auto-0007", scope_effective: "estrita", reasons: [{ type: "novo_documento" }], ingestion_job_id: "job-1", created_at: "2024-05-02T12:00:00Z", opened: false }]);
+    }
     if (url.endsWith("/opened") && init?.method === "POST") return jsonResponse({ notification_id: 5, opened: true });
     return jsonResponse({}, 404);
   });
