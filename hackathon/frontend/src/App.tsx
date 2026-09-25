@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 import { AppShell } from "./components/layout/AppShell";
 import { SessionProvider, useSession } from "./features/auth/SessionContext";
 import { DemoDataProvider } from "./features/demo/DemoDataContext";
+import { NotificationsProvider } from "./features/notifications/NotificationsContext";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { ExplorePage } from "./pages/ExplorePage";
 import { FamiliesPage } from "./pages/FamiliesPage";
@@ -22,7 +23,8 @@ export function App() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <SessionProvider>
         <DemoDataProvider>
-          <Routes>
+          <NotificationsProvider>
+            <Routes>
             <Route path="/" element={<EntryRedirect />} />
             <Route path="/login" element={<LoginPage />} />
             <Route element={<RequireSession />}>
@@ -45,7 +47,8 @@ export function App() {
             <Route path="/consulta-api" element={<SearchPage />} />
             <Route path="/integracoes/notificacoes" element={<NotificationsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </NotificationsProvider>
         </DemoDataProvider>
       </SessionProvider>
     </BrowserRouter>

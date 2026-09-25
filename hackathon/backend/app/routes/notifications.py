@@ -67,6 +67,7 @@ class NotificationOut(BaseModel):
     reasons: list[dict]
     ingestion_job_id: str
     created_at: str
+    opened: bool
 
 
 class NotificationOpenedOut(BaseModel):
@@ -125,6 +126,14 @@ def list_notifications(
         .where(Notification.user_id == user_id)
         .order_by(Notification.id.desc())
     ).all()
+    opened_ids = set(
+        session.scalars(
+            select(NotificationEvent.notification_id).where(
+                NotificationEvent.event_type == "notification_opened",
+                NotificationEvent.notification_id.in_([row.id for row in rows]),
+            )
+        ).all()
+    ) if rows else set()
 
     out: list[NotificationOut] = []
     for row in rows:
@@ -141,6 +150,7 @@ def list_notifications(
                 reasons=json.loads(row.reasons_json),
                 ingestion_job_id=row.ingestion_job_id,
                 created_at=row.created_at.isoformat(),
+                opened=row.id in opened_ids,
             )
         )
     return out
@@ -154,16 +164,23 @@ def mark_notification_opened(
     if notification is None:
         raise HTTPException(status_code=404, detail="Notificação não encontrada")
 
-    session.add(
-        NotificationEvent(
-            event_type="notification_opened",
-            user_id=notification.user_id,
-            document_version_id=notification.document_version_id,
-            notification_id=notification.id,
-            payload_json=json.dumps({"origin": "home"}),
+    already_opened = session.scalar(
+        select(NotificationEvent.id).where(
+            NotificationEvent.event_type == "notification_opened",
+            NotificationEvent.notification_id == notification.id,
         )
     )
-    session.flush()
+    if already_opened is None:
+        session.add(
+            NotificationEvent(
+                event_type="notification_opened",
+                user_id=notification.user_id,
+                document_version_id=notification.document_version_id,
+                notification_id=notification.id,
+                payload_json=json.dumps({"origin": "home"}),
+            )
+        )
+        session.flush()
     return NotificationOpenedOut(notification_id=notification_id)
 
 

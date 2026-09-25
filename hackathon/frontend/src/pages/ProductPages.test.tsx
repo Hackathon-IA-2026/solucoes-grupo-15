@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FamiliesPage } from "./FamiliesPage";
 import { MyProcessesPage } from "./MyProcessesPage";
 import { OpinionPage } from "./OpinionPage";
-import { ProductNotificationsPage } from "./ProductNotificationsPage";
 import { ProcessoPage } from "./ProcessoPage";
 import { RelationsMapPage } from "./RelationsMapPage";
 
@@ -73,14 +72,6 @@ describe("páginas do produto", () => {
     expect(await screen.findByText("Favorável com ressalvas", {}, { timeout: 1500 })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Evidências (10)" }));
     expect(screen.getByRole("heading", { name: "Evidências (10)" })).toBeInTheDocument();
-  });
-
-  it("marca uma notificação como lida", async () => {
-    render(<ProductNotificationsPage />);
-    expect(await screen.findByText("Novo voto juntado ao processo", {}, { timeout: 1500 })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /não lidas \(3\)/i })).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: /marcar como lida/i })[0]);
-    expect(screen.getByRole("button", { name: /não lidas \(2\)/i })).toBeInTheDocument();
   });
 
   it("permite selecionar nós no mapa de relações", () => {

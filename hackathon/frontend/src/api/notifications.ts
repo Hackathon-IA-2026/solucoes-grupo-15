@@ -40,6 +40,7 @@ export type NotificationItem = {
   reasons: NotificationReason[];
   ingestion_job_id: string;
   created_at: string;
+  opened: boolean;
 };
 
 export type EmailDigestPreview = {

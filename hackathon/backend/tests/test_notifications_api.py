@@ -80,6 +80,7 @@ def test_list_notifications_returns_most_recent_first_enriched_with_catalog(
         assert item["family_id"]
         assert item["scope_effective"] == "estrita"
         assert item["reasons"] == [{"type": "novo_documento"}]
+        assert item["opened"] is False
 
 
 def test_list_notifications_empty_for_user_without_notifications(database_url: str) -> None:
@@ -109,6 +110,30 @@ def test_mark_notification_opened_records_event(database_url: str) -> None:
     assert len(opened_events) == 1
     assert opened_events[0]["notification_id"] == notification_id
     assert opened_events[0]["payload"] == {"origin": "home"}
+
+    refreshed = client.get("/v1/users/carolina/notifications").json()
+    opened = next(item for item in refreshed if item["id"] == notification_id)
+    assert opened["opened"] is True
+
+
+def test_mark_notification_opened_is_idempotent(database_url: str) -> None:
+    client, _ = _client(database_url)
+    _seed_carolina_with_notifications(client)
+    notification_id = client.get("/v1/users/carolina/notifications").json()[0]["id"]
+
+    client.post(f"/v1/notifications/{notification_id}/opened")
+    client.post(f"/v1/notifications/{notification_id}/opened")
+
+    events = client.get(
+        "/v1/notification-events", params={"user_id": "carolina"}
+    ).json()
+    opened_events = [
+        event
+        for event in events
+        if event["event_type"] == "notification_opened"
+        and event["notification_id"] == notification_id
+    ]
+    assert len(opened_events) == 1
 
 
 def test_mark_notification_opened_404_for_unknown_id(database_url: str) -> None:

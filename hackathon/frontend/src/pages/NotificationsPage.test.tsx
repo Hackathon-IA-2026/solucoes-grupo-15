@@ -15,6 +15,7 @@ const SAMPLE_NOTIFICATION = {
   reasons: [{ type: "novo_documento" }],
   ingestion_job_id: "job-1",
   created_at: "2024-01-01T00:00:00Z",
+  opened: false,
 };
 
 const SAMPLE_DIGEST = {

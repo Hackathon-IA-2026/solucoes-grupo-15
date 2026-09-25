@@ -13,6 +13,10 @@ export async function prepareDemoData(): Promise<DemoIngestion> {
     throw new Error("Backend ou serviço de IA indisponível");
   }
 
+  return runDemoIngestion();
+}
+
+export async function runDemoIngestion(): Promise<DemoIngestion> {
   const response = await fetch("/v1/ingestions", { method: "POST" });
   if (!response.ok) {
     throw new Error(`Preparação demo falhou com status ${response.status}`);
