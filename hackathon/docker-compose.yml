@@ -27,8 +27,15 @@ services:
       MAILER: preview
       DATABASE_URL: postgresql+psycopg://capiwatt:capiwatt@postgres:5432/capiwatt
     depends_on:
-      - ai
-      - postgres
+      ai:
+        condition: service_started
+      postgres:
+        # Espera o Postgres ficar PRONTO (aceitando conexoes), nao so
+        # iniciado. O backend chama Base.metadata.create_all() no startup
+        # (app/main.py::_lifespan), que abre conexao imediata - sem esta
+        # condicao, o backend pode subir antes do initdb e sair com
+        # "Connection refused" (psycopg.OperationalError).
+        condition: service_healthy
     volumes:
       - documents-data:/data/documents
 
@@ -54,6 +61,15 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # Sonda usada pelo depends_on do backend (condition: service_healthy).
+      # pg_isready confirma que o Postgres aceita conexoes, nao so que o
+      # container iniciou. start_period cobre o initdb do primeiro boot.
+      test: ["CMD-SHELL", "pg_isready -U capiwatt -d capiwatt"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   opensearch:
     image: opensearchproject/opensearch:2.17.0
