@@ -65,7 +65,7 @@ def main() -> int:
     input_path = resolve_path(args.input)
     output_path = resolve_path(args.out)
     raw = input_path.read_text(encoding="utf-8")
-    manifest = discover(raw, args.source_system)
+    manifest = discover(raw, args.source_system, args.family_mode)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -89,6 +89,15 @@ def parse_args() -> argparse.Namespace:
         choices=["sei", "sicnet2"],
         help="Official source represented by the page.",
     )
+    parser.add_argument(
+        "--family-mode",
+        default="process",
+        choices=["process", "protocol"],
+        help=(
+            "process groups all protocols under the process family; protocol creates "
+            "one family per official protocol/document number."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -99,7 +108,7 @@ def resolve_path(value: str) -> Path:
     return path
 
 
-def discover(raw: str, source_system: str) -> dict[str, Any]:
+def discover(raw: str, source_system: str, family_mode: str) -> dict[str, Any]:
     text, links = normalize_input(raw)
     process_number = (
         first_table_value(raw, "Processo")
@@ -113,12 +122,14 @@ def discover(raw: str, source_system: str) -> dict[str, Any]:
     )
     protocols = parse_protocol_rows(raw, text, links)
     documents = [
-        protocol_to_document(row, process_number, source_system) for row in protocols
+        protocol_to_document(row, process_number, source_system, family_mode)
+        for row in protocols
     ]
     return {
         "schema_version": "prototype-document-downloader-v1",
         "generated_from": "official_page_export",
         "source_system": source_system,
+        "family_mode": family_mode,
         "process_number": process_number,
         "process_type": process_type,
         "generated_at": generated_at,
@@ -218,20 +229,28 @@ def parse_text_protocol_rows(text: str, links: dict[str, str]) -> list[ProtocolR
 
 
 def protocol_to_document(
-    row: ProtocolRow, process_number: str | None, source_system: str
+    row: ProtocolRow, process_number: str | None, source_system: str, family_mode: str
 ) -> dict[str, str]:
-    family_id = f"{source_system}-{row.protocol_number}"
     process_label = process_number or "processo-desconhecido"
+    process_slug = slug(process_label).replace("_", "-")
+    if family_mode == "process":
+        family_id = f"{source_system}-process-{process_slug}"
+        family_label = f"Processo {process_label}"
+        family_basis = "official_process_number"
+    else:
+        family_id = f"{source_system}-{row.protocol_number}"
+        family_label = f"{row.document_type} {row.protocol_number}"
+        family_basis = "official_protocol_number"
     locator = row.href or f"missing://{source_system}/{row.protocol_number}"
     return {
         "family_id": family_id,
-        "family_label": f"{row.document_type} {row.protocol_number}",
-        "family_basis": "official_protocol_number",
+        "family_label": family_label,
+        "family_basis": family_basis,
         "document_type": slug(row.document_type),
         "official_identifier": row.protocol_number,
         "process_number": process_label,
         "source_system": source_system,
-        "version_id": f"{family_id}-v1",
+        "version_id": f"{family_id}-{row.protocol_number}",
         "version_date": br_date_to_iso(row.document_date),
         "version_date_source": "official_protocol_date",
         "inclusion_date": br_date_to_iso(row.inclusion_date),

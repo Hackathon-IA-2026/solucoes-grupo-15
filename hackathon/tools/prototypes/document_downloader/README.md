@@ -24,13 +24,14 @@ shape used here.
 
 ## Family rule
 
-The safe default is conservative: one official protocol/document number is one
-family. Several rows are grouped into one family only when the source exposes a
-structured version/rectification relation or when a human curator confirms that
-they are versions of the same piece.
+For this downloader prototype, the default is Carolina's operational meaning:
+one process is one collection family, and the protocols/documents listed inside
+that process are pieces of the family.
 
-That means a "recurso" and a "complementacao de recurso" are related documents,
-not automatically versions of the same family.
+The parser still has `--family-mode protocol` for comparison, but
+`--family-mode process` is the default and should be used for the assisted
+downloader. The backend may later split this into a process node plus finer
+document-version families; the downloader keeps enough metadata for that.
 
 ## Run
 
@@ -74,7 +75,8 @@ Generate a manifest from a copied/exported SEI page:
 python hackathon/tools/prototypes/document_downloader/discover_official_page.py `
   --input hackathon/tools/prototypes/document_downloader/samples/sei-process-48500.027542-2026-62.md `
   --out hackathon/.prototype-downloads/sei-48500.027542-2026-62-manifest.json `
-  --source-system sei
+  --source-system sei `
+  --family-mode process
 ```
 
 Then run the downloader on that generated manifest:
@@ -84,6 +86,23 @@ python hackathon/tools/prototypes/document_downloader/download_families.py `
   --manifest hackathon/.prototype-downloads/sei-48500.027542-2026-62-manifest.json `
   --out hackathon/.prototype-downloads/sei-48500.027542-2026-62
 ```
+
+## Assisted process flow
+
+The assisted command opens SEI/Sicnet in the browser and waits while a person
+passes captcha and saves/copies the final process page:
+
+```powershell
+python hackathon/tools/prototypes/document_downloader/assisted_process_downloader.py `
+  --source-system sei `
+  --page hackathon/tools/prototypes/document_downloader/samples/sei-process-48500.027542-2026-62.md `
+  --out hackathon/.prototype-downloads/assisted-sei-48500.027542-2026-62 `
+  --no-open-browser
+```
+
+Remove `--no-open-browser` to open the official search page. When captcha
+appears, solve it manually, save/copy the process page to the path passed in
+`--page`, then press Enter in the terminal.
 
 ## Notes
 

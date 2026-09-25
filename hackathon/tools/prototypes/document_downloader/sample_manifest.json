@@ -4,9 +4,9 @@
   "generated_from": "hackathon/data/case-1-carolina-mmgd/README.md",
   "documents": [
     {
-      "family_id": "fam-ai-enel-ce-0032-2018",
-      "family_label": "AI 0032/2018-SFE - Enel Ceara",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-004024-2017-80",
+      "family_label": "Processo 48500.004024/2017-80 - Enel Ceara",
+      "family_basis": "curated_primary_process",
       "document_type": "auto_infracao",
       "official_identifier": "AI 0032/2018-SFE",
       "process_number": "48500.004024/2017-80",
@@ -17,9 +17,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.004024-2017-80/auto-infracao-48500.004024-2017-80.pdf"
     },
     {
-      "family_id": "fam-recurso-enel-ce-ai-0032-2018",
-      "family_label": "Recurso contra AI 0032/2018-SFE - Enel Ceara",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-004024-2017-80",
+      "family_label": "Processo 48500.004024/2017-80 - Enel Ceara",
+      "family_basis": "curated_primary_process",
       "document_type": "recurso",
       "official_identifier": "Carta Enel Ceara 011-RB-2019",
       "process_number": "48500.004024/2017-80",
@@ -30,9 +30,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.004024-2017-80/recurso-48500.004024-2017-80.pdf"
     },
     {
-      "family_id": "fam-voto-enel-ce-48500-004024-2017-80",
-      "family_label": "Voto - Enel Ceara - 48500.004024/2017-80",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-004024-2017-80",
+      "family_label": "Processo 48500.004024/2017-80 - Enel Ceara",
+      "family_basis": "curated_primary_process",
       "document_type": "voto",
       "official_identifier": "Voto do Diretor Efrain Pereira da Cruz",
       "process_number": "48500.004024/2017-80",
@@ -43,9 +43,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.004024-2017-80/voto-48500.004024-2017-80.pdf"
     },
     {
-      "family_id": "fam-ai-cemig-0017-2020",
-      "family_label": "AI 0017/2020-SFE - Cemig Distribuicao",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-000639-2019-07",
+      "family_label": "Processo 48500.000639/2019-07 - Cemig Distribuicao",
+      "family_basis": "curated_primary_process",
       "document_type": "auto_infracao",
       "official_identifier": "AI 0017/2020-SFE",
       "process_number": "48500.000639/2019-07",
@@ -56,9 +56,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.000639-2019-07/auto-infracao-48500.000639-2019-07.pdf"
     },
     {
-      "family_id": "fam-recurso-cemig-ai-0017-2020",
-      "family_label": "Recurso contra AI 0017/2020-SFE - Cemig",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-000639-2019-07",
+      "family_label": "Processo 48500.000639/2019-07 - Cemig Distribuicao",
+      "family_basis": "curated_primary_process",
       "document_type": "recurso",
       "official_identifier": "Recurso administrativo Cemig",
       "process_number": "48500.000639/2019-07",
@@ -69,9 +69,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.000639-2019-07/recurso-48500.000639-2019-07.pdf"
     },
     {
-      "family_id": "fam-voto-cemig-48500-000639-2019-07",
-      "family_label": "Voto - Cemig - 48500.000639/2019-07",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-000639-2019-07",
+      "family_label": "Processo 48500.000639/2019-07 - Cemig Distribuicao",
+      "family_basis": "curated_primary_process",
       "document_type": "voto",
       "official_identifier": "Voto da 18a RPO",
       "process_number": "48500.000639/2019-07",
@@ -82,9 +82,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.000639-2019-07/voto-48500.000639-2019-07.pdf"
     },
     {
-      "family_id": "fam-ai-coelba-0035-2025",
-      "family_label": "AI 0035/2025-SFT - Neoenergia Coelba",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-901433-2024-53",
+      "family_label": "Processo 48500.901433/2024-53 - Neoenergia Coelba",
+      "family_basis": "curated_primary_process",
       "document_type": "auto_infracao",
       "official_identifier": "AI 0035/2025-SFT",
       "process_number": "48500.901433/2024-53",
@@ -95,9 +95,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.901433-2024-53/auto-infracao-48500.901433-2024-53.pdf"
     },
     {
-      "family_id": "fam-voto-coelba-48500-901433-2024-53",
-      "family_label": "Voto - Neoenergia Coelba - 48500.901433/2024-53",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-901433-2024-53",
+      "family_label": "Processo 48500.901433/2024-53 - Neoenergia Coelba",
+      "family_basis": "curated_primary_process",
       "document_type": "voto",
       "official_identifier": "Voto do Diretor Fernando Mosna",
       "process_number": "48500.901433/2024-53",
@@ -108,9 +108,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.901433-2024-53/voto-48500.901433-2024-53.pdf"
     },
     {
-      "family_id": "fam-recurso-coelba-ai-0035-2025",
-      "family_label": "Recurso contra AI 0035/2025-SFT - Neoenergia Coelba",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-901433-2024-53",
+      "family_label": "Processo 48500.901433/2024-53 - Neoenergia Coelba",
+      "family_basis": "curated_primary_process",
       "document_type": "recurso",
       "official_identifier": "Recurso administrativo Coelba",
       "process_number": "48500.009907/2025-96",
@@ -121,9 +121,9 @@
       "locator": "hackathon/data/case-1-carolina-mmgd/48500.009907-2025-96/recurso-48500.009907-2025-96.pdf"
     },
     {
-      "family_id": "fam-complementacao-recurso-coelba-ai-0035-2025",
-      "family_label": "Complementacao de recurso contra AI 0035/2025-SFT - Neoenergia Coelba",
-      "family_basis": "curated_official_identifier",
+      "family_id": "process-48500-901433-2024-53",
+      "family_label": "Processo 48500.901433/2024-53 - Neoenergia Coelba",
+      "family_basis": "curated_primary_process",
       "document_type": "recurso",
       "official_identifier": "Complementacao de recurso Coelba",
       "process_number": "48500.017555/2025-42",
