@@ -12,7 +12,7 @@ updated_at: 2026-09-22
 
 Para a pergunta principal — “procure precedentes sobre fiscalização de atendimento a solicitações de conexão de MMGD” — Carolina quer encontrar pelo menos dois precedentes aplicáveis, preferencialmente com decisão nos últimos três anos, e navegar pelas peças que permitem ao advogado avaliar cada caso. Uma resposta útil entrega processos distintos com PDFs, números oficiais, fonte e documentos indispensáveis disponíveis, permite verificar o último andamento, avisa novas juntadas e exibe um parecer conclusivo de uma frase apoiado nos documentos.
 
-O parecer pode assumir forma como “manter a penalidade de advertência; manter o valor total das penalidades de multa de R$ 13.035.844,59”. O sistema não redige a peça jurídica completa. Histórico de buscas e favoritos permanecem como evolução posterior, fora da Destination atual.
+O parecer pode assumir forma como “Advertência Mantida; Valor Total das Multas de R$ 13.035.844,59”. O sistema não redige a peça jurídica completa. Histórico de buscas e favoritos permanecem como evolução posterior, fora da Destination atual.
 
 ## Confirmed facts
 
