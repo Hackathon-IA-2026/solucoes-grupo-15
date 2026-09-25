@@ -104,6 +104,45 @@ Remove `--no-open-browser` to open the official search page. When captcha
 appears, solve it manually, save/copy the process page to the path passed in
 `--page`, then press Enter in the terminal.
 
+## Assisted batch by filter
+
+Use this when you want the first N process families from a theme/date filter.
+The command opens the official search page, tells you which filter to apply, then
+reads the saved results page and asks for each selected process page.
+
+Offline sample:
+
+```powershell
+python hackathon/tools/prototypes/document_downloader/baixar_lote_assistido.py `
+  --source-system sei `
+  --theme "Fiscalizacao da Distribuicao: Processo Administrativo Sancionador" `
+  --date-from 05/08/2026 `
+  --date-to 05/08/2026 `
+  --limit-families 3 `
+  --results-page hackathon/tools/prototypes/document_downloader/samples/sei-results-august-05.md `
+  --pages-dir hackathon/tools/prototypes/document_downloader/samples/process-pages `
+  --out hackathon/.prototype-downloads/lote-agosto-05 `
+  --no-open-browser
+```
+
+Real assisted run:
+
+```powershell
+python hackathon/tools/prototypes/document_downloader/baixar_lote_assistido.py `
+  --source-system sei `
+  --theme "Fiscalização da Distribuição: Processo Administrativo Sancionador" `
+  --date-from 05/08/2026 `
+  --date-to 05/08/2026 `
+  --limit-families 3 `
+  --results-page hackathon/.prototype-downloads/resultados-sei-agosto-05.html `
+  --pages-dir hackathon/.prototype-downloads/paginas-processos-agosto-05 `
+  --out hackathon/.prototype-downloads/lote-agosto-05
+```
+
+For the real run, solve captcha in the browser, save/copy the search results to
+`--results-page`, then press Enter. If a selected process page is missing in
+`--pages-dir`, the command tells you the exact filename to save before continuing.
+
 ## Notes
 
 - Output is scratch data. It belongs under `hackathon/.prototype-downloads/`.
