@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -191,17 +191,22 @@ def print_plan(families: dict[str, list[SourceDocument]]) -> None:
 
 
 def download_all(
-    families: dict[str, list[SourceDocument]], output_root: Path
+    families: dict[str, list[SourceDocument]],
+    output_root: Path,
+    download_url_fn: Callable[[str, Path], None] | None = None,
 ) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for family_id, versions in families.items():
         for version in versions:
-            results.append(download_one(family_id, version, output_root))
+            results.append(download_one(family_id, version, output_root, download_url_fn))
     return results
 
 
 def download_one(
-    family_id: str, version: SourceDocument, output_root: Path
+    family_id: str,
+    version: SourceDocument,
+    output_root: Path,
+    download_url_fn: Callable[[str, Path], None] | None = None,
 ) -> dict[str, Any]:
     target_dir = output_root / "families" / safe_name(family_id) / "versions" / safe_name(
         version.version_id
@@ -235,7 +240,7 @@ def download_one(
             digest = None
             size_bytes = target_path.stat().st_size
         elif version.locator.startswith(("http://", "https://")):
-            download_url(version.locator, target_path)
+            (download_url_fn or download_url)(version.locator, target_path)
             digest = sha256_file(target_path)
             status = "downloaded"
             error = None

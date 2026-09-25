@@ -163,6 +163,42 @@ When using `--no-open-browser`, the page files must already exist. If one is
 missing, the command stops with the expected path and an instruction to save it;
 it does not emit a Python traceback.
 
+## Automated SEI batch after human CAPTCHA
+
+This is the simplest real-SEI flow. The command opens a visible Edge or Chrome window,
+fills the filters, then waits while you solve CAPTCHA and click `Pesquisar`.
+After results appear, it automatically selects the first N process families,
+visits their public pages, and downloads documents whose public links are
+available. There is no need to save HTML pages or return to the terminal.
+
+Install the one prototype dependency once:
+
+```powershell
+python -m pip install -r hackathon/tools/prototypes/document_downloader/requirements.txt
+```
+
+Then run:
+
+```powershell
+python hackathon/tools/prototypes/document_downloader/automated_batch_downloader.py `
+  --source-system sei `
+  --theme "Fiscalização da Distribuição: Processo Administrativo Sancionador" `
+  --theme-field tipo-processo `
+  --date-from 05/08/2026 `
+  --date-to 05/08/2026 `
+  --limit-families 3 `
+  --out hackathon/.prototype-downloads/lote-agosto-05-automatico
+```
+
+On the first run, Cloudflare may appear before the SEI form. Solve that human
+check and wait: the command fills the SEI fields once the form becomes available.
+Then your only action is to solve the SEI CAPTCHA and click `Pesquisar`. The
+browser profile is kept under `hackathon/.prototype-downloads/sei-browser-profile`
+so a verified public session can be reused. Do not close the browser while the
+script is collecting pages. The prototype records public files as `downloaded`;
+an official page without a public document URL remains `metadata_only`, and an
+inaccessible public URL is marked `failed`.
+
 ## Notes
 
 - Output is scratch data. It belongs under `hackathon/.prototype-downloads/`.
