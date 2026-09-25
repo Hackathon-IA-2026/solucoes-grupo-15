@@ -29,8 +29,8 @@ export function ExploreLanding() {
           </div>
         </section>
         <aside className="landing-panel landing-side">
-          <div><span className="landing-icon"><FolderKanban size={20} /></span><h3>Processos acompanhados</h3><p>Veja atualizações, documentos e prazos dos processos que você segue.</p><button type="button" onClick={() => navigate("/meus-processos")}>Abrir processos <ArrowRight size={15} /></button></div>
-          <div><span className="landing-icon green"><BellRing size={20} /></span><h3>Atualizações recentes</h3><p>Três notificações aguardam sua leitura, incluindo um voto juntado.</p><button type="button" onClick={() => navigate("/notificacoes")}>Ver notificações <ArrowRight size={15} /></button></div>
+          <div><span className="landing-icon"><FolderKanban size={20} /></span><h3>Catálogo de processos</h3><p>Consulte as peças e relações processuais disponíveis no corpus demonstrativo.</p><button type="button" onClick={() => navigate("/meus-processos")}>Abrir processos <ArrowRight size={15} /></button></div>
+          <div><span className="landing-icon green"><BellRing size={20} /></span><h3>Notificações do corpus</h3><p>Escolha seu escopo para receber alertas sobre novos documentos indexados.</p><button type="button" onClick={() => navigate("/notificacoes")}>Configurar notificações <ArrowRight size={15} /></button></div>
         </aside>
       </div>
     </section>
