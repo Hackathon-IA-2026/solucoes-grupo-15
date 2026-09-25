@@ -59,6 +59,23 @@ describe("App", () => {
     await waitFor(() => expect(window.location.pathname).toContain("/documents/fam-auto-0007"));
     expect(screen.getByRole("button", { name: /notificações, 0 não lidas/i })).toBeInTheDocument();
   });
+
+  it("confirma o reset da demonstração pelo menu da conta", async () => {
+    window.localStorage.setItem("capiwatt-lens:mock-session", JSON.stringify({
+      user: { id: "carolina", name: "Carolina", firstName: "Carol", initials: "CA", email: "carolina@capiwatt.demo" },
+      activePersona: "advocacia",
+    }));
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Carol/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /resetar demonstração/i }));
+    expect(screen.getByRole("dialog", { name: /resetar demonstração/i })).toHaveTextContent(/corpus documental.*preservado/i);
+    fireEvent.click(screen.getByRole("button", { name: /confirmar reset/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: /resetar demonstração/i })).not.toBeInTheDocument());
+    expect(fetch).toHaveBeenCalledWith("/v1/demo/reset", { method: "POST" });
+    expect(window.location.pathname).toBe("/explorar");
+  });
 });
 
 function buildFetchMock() {
@@ -70,6 +87,7 @@ function buildFetchMock() {
     if (url.endsWith("/email-digests")) return jsonResponse([{ email_id: "carolina:job-1", user_id: "carolina", ingestion_job_id: "job-1", notification_ids: [5], rendered_body: "Você tem 1 novo documento", created_at: "2024-05-02T12:00:00Z" }]);
     if (url.endsWith("/notifications")) return jsonResponse([{ id: 5, user_id: "carolina", document_version_id: "docver-auto-0007-v2", family_id: "fam-auto-0007", document_type: "auto_de_infracao", document_id: "auto-0007", scope_effective: "estrita", reasons: [{ type: "novo_documento" }], ingestion_job_id: "job-1", created_at: "2024-05-02T12:00:00Z", opened: false }]);
     if (url.endsWith("/opened")) return jsonResponse({ notification_id: 5, opened: true });
+    if (url === "/v1/demo/reset") return jsonResponse({ deleted: { notifications: 1 } });
     return jsonResponse({}, 404);
   });
 }

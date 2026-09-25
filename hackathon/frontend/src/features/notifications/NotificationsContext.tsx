@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { runDemoIngestion } from "../../api/ingestions";
+import { resetDemoState } from "../../api/demo";
 import {
   chooseNotificationScope,
   fetchEmailDigests,
@@ -36,6 +37,7 @@ type NotificationsState =
 type NotificationsContextValue = NotificationsState & {
   chooseScope: (scope: NotificationScope) => Promise<void>;
   openNotification: (notificationId: number) => Promise<void>;
+  resetDemo: () => Promise<void>;
   retry: () => Promise<void>;
 };
 
@@ -111,6 +113,11 @@ export function NotificationsProvider({ children }: PropsWithChildren) {
       : current);
   }, []);
 
+  const resetDemo = useCallback(async () => {
+    await resetDemoState();
+    setState({ kind: "scope-required" });
+  }, []);
+
   const retry = useCallback(async () => {
     if (!user) return;
     setState({ kind: "loading" });
@@ -122,8 +129,8 @@ export function NotificationsProvider({ children }: PropsWithChildren) {
     }
   }, [user]);
   const value = useMemo<NotificationsContextValue>(
-    () => ({ ...state, chooseScope, openNotification, retry }),
-    [chooseScope, openNotification, retry, state],
+    () => ({ ...state, chooseScope, openNotification, resetDemo, retry }),
+    [chooseScope, openNotification, resetDemo, retry, state],
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

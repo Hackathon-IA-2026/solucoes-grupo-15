@@ -32,6 +32,7 @@ from fastapi import FastAPI
 
 from app.config import get_settings
 from app.db import Base, make_engine, make_session_factory
+from app.routes.demo import router as demo_router
 from app.routes.documents import router as documents_router
 from app.routes.feedback import router as feedback_router
 from app.routes.health import router as health_router
@@ -55,6 +56,7 @@ def create_app() -> FastAPI:
     app.state.db_engine = engine
     app.state.db_session_factory = make_session_factory(engine)
     app.include_router(health_router)
+    app.include_router(demo_router)
     app.include_router(ingestions_router)
     app.include_router(search_router)
     app.include_router(documents_router)

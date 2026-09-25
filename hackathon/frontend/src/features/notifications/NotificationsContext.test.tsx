@@ -59,6 +59,18 @@ describe("NotificationsContext", () => {
       expect.objectContaining({ method: "POST" }),
     );
   });
+
+  it("reseta as interações e volta a exigir a escolha de escopo", async () => {
+    const fetchMock = buildFetchMock("estrita");
+    vi.stubGlobal("fetch", fetchMock);
+    renderProbe();
+
+    expect(await screen.findByText("1 não lidas")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /resetar estado/i }));
+
+    expect(await screen.findByText("scope-required")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/v1/demo/reset", { method: "POST" });
+  });
 });
 
 function renderProbe() {
@@ -76,7 +88,7 @@ function Probe() {
   if (state.kind === "scope-required") return <><span>scope-required</span><button type="button" onClick={() => void state.chooseScope("estrita")}>Escolher estrita</button></>;
   if (state.kind !== "ready") return <span>{state.kind}</span>;
   const unread = state.notifications.filter((item) => !item.opened).length;
-  return <><span>{unread} não lidas</span><button type="button" onClick={() => void state.openNotification(5)}>Abrir notificação</button></>;
+  return <><span>{unread} não lidas</span><button type="button" onClick={() => void state.openNotification(5)}>Abrir notificação</button><button type="button" onClick={() => void state.resetDemo()}>Resetar estado</button></>;
 }
 
 function buildFetchMock(initialScope: "estrita" | null) {
@@ -92,6 +104,7 @@ function buildFetchMock(initialScope: "estrita" | null) {
     if (url.endsWith("/email-digests")) return jsonResponse([]);
     if (url.endsWith("/notifications")) return jsonResponse([notification]);
     if (url.endsWith("/opened")) return jsonResponse({ notification_id: 5, opened: true });
+    if (url === "/v1/demo/reset") return jsonResponse({ deleted: { notifications: 1 } });
     return jsonResponse({}, 404);
   });
 }

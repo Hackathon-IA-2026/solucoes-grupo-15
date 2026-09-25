@@ -1,4 +1,4 @@
-import { Bell, Check, ChevronDown, Database, LoaderCircle, LogOut, Menu, RefreshCw, Search, Settings, UserRound, X } from "lucide-react";
+import { AlertTriangle, Bell, Check, ChevronDown, Database, LoaderCircle, LogOut, Menu, RefreshCw, RotateCcw, Search, Settings, UserRound, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -15,6 +15,9 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
   const [accountOpen, setAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationOpenError, setNotificationOpenError] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState(false);
   const [globalQuery, setGlobalQuery] = useState("");
   const unread = notificationState.kind === "ready"
     ? notificationState.notifications.filter((notification) => !notification.opened)
@@ -39,6 +42,20 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
       navigate(`/documents/${encodeURIComponent(familyId)}`);
     } catch {
       setNotificationOpenError(true);
+    }
+  }
+
+  async function confirmReset() {
+    setResetting(true);
+    setResetError(false);
+    try {
+      await notificationState.resetDemo();
+      setResetDialogOpen(false);
+      navigate("/explorar");
+    } catch {
+      setResetError(true);
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -80,11 +97,27 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
             <div className="account-menu" role="menu">
               <button type="button" role="menuitem" onClick={() => navigate("/meu-perfil")}><UserRound size={17} /> Meu perfil</button>
               <button type="button" role="menuitem" onClick={() => navigate("/configuracoes")}><Settings size={17} /> Configurações</button>
+              <button type="button" role="menuitem" onClick={() => { setAccountOpen(false); setResetError(false); setResetDialogOpen(true); }}><RotateCcw size={17} /> Resetar demonstração</button>
               <button type="button" role="menuitem" onClick={handleLogout}><LogOut size={17} /> Sair</button>
             </div>
           )}
         </div>
       </div>
+      {resetDialogOpen && (
+        <div className="product-modal-backdrop" role="presentation" onMouseDown={() => !resetting && setResetDialogOpen(false)}>
+          <section className="product-modal" role="dialog" aria-modal="true" aria-labelledby="reset-demo-title" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="modal-close" type="button" disabled={resetting} onClick={() => setResetDialogOpen(false)} aria-label="Fechar"><X /></button>
+            <AlertTriangle size={28} />
+            <h2 id="reset-demo-title">Resetar demonstração?</h2>
+            <p>Notificações, leituras, escopo, feedbacks e buscas registradas serão apagados. O corpus documental e suas relações serão preservados.</p>
+            {resetError && <p className="feedback-message error">Não foi possível resetar. Tente novamente.</p>}
+            <div className="modal-actions">
+              <button type="button" disabled={resetting} onClick={() => setResetDialogOpen(false)}>Cancelar</button>
+              <button className="danger-outline-button" type="button" disabled={resetting} onClick={() => void confirmReset()}><RotateCcw size={17} /> {resetting ? "Resetando..." : "Confirmar reset"}</button>
+            </div>
+          </section>
+        </div>
+      )}
     </header>
   );
 }
