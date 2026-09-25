@@ -9,9 +9,10 @@ import type { PersonaId } from "../types/product";
 export function PersonaPage() {
   const navigate = useNavigate();
   const { selectPersona } = useSession();
-  const [selected, setSelected] = useState<PersonaId>("advocacia");
+  const [selected, setSelected] = useState<PersonaId | null>(null);
 
   function continueToApp() {
+    if (!selected) return;
     selectPersona(selected);
     navigate("/explorar");
   }
@@ -24,14 +25,14 @@ export function PersonaPage() {
         <p>Escolha o perfil que melhor combina com sua atividade de hoje.</p>
         <div className="persona-grid">
           {mockPersonas.map((persona) => (
-            <button key={persona.id} type="button" className={selected === persona.id ? "persona-card selected" : "persona-card"} onClick={() => setSelected(persona.id)} aria-pressed={selected === persona.id}>
+            <button key={persona.id} type="button" className={`persona-card persona-${persona.id} ${selected === persona.id ? "selected" : ""}`} onClick={() => setSelected(persona.id)} aria-pressed={selected === persona.id}>
               <span className="persona-image"><img src={persona.image} alt="" /></span>
               {selected === persona.id && <span className="persona-check"><Check size={20} /></span>}
               <strong>{persona.title}</strong><span>{persona.description}</span>
             </button>
           ))}
         </div>
-        <button className="yellow-button persona-continue" type="button" onClick={continueToApp}>Continuar <ArrowRight size={23} /></button>
+        <button className="yellow-button persona-continue" type="button" onClick={continueToApp} disabled={!selected}>Continuar <ArrowRight size={23} /></button>
         <button className="persona-back" type="button" onClick={() => navigate("/login")}><ArrowLeft size={19} /> Voltar</button>
       </section>
     </main>

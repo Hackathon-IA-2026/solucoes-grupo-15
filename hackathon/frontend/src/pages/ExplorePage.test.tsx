@@ -4,13 +4,20 @@ import { describe, expect, it } from "vitest";
 
 import { ExplorePage } from "./ExplorePage";
 
-function renderPage() {
-  render(<MemoryRouter><ExplorePage /></MemoryRouter>);
+function renderPage(path = "/explorar") {
+  render(<MemoryRouter initialEntries={[path]}><ExplorePage /></MemoryRouter>);
 }
 
 describe("ExplorePage", () => {
-  it("mostra o ranking MMGD e explica o primeiro precedente", async () => {
+  it("abre em uma home sem ranking antes de uma pesquisa", () => {
     renderPage();
+    expect(screen.getByRole("heading", { name: /ainda não há uma pesquisa/i })).toBeInTheDocument();
+    expect(screen.queryByText("48500.004024/2017-80")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Buscar" })).toBeDisabled();
+  });
+
+  it("mostra o ranking MMGD e explica o primeiro precedente", async () => {
+    renderPage("/explorar?q=MMGD");
     expect(screen.getByLabelText(/carregando ranking/i)).toBeInTheDocument();
     expect(await screen.findByText("48500.004024/2017-80", {}, { timeout: 2000 })).toBeInTheDocument();
     expect(screen.getByText("48500.000639/2019-07")).toBeInTheDocument();
@@ -19,7 +26,7 @@ describe("ExplorePage", () => {
   });
 
   it("abre a explicação do ranking e os documentos-chave", async () => {
-    renderPage();
+    renderPage("/explorar?q=MMGD");
     await screen.findByText("48500.004024/2017-80", {}, { timeout: 2000 });
     fireEvent.click(screen.getByRole("button", { name: /como o ranking é calculado/i }));
     expect(screen.getByRole("dialog", { name: /como o ranking é calculado/i })).toBeInTheDocument();
@@ -30,7 +37,7 @@ describe("ExplorePage", () => {
   });
 
   it("simula a busca de evidências e melhora a cobertura", async () => {
-    renderPage();
+    renderPage("/explorar?q=MMGD");
     await screen.findByText("48500.004024/2017-80", {}, { timeout: 2000 });
     fireEvent.click(screen.getByRole("button", { name: /buscar evidências para preencher/i }));
     expect(screen.getByRole("button", { name: /buscando novas evidências/i })).toBeDisabled();
