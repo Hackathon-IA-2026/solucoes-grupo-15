@@ -1,8 +1,9 @@
-import { Bell, Check, ChevronDown, LogOut, Menu, Search, Settings, UserRound, X } from "lucide-react";
+import { Bell, Check, ChevronDown, Database, LoaderCircle, LogOut, Menu, RefreshCw, Search, Settings, UserRound, X } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useSession } from "../../features/auth/SessionContext";
+import { useDemoData } from "../../features/demo/DemoDataContext";
 import { mockNotifications } from "../../mocks/notificacoes";
 import type { AppNotification } from "../../types/product";
 import { Brand } from "./Brand";
@@ -10,6 +11,7 @@ import { Brand } from "./Brand";
 export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggleMenu: () => void }) {
   const navigate = useNavigate();
   const { user, logout } = useSession();
+  const demoData = useDemoData();
   const [accountOpen, setAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
@@ -45,6 +47,7 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
         <kbd>Ctrl K</kbd>
       </form>
       <div className="topbar-actions">
+        <DemoStatus state={demoData.kind} onRetry={demoData.retry} />
         <div className="notification-control">
           <button className={`notification-button ${unread.length ? "has-unread" : "all-read"}`} type="button" aria-label={`Notificações, ${unread.length} não lidas`} aria-expanded={notificationsOpen} onClick={() => { setNotificationsOpen((open) => !open); setAccountOpen(false); }}>
             <Bell size={21} />
@@ -75,4 +78,14 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
       </div>
     </header>
   );
+}
+
+function DemoStatus({ state, onRetry }: { state: "idle" | "preparing" | "ready" | "error"; onRetry: () => void }) {
+  if (state === "error") {
+    return <button className="demo-status error" type="button" onClick={onRetry} aria-label="Modo demo indisponível. Tentar novamente"><RefreshCw size={14} /> Modo demo indisponível</button>;
+  }
+  if (state === "ready") {
+    return <span className="demo-status ready"><Database size={14} /> Dados demo prontos</span>;
+  }
+  return <span className="demo-status preparing"><LoaderCircle size={14} /> Preparando dados demo</span>;
 }

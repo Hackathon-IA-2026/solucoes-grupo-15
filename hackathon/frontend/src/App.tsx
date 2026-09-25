@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 
 import { AppShell } from "./components/layout/AppShell";
 import { SessionProvider, useSession } from "./features/auth/SessionContext";
+import { DemoDataProvider } from "./features/demo/DemoDataContext";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { ExplorePage } from "./pages/ExplorePage";
 import { FamiliesPage } from "./pages/FamiliesPage";
@@ -20,30 +21,32 @@ export function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <SessionProvider>
-        <Routes>
-          <Route path="/" element={<EntryRedirect />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route element={<RequireSession />}>
-            <Route path="/escolher-perfil" element={<PersonaPage />} />
-            <Route element={<RequirePersona />}>
-              <Route element={<AppShell />}>
-                <Route path="/explorar" element={<ExplorePage />} />
-                <Route path="/meus-processos" element={<MyProcessesPage />} />
-                <Route path="/familias" element={<FamiliesPage />} />
-                <Route path="/mapas-relacoes" element={<RelationsMapPage />} />
-                <Route path="/parecer-conclusivo" element={<OpinionPage />} />
-                <Route path="/notificacoes" element={<ProductNotificationsPage />} />
-                <Route path="/meu-perfil" element={<ComingSoonPage title="Meu perfil" description="Preferências da usuária e da persona ativa." />} />
-                <Route path="/configuracoes" element={<ComingSoonPage title="Configurações" description="Preferências do CapiWatt Lens." />} />
+        <DemoDataProvider>
+          <Routes>
+            <Route path="/" element={<EntryRedirect />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route element={<RequireSession />}>
+              <Route path="/escolher-perfil" element={<PersonaPage />} />
+              <Route element={<RequirePersona />}>
+                <Route element={<AppShell />}>
+                  <Route path="/explorar" element={<ExplorePage />} />
+                  <Route path="/meus-processos" element={<MyProcessesPage />} />
+                  <Route path="/familias" element={<FamiliesPage />} />
+                  <Route path="/mapas-relacoes" element={<RelationsMapPage />} />
+                  <Route path="/parecer-conclusivo" element={<OpinionPage />} />
+                  <Route path="/notificacoes" element={<ProductNotificationsPage />} />
+                  <Route path="/meu-perfil" element={<ComingSoonPage title="Meu perfil" description="Preferências da usuária e da persona ativa." />} />
+                  <Route path="/configuracoes" element={<ComingSoonPage title="Configurações" description="Preferências do CapiWatt Lens." />} />
+                </Route>
               </Route>
             </Route>
-          </Route>
-          <Route path="/consulta-api" element={<SearchPage />} />
-          <Route path="/integracoes/notificacoes" element={<NotificationsPage />} />
-          <Route path="/documents/:familyId" element={<FamilyPage />} />
-          <Route path="/processos/:processoId" element={<ProcessoPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="/consulta-api" element={<SearchPage />} />
+            <Route path="/integracoes/notificacoes" element={<NotificationsPage />} />
+            <Route path="/documents/:familyId" element={<FamilyPage />} />
+            <Route path="/processos/:processoId" element={<ProcessoPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </DemoDataProvider>
       </SessionProvider>
     </BrowserRouter>
   );
