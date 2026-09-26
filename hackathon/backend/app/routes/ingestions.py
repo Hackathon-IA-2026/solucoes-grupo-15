@@ -161,8 +161,20 @@ def _upsert_relation(session: Session, rel: FixtureRelation) -> None:
 
 
 def _index_corpus(corpus: FixtureCorpus, ai_client: AiClient) -> dict[str, IndexReport]:
+    """Monta o payload de ``ai_client.index`` a partir do corpus.
+
+    ``family_id``/``corpus_version`` (issue #69) sao enviados junto do
+    texto para que o ai real (EMBEDDER=bedrock) tenha os atributos de
+    filtro que precisa gravar por chunk - o adapter de fixture
+    (EMBEDDER=fake) continua ignorando os dois, como antes.
+    """
     payload = [
-        IndexDocumentPayload(document_version=doc.document_version, text=doc.text)
+        IndexDocumentPayload(
+            document_version=doc.document_version,
+            text=doc.text,
+            family_id=doc.family_id,
+            corpus_version=corpus.corpus_version,
+        )
         for doc in corpus.documents
     ]
     reports = ai_client.index(payload)

@@ -20,15 +20,19 @@ document_version/document_family) para montar:
     ``document_version`` da face.
 
 Envelope da resposta: ``request_id`` (uuid4 novo por chamada),
-``data_mode: "demo"``, ``corpus_version`` (lido do
-``DocumentVersion.corpus_version`` da primeira familia resolvida - cai
-para ``Settings.default_corpus_version`` quando ``results`` fica
-vazio, pois nao ha nenhuma familia da qual derivar), ``model_version``
-(a mesma constante ``"fixture-demo"`` devolvida pelo ai - nunca
-reinventada aqui), ``ranking_version`` (constante nova desta issue,
-``RANKING_VERSION`` abaixo - nao ha ranking real, so identifica esta
-versao de codigo/agrupamento para reprodutibilidade futura, issue #16
-secao "Versionamento e reprodutibilidade").
+``data_mode`` (issue #69: ``"demo"`` quando ``Settings.embedder ==
+"fake"`` - o mesmo toggle ``EMBEDDER`` do backend/ai, ver
+app/config.py -, ``"real"`` quando ``"bedrock"`` - nunca mais fixo em
+``"demo"``, ja que agora existe um modo com busca vetorial de
+verdade), ``corpus_version`` (lido do ``DocumentVersion.corpus_version``
+da primeira familia resolvida - cai para ``Settings.default_corpus_version``
+quando ``results`` fica vazio, pois nao ha nenhuma familia da qual
+derivar), ``model_version`` (a mesma constante devolvida pelo ai -
+``"fixture-demo"`` no modo fake, a constante real do Titan V2 no modo
+bedrock - nunca reinventada aqui), ``ranking_version`` (constante nova
+desta issue, ``RANKING_VERSION`` abaixo - nao ha ranking real, so
+identifica esta versao de codigo/agrupamento para reprodutibilidade
+futura, issue #16 secao "Versionamento e reprodutibilidade").
 
 Ticket 9 (issue #25, reprodutibilidade) acrescenta a persistencia de
 ``SearchExecution`` (app/models.py) a cada chamada: alem do envelope
@@ -59,6 +63,17 @@ router = APIRouter(prefix="/v1", tags=["search"])
 # para reprodutibilidade futura (issue #16, "Versionamento e
 # reprodutibilidade"). Documentada no resumo de entrega do Ticket 3.
 RANKING_VERSION = "demo-ranking-v1"
+
+
+def _data_mode_for(embedder: str) -> str:
+    """Deriva ``data_mode`` do toggle ``EMBEDDER`` (issue #69).
+
+    ``"fake"`` (default) -> ``"demo"`` (nunca houve busca vetorial
+    real). ``"bedrock"`` -> ``"real"``. Qualquer outro valor cai em
+    ``"demo"`` por seguranca (nunca afirma "real" sem confirmar o modo
+    exato esperado).
+    """
+    return "real" if embedder == "bedrock" else "demo"
 
 
 class SearchRequestIn(BaseModel):
@@ -107,7 +122,7 @@ def search(
 
     envelope = SearchEnvelope(
         request_id=str(uuid.uuid4()),
-        data_mode="demo",
+        data_mode=_data_mode_for(get_settings().embedder),
         corpus_version=corpus_version,
         model_version=ai_response.model_version,
         ranking_version=RANKING_VERSION,

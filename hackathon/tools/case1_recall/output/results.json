@@ -1,0 +1,88 @@
+{
+  "query": "procure precedentes sobre fiscalização de atendimento a solicitações de conexão de MMGD",
+  "corpus_version": "case1-real-v1",
+  "top_k": 3,
+  "golden_top3_processes": [
+    "48500.000639/2019-07",
+    "48500.004024/2017-80",
+    "48500.901433/2024-53"
+  ],
+  "after_index": {
+    "model_version": "amazon.titan-embed-text-v2-us-east-1-1024d-normalized",
+    "hits": [
+      {
+        "document_version": "case1-cemig-auto-2020",
+        "family_id": "case1-cemig-auto",
+        "score": 1.3751076,
+        "processo_raw": "48500.000639/2019-07",
+        "processo_canonical": "48500.000639/2019-07",
+        "excerpt_preview": "3 do\n                            PRODIST, isto é, assim que os interessados protocolam seus pedidos na loja virtual\n    "
+      },
+      {
+        "document_version": "case1-cemig-recurso-2020",
+        "family_id": "case1-cemig-recurso",
+        "score": 1.3686106,
+        "processo_raw": "48500.000639/2019-07",
+        "processo_canonical": "48500.000639/2019-07",
+        "excerpt_preview": " consumidores ou usuários, até o fim do prazo estabelecido para manifestação ao\n                                      TN"
+      },
+      {
+        "document_version": "case1-enel-auto-2018",
+        "family_id": "case1-enel-auto",
+        "score": 1.3637686,
+        "processo_raw": "48500.004024/2017-80",
+        "processo_canonical": "48500.004024/2017-80",
+        "excerpt_preview": " 2.4.4 A solicitação de acesso deve conter o Formulário de Solicitação de Acesso para microgeração e\n                   "
+      }
+    ],
+    "processes_retrieved_top3": [
+      "48500.000639/2019-07",
+      "48500.004024/2017-80"
+    ],
+    "hits_in_golden": [
+      "48500.000639/2019-07",
+      "48500.004024/2017-80"
+    ],
+    "recall_at_3": 0.6666666666666666,
+    "gate_passed": true
+  },
+  "after_reindex": {
+    "model_version": "amazon.titan-embed-text-v2-us-east-1-1024d-normalized",
+    "hits": [
+      {
+        "document_version": "case1-cemig-auto-2020",
+        "family_id": "case1-cemig-auto",
+        "score": 1.3751076,
+        "processo_raw": "48500.000639/2019-07",
+        "processo_canonical": "48500.000639/2019-07",
+        "excerpt_preview": "3 do\n                            PRODIST, isto é, assim que os interessados protocolam seus pedidos na loja virtual\n    "
+      },
+      {
+        "document_version": "case1-cemig-recurso-2020",
+        "family_id": "case1-cemig-recurso",
+        "score": 1.3686106,
+        "processo_raw": "48500.000639/2019-07",
+        "processo_canonical": "48500.000639/2019-07",
+        "excerpt_preview": " consumidores ou usuários, até o fim do prazo estabelecido para manifestação ao\n                                      TN"
+      },
+      {
+        "document_version": "case1-enel-auto-2018",
+        "family_id": "case1-enel-auto",
+        "score": 1.3637686,
+        "processo_raw": "48500.004024/2017-80",
+        "processo_canonical": "48500.004024/2017-80",
+        "excerpt_preview": " 2.4.4 A solicitação de acesso deve conter o Formulário de Solicitação de Acesso para microgeração e\n                   "
+      }
+    ],
+    "processes_retrieved_top3": [
+      "48500.000639/2019-07",
+      "48500.004024/2017-80"
+    ],
+    "hits_in_golden": [
+      "48500.000639/2019-07",
+      "48500.004024/2017-80"
+    ],
+    "recall_at_3": 0.6666666666666666,
+    "gate_passed": true
+  }
+}

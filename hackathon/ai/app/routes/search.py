@@ -1,24 +1,32 @@
-"""Rota interna de busca (adapter demo) do modulo ai.
+"""Rota interna de busca do modulo ai.
 
-Cobre, para o Ticket 3 (TB1, issue #19), a operacao ``search`` do port
-VectorService (issue #16). Nao ha busca vetorial real, embeddings ou
-calculo de similaridade: a resposta vem inteiramente de um mapeamento
-declarativo fixo, definido em app/fixtures/search_fixtures.json
-(marcado ``"provisional": true``) - consulta (string exata) -> lista
-ordenada de hits. O ai le esse arquivo diretamente e resolve a busca
-sozinho: recebe so a ``query`` por HTTP, nunca os dados de busca em si
-(o backend nao repassa um payload de dados aqui, ao contrario de
-``index``).
+Cobre a operacao ``search`` do port VectorService (issue #16), em dois
+modos escolhidos por ``Settings.embedder`` (variavel ``EMBEDDER``, ver
+app/config.py) - o mesmo toggle usado por app/routes/index.py:
 
-Correspondencia e SEMPRE exata (sem fuzzy matching, sem NLP, sem
-normalizacao de acentos/caixa). Uma consulta que nao esta declarada na
-fixture NAO e erro: devolve 200 com ``hits: []``.
+- ``EMBEDDER=fake`` (default, Ticket 3/TB1): adapter demo original. Nao
+  ha busca vetorial real: a resposta vem de um mapeamento declarativo
+  fixo (app/fixtures/search_fixtures.json, ``"provisional": true``) -
+  consulta (string exata) -> lista ordenada de hits. Correspondencia e
+  SEMPRE exata (sem fuzzy matching/NLP/normalizacao). Uma consulta nao
+  declarada devolve 200 com ``hits: []``. Preservado byte-a-byte (issue
+  #69, AC "modo fixture continua funcionando sem credenciais AWS").
+
+- ``EMBEDDER=bedrock`` (issue #69): embeda a ``query`` com o mesmo
+  adapter Titan V2 usado por ``index`` (app/embeddings.py) e busca no
+  indice vetorial real (app/vector_store.py) os ``top_k`` chunks mais
+  proximos por produto escalar (vetores normalizados == cosseno, mesma
+  escolha do protototipo do Recall@3, issue #60). Devolve hits crus por
+  chunk, na ordem de score (maior primeiro) - o agrupamento por familia
+  continua responsabilidade exclusiva do backend (POST /v1/search, ver
+  hackathon/backend/app/routes/search.py). ``model_version`` de
+  resposta e ``app.embeddings.MODEL_VERSION``.
 
 O agrupamento por familia (uma familia nunca duas vezes na resposta,
-face = versao mais recente) e responsabilidade do backend (POST
-/v1/search, ver hackathon/backend/app/routes/search.py) - esta rota
-devolve os hits crus, na ordem exatamente declarada na fixture, sem
-agrupar nem reordenar por score.
+face = versao mais recente) e responsabilidade do backend nos dois
+modos - esta rota nunca agrupa nem reordena por conta propria alem do
+proprio ranking por score (no modo real) ou da ordem declarada (no modo
+fake).
 """
 
 import json
@@ -27,11 +35,21 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.routes.index import MODEL_VERSION
+from app.config import get_settings
+from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
+from app.embeddings import BedrockEmbedder
+from app.routes.index import MODEL_VERSION, get_embedder, get_vector_store
+from app.vector_store import VectorStore, index_name_for_model_version
 
 router = APIRouter(prefix="/internal/v1", tags=["internal"])
 
 _DEFAULT_FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "search_fixtures.json"
+
+# Default de top_k quando o modo real e usado sem o parametro explicito -
+# a issue #60 mediu Recall@3 com top_k=3; um default mais generoso (10)
+# evita truncar demais uma busca de uso geral (issue #73, corpus maior)
+# quando o chamador nao pede um top_k especifico.
+DEFAULT_REAL_TOP_K = 10
 
 
 class SearchRequest(BaseModel):
@@ -65,7 +83,15 @@ def get_search_fixture_path() -> Path:
 def search(
     payload: SearchRequest,
     fixture_path: Path = Depends(get_search_fixture_path),
+    embedder: BedrockEmbedder = Depends(get_embedder),
+    vector_store: VectorStore = Depends(get_vector_store),
 ) -> SearchResponse:
+    if get_settings().embedder == "bedrock":
+        return _search_real(payload, embedder, vector_store)
+    return _search_fake(payload, fixture_path)
+
+
+def _search_fake(payload: SearchRequest, fixture_path: Path) -> SearchResponse:
     queries = _load_queries(fixture_path)
     hits = queries.get(payload.query, [])
     if payload.top_k is not None:
@@ -73,6 +99,27 @@ def search(
     return SearchResponse(
         hits=[SearchHitOut(**hit) for hit in hits],
         model_version=MODEL_VERSION,
+    )
+
+
+def _search_real(
+    payload: SearchRequest, embedder: BedrockEmbedder, vector_store: VectorStore
+) -> SearchResponse:
+    top_k = payload.top_k if payload.top_k is not None else DEFAULT_REAL_TOP_K
+    query_vector = embedder.embed_text(payload.query).vector
+    index_name = index_name_for_model_version(REAL_MODEL_VERSION)
+    hits = vector_store.search(index_name, query_vector, top_k)
+    return SearchResponse(
+        hits=[
+            SearchHitOut(
+                family_id=hit.family_id,
+                document_version=hit.document_version,
+                excerpt=hit.excerpt,
+                score=hit.score,
+            )
+            for hit in hits
+        ],
+        model_version=REAL_MODEL_VERSION,
     )
 
 

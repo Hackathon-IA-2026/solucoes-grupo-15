@@ -304,3 +304,21 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
         }
     ]
     assert json.loads(execution.response_json) == body
+
+
+def test_search_data_mode_is_real_when_embedder_is_bedrock(database_url: str, monkeypatch) -> None:
+    """Issue #69: ``data_mode`` deixa de ser fixo em ``"demo"`` - reflete
+    ``Settings.embedder`` (o mesmo toggle ``EMBEDDER`` do backend/ai).
+    """
+    from app.config import get_settings
+
+    monkeypatch.setenv("EMBEDDER", "bedrock")
+    get_settings.cache_clear()
+    try:
+        client = _client(database_url, hits=[])
+        response = client.post("/v1/search", json={"query": "qualquer consulta"})
+    finally:
+        get_settings.cache_clear()
+
+    assert response.status_code == 200
+    assert response.json()["data_mode"] == "real"
