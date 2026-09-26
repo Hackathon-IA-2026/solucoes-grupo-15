@@ -1,0 +1,12 @@
+# Dependencies for hackathon/tools/pipeline/ (standalone script, not one of
+# the three ADR-0001 modules — this is the only file that pins its deps).
+#
+# Added by issue #70 (routes/html_sei.py): SEI's native HTML documents mix
+# real content tables with a signature/CRC boilerplate block; a robust HTML
+# parser is needed to walk that structure (tables, nested divs) reliably —
+# hand-rolled regex over raw HTML is too fragile for real-world SEI markup
+# (see routes/html_sei.py's module docstring for the alternatives considered).
+#
+# Install with: python3.12 -m pip install -r hackathon/tools/pipeline/requirements.txt
+beautifulsoup4>=4.12
+lxml>=5.0

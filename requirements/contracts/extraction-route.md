@@ -4,12 +4,12 @@ sources:
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/d14-data-operations-modeling.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i7-reproducibility.md
   - hackathon/tools/prototypes/pdf_to_markdown/README.md
-last_synced_with_sources: 2026-09-26 (issue-68)
+last_synced_with_sources: 2026-09-26 (issue-70)
 ---
 
 # Contrato de fronteira: manifesto/executor ↔ rotas de extração
 
-Snapshot legível do contrato entre o executor em lote (`hackathon/tools/pipeline/executor.py`, issue #68) e as rotas de extração que outras issues plugam nele: a rota PDF-com-texto genérica desta própria issue (`routes/pdf_text_generic.py`), e as rotas futuras de HTML (#70), PDF com specs geradas por LLM (#71) e OCR (#72). **A fonte de verdade do contrato é o código** (`hackathon/tools/pipeline/routes/__init__.py`, docstring do módulo) — este arquivo é um resumo derivado dele, para quem for implementar #70/#71/#72 sem precisar ler o executor inteiro primeiro.
+Snapshot legível do contrato entre o executor em lote (`hackathon/tools/pipeline/executor.py`, issue #68) e as rotas de extração que outras issues plugam nele: a rota PDF-com-texto genérica (`routes/pdf_text_generic.py`, issue #68) e a rota de HTML nativo do SEI (`routes/html_sei.py`, issue #70) já implementadas, e as rotas futuras de PDF com specs geradas por LLM (#71) e OCR (#72). **A fonte de verdade do contrato é o código** (`hackathon/tools/pipeline/routes/__init__.py`, docstring do módulo) — este arquivo é um resumo derivado dele, para quem for implementar #71/#72 sem precisar ler o executor inteiro primeiro.
 
 > **Manutenção:** este arquivo deve ser atualizado sempre que `routes/__init__.py` mudar de forma a afetar a interface `ExtractionRoute`/`ExtractionResult`, ou quando D14 (extração por IA) ou I7 (reprodutibilidade/`corpus_version`) mudarem de forma a afetar esta fronteira. Ver seção "Como manter em sincronia" no fim.
 
@@ -44,7 +44,7 @@ Uma interface Python só (`ExtractionRoute`, um `Protocol` em `routes/__init__.p
 ## Entrada, saída e marcadores de página
 
 - **Entrada**: um `ManifestDocument` com `caminho` real em disco. O executor nunca chama uma rota para um documento `descartado` (triagem) ou sem `sha256` (ex.: `status_origem == "restrito"`, ANEEL nunca disponibilizou o arquivo).
-- **Saída**: Markdown com marcadores de página `<!-- page:N -->` antes do conteúdo de cada página — mesmo formato que `hackathon/tools/prototypes/pdf_to_markdown/filter_verbatim.py` já escreve (issue #59). Uma rota sem noção natural de página (HTML, issue #70) deve documentar, no próprio docstring do módulo, o que ela preenche nesse marcador único (ex.: `<!-- page:1 -->` para o documento inteiro).
+- **Saída**: Markdown com marcadores de página `<!-- page:N -->` antes do conteúdo de cada página — mesmo formato que `hackathon/tools/prototypes/pdf_to_markdown/filter_verbatim.py` já escreve (issue #59). Uma rota sem noção natural de página (HTML, issue #70) deve documentar, no próprio docstring do módulo, o que ela preenche nesse marcador único (ex.: `<!-- page:1 -->` para o documento inteiro). **Decisão tomada pela #70** (`routes/html_sei.py`): documento HTML inteiro = página única, sempre `<!-- page:1 -->` e `pages_total = pages_kept = 1` — não há mecanismo de descarte de página parcial nessa rota (nada equivalente ao `drop_pages` do protótipo PDF), porque não há unidade de página para descartar; um documento sem conteúdo aproveitável depois de remover o boilerplate é `status="pending"`, nunca uma página "descartada".
 - **Identidade da versão extraída**: `(sha256, extractor_version)`. Uma rota deve trocar sua própria `extractor_version` sempre que sua saída para a mesma entrada mudaria (nova regex, nova dependência com saída diferente etc.) — o cache do executor nunca deve servir uma entrada antiga silenciosamente.
 - **Cópia verbatim (D14)**: nenhuma rota pode reescrever ou resumir frase alguma — só remover linhas/blocos (assinatura, certificação, boilerplate) por regra explícita e auditável. Isso vale para todas as rotas presentes e futuras, não só para a rota PDF genérica desta issue.
 
@@ -52,7 +52,7 @@ Uma interface Python só (`ExtractionRoute`, um `Protocol` em `routes/__init__.p
 
 Plugar uma nova rota é: implementar `ExtractionRoute` (uma classe com `name`, `extractor_version`, `can_handle`, `extract`) num novo módulo em `routes/`, e registrá-la em `cli.py::build_registry()`. Nenhuma mudança no executor é esperada:
 
-- **#70 (HTML nativo do SEI)**: `can_handle` responde `True` para `formato == "html"`; a rota decide e documenta o que preenche no marcador de página único.
+- **#70 (HTML nativo do SEI) — implementada** (`routes/html_sei.py`): `can_handle` responde `True` para `formato == "html"`. Usa BeautifulSoup+lxml (nova dependência do módulo — ver `hackathon/tools/pipeline/requirements.txt`) para andar a árvore DOM em vez de regex sobre HTML bruto; remove o bloco de assinatura/CRC do SEI por marcador estrutural (`<div unselectable="on">`, verificado 100% consistente nos 612 HTML reais do corpus) e a tabela de referência de rodapé por casamento textual exato — nunca por posição isolada nem por rewrite de frase. Ver o docstring do módulo para o detalhamento completo das regras de remoção (auditáveis) e uma limitação conhecida e documentada (numeração gerada via contador CSS em alguns documentos, invisível a qualquer extrator estático de texto — fora de escopo da #70).
 - **#71 (PDF com specs geradas por LLM)**: mesma família de formato (`pdf`) da rota desta issue — para não colidir, `#71` deve registrar sua rota **antes** da rota genérica em `build_registry()` (primeira que responder `can_handle` vence) e sua própria rota decide, internamente, se usa a spec gerada por LLM ou devolve `pending` para a rota genérica tratar (ou vice-versa — a ordem exata de precedência entre as duas rotas de PDF é decisão da #71, não desta issue).
 - **#72 (OCR)**: hoje, `routes/pdf_text_generic.py` já detecta "PDF sem camada de texto" e devolve `status="pending"` com uma mensagem apontando para a #72 — a rota de OCR pode assumir esses documentos registrando-se como uma rota adicional para `formato == "pdf"` que roda depois da rota de texto, tratando especificamente o caso em que a rota de texto devolveu `pending` por falta de texto (mecanismo exato de encadeamento é decisão da #72).
 

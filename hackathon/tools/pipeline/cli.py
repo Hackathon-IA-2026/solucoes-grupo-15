@@ -27,6 +27,7 @@ from manifest import (  # noqa: E402
     compute_corpus_version,
 )
 from routes import RouteRegistry  # noqa: E402
+from routes.html_sei import HtmlSeiRoute  # noqa: E402
 from routes.pdf_text_generic import PdfTextGenericRoute  # noqa: E402
 from triage import apply_triage  # noqa: E402
 
@@ -37,6 +38,7 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "hackathon" / ".pipeline-output"
 def build_registry() -> RouteRegistry:
     registry = RouteRegistry()
     registry.register(PdfTextGenericRoute())
+    registry.register(HtmlSeiRoute())
     return registry
 
 
