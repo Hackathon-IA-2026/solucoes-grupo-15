@@ -23,6 +23,11 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /especialistas em regulação/i })).toHaveTextContent(
       /fiscalização, processos, normas e acompanhamento regulatório/i,
     );
+    const pesquisadores = screen.getByRole("button", { name: /pesquisadores/i });
+    expect(pesquisadores).toHaveAttribute("aria-disabled", "true");
+    expect(pesquisadores).toHaveTextContent(/em construção/i);
+    fireEvent.click(pesquisadores);
+    expect(screen.getByRole("button", { name: /continuar/i })).toBeDisabled();
     expect(screen.queryByText(/pareceres/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continuar/i })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /advogados/i }));

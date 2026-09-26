@@ -90,7 +90,7 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
         <div className="account-control">
           <button type="button" className="account-trigger" onClick={() => { setAccountOpen((open) => !open); setNotificationsOpen(false); }} aria-expanded={accountOpen}>
             <span className="avatar">{user?.initials ?? "CA"}</span>
-            <span className="account-name"><strong>{user?.firstName ?? "Carol"}</strong><small>Advocacia regulatória</small></span>
+            <span className="account-name"><strong>{user?.firstName ?? "Carol"}</strong><small>Advogados</small></span>
             <ChevronDown size={16} />
           </button>
           {accountOpen && (
