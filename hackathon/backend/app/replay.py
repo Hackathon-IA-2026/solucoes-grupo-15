@@ -83,6 +83,8 @@ def replay_search(request_id: str, session: Session) -> ReplayResult:
         model_version=execution.model_version,
         ranking_version=execution.ranking_version,
         results=results,
+        total=len(results),
+        next_cursor=None,
     )
     original_response = SearchEnvelope.model_validate_json(execution.response_json)
 

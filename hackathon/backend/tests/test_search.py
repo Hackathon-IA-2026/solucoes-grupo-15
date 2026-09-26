@@ -304,3 +304,168 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
         }
     ]
     assert json.loads(execution.response_json) == body
+
+
+# ---------------------------------------------------------------------------
+# Testes de paginacao lazy (issue #76)
+# ---------------------------------------------------------------------------
+
+def test_search_pagination_first_page_returns_next_cursor(database_url: str) -> None:
+    """Primeira pagina com limit=1 sobre 2 familias devolve next_cursor nao nulo."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="trecho auto",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="trecho defesa",
+            score=0.7,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "paginacao primeira pagina", "limit": 1})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 2
+    assert len(body["results"]) == 1
+    assert body["results"][0]["family_id"] == "fam-auto-0007"
+    assert body["next_cursor"] is not None
+
+
+def test_search_pagination_continuation_does_not_call_ai(database_url: str) -> None:
+    """Continuacao com cursor valido nao chama AiClient.search.
+
+    Verificado indiretamente: o FakeSearchAiClient da continuacao
+    levantaria AssertionError se search() fosse chamado, pois
+    passamos uma instancia sem hits. O resultado da segunda pagina
+    deve conter a segunda familia congelada na primeira chamada.
+    """
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="trecho auto",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="trecho defesa",
+            score=0.7,
+        ),
+    ]
+
+    # Primeira chamada: obtemos o cursor
+    engine = make_engine(database_url)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    session_factory = make_session_factory(engine)
+
+    def _override_session():
+        session = session_factory()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    _seed_catalog(session_factory)
+
+    # Cliente que falharia se search() fosse chamado numa segunda vez
+    class _OnceAiClient:
+        def __init__(self, hits: list[AiSearchHit]) -> None:
+            self._hits = hits
+            self._called = False
+
+        def search(self, query: str, top_k: int | None = None) -> AiSearchResponse:
+            assert not self._called, "AiClient.search foi chamado mais de uma vez — paginacao nao deveria chamar o ai"
+            self._called = True
+            return AiSearchResponse(hits=self._hits, model_version="fixture-demo")
+
+    fake_ai = _OnceAiClient(hits)
+
+    app = create_app()
+    app.dependency_overrides[get_ai_client] = lambda: fake_ai
+    app.dependency_overrides[get_db_session] = _override_session
+    first_client = TestClient(app)
+
+    first_resp = first_client.post("/v1/search", json={"query": "continuacao", "limit": 1})
+    assert first_resp.status_code == 200
+    first_body = first_resp.json()
+    cursor = first_body["next_cursor"]
+    assert cursor is not None
+
+    # Segunda chamada (continuacao) - o mesmo TestClient/app com o mesmo fake_ai
+    second_resp = first_client.post("/v1/search", json={"query": "qualquer", "cursor": cursor, "limit": 1})
+    assert second_resp.status_code == 200
+    second_body = second_resp.json()
+
+    assert len(second_body["results"]) == 1
+    assert second_body["results"][0]["family_id"] == "fam-defesa-0007"
+    assert second_body["total"] == 2
+    assert second_body["next_cursor"] is None
+
+
+def test_search_pagination_invalid_cursor_returns_400(database_url: str) -> None:
+    """Cursor invalido (nao decodificavel) deve retornar HTTP 400."""
+    client = _client(database_url, hits=[])
+
+    response = client.post(
+        "/v1/search",
+        json={"query": "qualquer", "cursor": "cursor-invalido-nao-base64-valido!!!"},
+    )
+
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "invalido" in detail.lower() or "invalid" in detail.lower()
+
+
+def test_search_pagination_custom_limit(database_url: str) -> None:
+    """Limit customizado e respeitado: limit=2 sobre 3 familias devolve 2 resultados
+    na primeira pagina e next_cursor nao nulo."""
+    hits = [
+        AiSearchHit(family_id="fam-auto-0007", document_version="docver-auto-0007-v1", excerpt="t1", score=0.9),
+        AiSearchHit(family_id="fam-defesa-0007", document_version="docver-defesa-0007-v1", excerpt="t2", score=0.8),
+        AiSearchHit(family_id="fam-decisao-0007", document_version="docver-decisao-0007-v1", excerpt="t3", score=0.7),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "limit customizado", "limit": 2})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 3
+    assert len(body["results"]) == 2
+    assert body["next_cursor"] is not None
+
+
+def test_search_pagination_last_page_has_no_next_cursor(database_url: str) -> None:
+    """Ultima pagina tem next_cursor nulo."""
+    hits = [
+        AiSearchHit(family_id="fam-auto-0007", document_version="docver-auto-0007-v1", excerpt="t1", score=0.9),
+        AiSearchHit(family_id="fam-defesa-0007", document_version="docver-defesa-0007-v1", excerpt="t2", score=0.8),
+    ]
+    client = _client(database_url, hits)
+
+    # Primeira pagina com limit=1 → cursor disponivel
+    first_resp = client.post("/v1/search", json={"query": "ultima pagina", "limit": 1})
+    assert first_resp.status_code == 200
+    cursor = first_resp.json()["next_cursor"]
+    assert cursor is not None
+
+    # Segunda (e ultima) pagina → sem cursor
+    second_resp = client.post("/v1/search", json={"query": "qualquer", "cursor": cursor, "limit": 1})
+    assert second_resp.status_code == 200
+    body = second_resp.json()
+    assert len(body["results"]) == 1
+    assert body["next_cursor"] is None
+    assert body["total"] == 2

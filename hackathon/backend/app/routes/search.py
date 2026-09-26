@@ -30,6 +30,15 @@ reinventada aqui), ``ranking_version`` (constante nova desta issue,
 versao de codigo/agrupamento para reprodutibilidade futura, issue #16
 secao "Versionamento e reprodutibilidade").
 
+Paginacao lazy (issue #76): o body aceita ``cursor`` (opaco, opcional)
+e ``limit`` (default 10). Sem cursor: executa a busca no ai, persiste
+todos os hits em ``SearchExecution`` e devolve o primeiro lote. Com
+cursor valido: carrega os hits congelados do ``SearchExecution``
+identificado pelo cursor sem chamar o ai, devolve o proximo lote.
+Cursor invalido/expirado → HTTP 400. ``total`` e o numero de familias
+unicas do conjunto congelado inteiro; ``next_cursor`` e nulo na ultima
+pagina.
+
 Ticket 9 (issue #25, reprodutibilidade) acrescenta a persistencia de
 ``SearchExecution`` (app/models.py) a cada chamada: alem do envelope
 final, grava os hits CRUS devolvidos por ``ai_client.search`` (antes
@@ -38,10 +47,11 @@ fase demo, que ``app/replay.py::replay_search`` usa para reexecutar a
 busca offline, sem chamar o ai de novo (ver i7-reproducibility).
 """
 
+import base64
 import json
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -61,9 +71,38 @@ router = APIRouter(prefix="/v1", tags=["search"])
 RANKING_VERSION = "demo-ranking-v1"
 
 
+# ---------------------------------------------------------------------------
+# Cursor helpers (issue #76)
+# ---------------------------------------------------------------------------
+
+def _encode_cursor(request_id: str, offset: int) -> str:
+    """Codifica (request_id, offset) como cursor opaco em base64 URL-safe."""
+    raw = f"{request_id}:{offset}"
+    return base64.urlsafe_b64encode(raw.encode()).decode()
+
+
+def _decode_cursor(cursor: str) -> tuple[str, int]:
+    """Decodifica o cursor opaco; levanta ValueError em qualquer falha."""
+    try:
+        raw = base64.urlsafe_b64decode(cursor.encode()).decode()
+        request_id, offset_str = raw.rsplit(":", 1)
+        offset = int(offset_str)
+    except Exception as exc:
+        raise ValueError(f"Cursor invalido: {cursor!r}") from exc
+    if not request_id:
+        raise ValueError(f"Cursor invalido: request_id vazio em {cursor!r}")
+    return request_id, offset
+
+
+# ---------------------------------------------------------------------------
+# Modelos Pydantic
+# ---------------------------------------------------------------------------
+
 class SearchRequestIn(BaseModel):
     query: str
     top_k: int | None = None
+    cursor: str | None = None
+    limit: int = 10
 
 
 class SearchFace(BaseModel):
@@ -94,7 +133,13 @@ class SearchEnvelope(BaseModel):
     model_version: str
     ranking_version: str
     results: list[SearchResultOut]
+    total: int
+    next_cursor: str | None = None
 
+
+# ---------------------------------------------------------------------------
+# Rota principal
+# ---------------------------------------------------------------------------
 
 @router.post("/search", response_model=SearchEnvelope)
 def search(
@@ -102,38 +147,95 @@ def search(
     ai_client: AiClient = Depends(get_ai_client),
     session: Session = Depends(get_db_session),
 ) -> SearchEnvelope:
+    limit = payload.limit
+
+    if payload.cursor is not None:
+        # --- Continuacao: carrega hits congelados, nao chama o ai ---
+        try:
+            request_id, offset = _decode_cursor(payload.cursor)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        execution = session.get(SearchExecution, request_id)
+        if execution is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cursor expirado ou invalido: nenhuma execucao encontrada para request_id={request_id!r}",
+            )
+
+        raw_hits = [AiSearchHit(**h) for h in json.loads(execution.raw_hits_json)]
+        all_results, _ = _group_by_family(raw_hits, session)
+        total = len(all_results)
+        page_results = all_results[offset : offset + limit]
+
+        next_offset = offset + limit
+        next_cursor = _encode_cursor(request_id, next_offset) if next_offset < total else None
+
+        return SearchEnvelope(
+            request_id=execution.request_id,
+            data_mode=execution.data_mode,
+            corpus_version=execution.corpus_version,
+            model_version=execution.model_version,
+            ranking_version=execution.ranking_version,
+            results=page_results,
+            total=total,
+            next_cursor=next_cursor,
+        )
+
+    # --- Primeira chamada: executa busca no ai, persiste, devolve primeiro lote ---
     ai_response = ai_client.search(payload.query, top_k=payload.top_k)
-    results, corpus_version = _group_by_family(ai_response.hits, session)
+    all_results, corpus_version = _group_by_family(ai_response.hits, session)
+    total = len(all_results)
+    page_results = all_results[:limit]
+
+    request_id = str(uuid.uuid4())
+    next_offset = limit
+    next_cursor = _encode_cursor(request_id, next_offset) if next_offset < total else None
 
     envelope = SearchEnvelope(
-        request_id=str(uuid.uuid4()),
+        request_id=request_id,
         data_mode="demo",
         corpus_version=corpus_version,
         model_version=ai_response.model_version,
         ranking_version=RANKING_VERSION,
-        results=results,
+        results=page_results,
+        total=total,
+        next_cursor=next_cursor,
     )
 
     _persist_search_execution(
-        envelope, query=payload.query, raw_hits=ai_response.hits, session=session
+        envelope,
+        query=payload.query,
+        raw_hits=ai_response.hits,
+        all_results=all_results,
+        session=session,
     )
 
     return envelope
 
+
+# ---------------------------------------------------------------------------
+# Persistencia
+# ---------------------------------------------------------------------------
 
 def _persist_search_execution(
     envelope: SearchEnvelope,
     *,
     query: str,
     raw_hits: list[AiSearchHit],
+    all_results: list[SearchResultOut],
     session: Session,
 ) -> None:
     """Grava o registro de execucao desta busca (Ticket 9, issue #25).
 
     ``raw_hits`` sao os hits CRUS devolvidos pelo ai, antes do
-    agrupamento por familia - e esse valor, nao ``envelope.results``,
-    que ``app/replay.py::replay_search`` reusa para reexecutar a busca
+    agrupamento por familia - e esse valor, nao ``envelope.results``
+    (que pode ser um slice da primeira pagina), que
+    ``app/replay.py::replay_search`` reusa para reexecutar a busca
     offline (ver docstring do modulo).
+
+    ``response_json`` armazena o envelope da primeira pagina para
+    auditoria/comparacao; replay usa raw_hits_json para recomputar.
     """
     session.add(
         SearchExecution(
@@ -150,6 +252,10 @@ def _persist_search_execution(
     )
     session.flush()
 
+
+# ---------------------------------------------------------------------------
+# Agrupamento por familia
+# ---------------------------------------------------------------------------
 
 def _group_by_family(
     hits: list[AiSearchHit], session: Session
