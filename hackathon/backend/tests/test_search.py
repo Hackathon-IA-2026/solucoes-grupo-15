@@ -581,3 +581,113 @@ def test_replay_returns_404_for_unknown_request_id(database_url: str) -> None:
     assert response.status_code == 404
     detail = response.json()["detail"]
     assert fake_id in detail
+
+
+# ---------------------------------------------------------------------------
+# Testes de corpus stale (issue #81)
+# ---------------------------------------------------------------------------
+
+def test_search_stale_corpus_false_on_first_call(database_url: str) -> None:
+    """Primeira chamada sempre tem stale_corpus=False (corpus acabou de ser usado)."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="trecho qualquer",
+            score=0.8,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "primeira chamada stale"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["stale_corpus"] is False
+
+
+def test_search_stale_corpus_false_on_continuation_with_same_corpus(
+    database_url: str,
+) -> None:
+    """Continuacao com corpus inalterado tem stale_corpus=False."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="primeiro chunk",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="segundo chunk",
+            score=0.7,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    # Primeira pagina
+    first_resp = client.post("/v1/search", json={"query": "corpus igual", "limit": 1})
+    assert first_resp.status_code == 200
+    first_body = first_resp.json()
+    cursor = first_body["next_cursor"]
+    assert cursor is not None
+
+    # Continuacao — corpus nao mudou
+    second_resp = client.post("/v1/search", json={"query": "qualquer", "cursor": cursor, "limit": 1})
+    assert second_resp.status_code == 200
+    second_body = second_resp.json()
+    assert second_body["stale_corpus"] is False
+
+
+def test_search_stale_corpus_true_on_continuation_after_corpus_update(
+    database_url: str,
+) -> None:
+    """Continuacao apos corpus ter sido atualizado tem stale_corpus=True.
+
+    Estrategia: faz a primeira busca normalmente, entao altera diretamente
+    SearchExecution.corpus_version para uma versao mais antiga no banco,
+    simulando que o catalogo foi atualizado apos a busca original. A
+    continuacao deve detectar a divergencia e retornar stale_corpus=True.
+    """
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="chunk stale",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="chunk stale 2",
+            score=0.7,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    # Primeira busca — obtem cursor e request_id
+    first_resp = client.post("/v1/search", json={"query": "stale test", "limit": 1})
+    assert first_resp.status_code == 200
+    first_body = first_resp.json()
+    request_id = first_body["request_id"]
+    cursor = first_body["next_cursor"]
+    assert cursor is not None
+
+    # Altera SearchExecution.corpus_version para simular que o catalogo foi atualizado
+    from app.db import make_engine, make_session_factory
+    from app.models import SearchExecution as SE
+
+    engine = make_engine(database_url)
+    session_factory = make_session_factory(engine)
+    with session_factory() as session:
+        execution = session.get(SE, request_id)
+        assert execution is not None
+        execution.corpus_version = "corpus-version-antiga-stale"
+        session.commit()
+
+    # Continuacao — corpus_version do SearchExecution e mais antiga que a do catalogo
+    second_resp = client.post("/v1/search", json={"query": "qualquer", "cursor": cursor, "limit": 1})
+    assert second_resp.status_code == 200
+    second_body = second_resp.json()
+    assert second_body["stale_corpus"] is True
