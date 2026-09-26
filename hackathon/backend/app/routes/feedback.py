@@ -1,9 +1,13 @@
 """Rota publica de feedback (👍/👎) sobre resultados de busca (TB1 Ticket 7,
-issue #23).
+issue #23; chave de chunk issue #82).
 
 ``POST /v1/feedback`` persiste um voto sobre um card de resultado de
-busca (ticket 3, issue #19): liga o voto ao ``request_id`` da chamada
-de POST /v1/search que produziu o card e ao ``family_id`` avaliado.
+busca. Desde a issue #82 (resultados por chunk, issue #78), o payload
+primario identifica o chunk exato: ``document_version`` + ``chunk_index``
+sao obrigatorios; ``family_id`` e opcional (pode ser omitido). O campo
+``request_id`` permanece obrigatorio para ligar o voto a execucao de
+busca que gerou o resultado.
+
 ``vote`` so aceita ``"up"``/``"down"`` (qualquer outro valor -> 422,
 validacao do Pydantic via ``Literal``); nenhum campo de
 justificativa/comentario e exigido nem aceito, por decisao explicita
@@ -11,8 +15,8 @@ da issue.
 
 ``GET /v1/feedback`` lista o feedback registrado, para conferencia
 manual - sem paginacao sofisticada, so um ``limit`` opcional (mais
-recente primeiro) e filtros opcionais por ``request_id``/``family_id``
-via query params.
+recente primeiro) e filtros opcionais por ``request_id``,
+``document_version``, ``chunk_index`` e ``family_id`` via query params.
 """
 
 import datetime
@@ -31,14 +35,18 @@ router = APIRouter(prefix="/v1", tags=["feedback"])
 
 class FeedbackIn(BaseModel):
     request_id: str
-    family_id: str
+    document_version: str           # novo obrigatorio (issue #82)
+    chunk_index: int                 # novo obrigatorio (issue #82)
+    family_id: str | None = None     # agora opcional; preserva compatibilidade legada
     vote: Literal["up", "down"]
 
 
 class FeedbackOut(BaseModel):
     id: int
     request_id: str
-    family_id: str
+    document_version: str | None
+    chunk_index: int | None
+    family_id: str | None
     vote: str
     created_at: datetime.datetime
 
@@ -51,6 +59,8 @@ def create_feedback(
 ) -> Feedback:
     feedback = Feedback(
         request_id=payload.request_id,
+        document_version=payload.document_version,
+        chunk_index=payload.chunk_index,
         family_id=payload.family_id,
         vote=payload.vote,
     )
@@ -63,6 +73,8 @@ def create_feedback(
 @router.get("/feedback", response_model=list[FeedbackOut])
 def list_feedback(
     request_id: str | None = None,
+    document_version: str | None = None,
+    chunk_index: int | None = None,
     family_id: str | None = None,
     limit: int | None = None,
     session: Session = Depends(get_db_session),
@@ -70,6 +82,10 @@ def list_feedback(
     query = select(Feedback).order_by(Feedback.id.desc())
     if request_id is not None:
         query = query.where(Feedback.request_id == request_id)
+    if document_version is not None:
+        query = query.where(Feedback.document_version == document_version)
+    if chunk_index is not None:
+        query = query.where(Feedback.chunk_index == chunk_index)
     if family_id is not None:
         query = query.where(Feedback.family_id == family_id)
     if limit is not None:
