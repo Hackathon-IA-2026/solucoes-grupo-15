@@ -1,0 +1,65 @@
+{
+  "config": {
+    "model_id": "amazon.titan-embed-text-v2:0",
+    "region": "us-east-1",
+    "dimensions": 1024,
+    "normalize": true,
+    "similarity_metric": "dot_product (vetores normalizados == cosseno)",
+    "tokenizer": "cl100k_base",
+    "chunking": {
+      "target_tokens": 600,
+      "max_tokens": 800,
+      "overlap_tokens": 100
+    },
+    "corpus_version": "c6a8370",
+    "top_k": 3
+  },
+  "query": "procure precedentes sobre fiscalização de atendimento a solicitações de conexão de MMGD",
+  "total_documents": 10,
+  "total_chunks": 342,
+  "top3": [
+    {
+      "chunk_id": "48500.000639-2019-07/auto-infracao-48500.000639-2019-07#chunk-0007",
+      "document_id": "48500.000639-2019-07/auto-infracao-48500.000639-2019-07",
+      "process_nup_canonical": "48500.000639/2019-07",
+      "section": "Seção X – DAS OBRAS COM PARTICIPAÇÃO FINANCEIRA DO CONSUMIDOR",
+      "page_start": 6,
+      "page_end": 6,
+      "score": 0.37510764365297145
+    },
+    {
+      "chunk_id": "48500.000639-2019-07/recurso-48500.000639-2019-07#chunk-0016",
+      "document_id": "48500.000639-2019-07/recurso-48500.000639-2019-07",
+      "process_nup_canonical": "48500.000639/2019-07",
+      "section": null,
+      "page_start": 11,
+      "page_end": 12,
+      "score": 0.3686105104525336
+    },
+    {
+      "chunk_id": "48500.004024-2017-80/auto-infracao-48500.004024-2017-80#chunk-0064",
+      "document_id": "48500.004024-2017-80/auto-infracao-48500.004024-2017-80",
+      "process_nup_canonical": "48500.004024/2017-80",
+      "section": "III – DA MOTIVAÇÃO",
+      "page_start": 46,
+      "page_end": 47,
+      "score": 0.3637685342293752
+    }
+  ],
+  "processes_retrieved_top3": [
+    "48500.000639/2019-07",
+    "48500.004024/2017-80"
+  ],
+  "golden_top3_processes": [
+    "48500.000639/2019-07",
+    "48500.004024/2017-80",
+    "48500.901433/2024-53"
+  ],
+  "hits": [
+    "48500.000639/2019-07",
+    "48500.004024/2017-80"
+  ],
+  "recall_at_3": 0.6666666666666666,
+  "gate_threshold": 0.6666666666666666,
+  "gate_passed": true
+}
