@@ -43,6 +43,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.clients.ai_client import AiClient, AiSearchHit, get_ai_client
@@ -115,6 +116,22 @@ class SearchEnvelope(BaseModel):
     results: list[SearchResultOut]
     total: int
     next_cursor: str | None = None
+    stale_corpus: bool = False
+
+
+# ---------------------------------------------------------------------------
+# Corpus version helpers (issue #81)
+# ---------------------------------------------------------------------------
+
+def _latest_corpus_version(session: Session) -> str:
+    """Retorna o corpus_version mais recente presente no catalogo.
+
+    Usa ``max(corpus_version)`` sobre todas as linhas de
+    ``DocumentVersion``. Se a tabela estiver vazia (catalogo sem
+    documentos), retorna o fallback de ``Settings.default_corpus_version``.
+    """
+    result = session.scalar(select(func.max(DocumentVersion.corpus_version)))
+    return result or get_settings().default_corpus_version
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +168,8 @@ def search(
         next_offset = offset + limit
         next_cursor = _encode_cursor(request_id, next_offset) if next_offset < total else None
 
+        stale_corpus = execution.corpus_version != _latest_corpus_version(session)
+
         return SearchEnvelope(
             request_id=execution.request_id,
             data_mode=execution.data_mode,
@@ -160,6 +179,7 @@ def search(
             results=page_results,
             total=total,
             next_cursor=next_cursor,
+            stale_corpus=stale_corpus,
         )
 
     # --- Primeira chamada: executa busca no ai, persiste, devolve primeiro lote ---
@@ -181,6 +201,7 @@ def search(
         results=page_results,
         total=total,
         next_cursor=next_cursor,
+        stale_corpus=False,
     )
 
     _persist_search_execution(
