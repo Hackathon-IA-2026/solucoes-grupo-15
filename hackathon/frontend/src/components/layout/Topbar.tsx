@@ -65,7 +65,7 @@ export function Topbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
       <Brand />
       <form className="global-search" onSubmit={submitGlobalSearch}>
         <Search size={19} aria-hidden="true" />
-        <input value={globalQuery} onChange={(event) => setGlobalQuery(event.target.value)} aria-label="Busca global" placeholder="Buscar normas, processos, pareceres, notas técnicas e mais..." />
+        <input value={globalQuery} onChange={(event) => setGlobalQuery(event.target.value)} aria-label="Busca global" placeholder="Buscar normas, processos, documentos e notas técnicas..." />
         <kbd>Ctrl K</kbd>
       </form>
       <div className="topbar-actions">
