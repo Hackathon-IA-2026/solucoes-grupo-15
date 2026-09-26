@@ -15,3 +15,7 @@ Cinco labels canônicos padrão (`needs-triage`, `needs-info`, `ready-for-agent`
 ### Domain docs
 
 Single-context, com raiz em `hackathon/` (`hackathon/CONTEXT.md` + `hackathon/docs/adr/`). See `docs/agents/domain.md`.
+
+### Boundary contracts
+
+Contratos de fronteira entre componentes (ex.: backend ↔ serviço vetorial) vivem em `requirements/contracts/`, um arquivo por fronteira — snapshot legível derivado das Concern Resolution pages do `perspec-me` (`requirements/perspec-me/<caso>/concerns/`), nunca a fonte de verdade. Ao editar uma Concern Resolution page ou refreshar o `MAP.md` de um caso de forma que afete uma fronteira já documentada, atualize o arquivo de contrato correspondente na mesma sessão (cada arquivo tem uma seção "Como manter em sincronia").
