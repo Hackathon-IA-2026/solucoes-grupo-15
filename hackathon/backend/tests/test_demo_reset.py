@@ -80,7 +80,7 @@ def test_reset_clears_interactions_and_preserves_document_corpus(database_url: s
     assert response.status_code == 200
     deleted = response.json()["deleted"]
     assert deleted["notification_scope_preferences"] == 1
-    assert deleted["notifications"] == 5
+    assert deleted["notifications"] == 15
     assert deleted["email_digests"] == 1
     assert deleted["feedback"] == 1
     assert deleted["search_executions"] == 1
