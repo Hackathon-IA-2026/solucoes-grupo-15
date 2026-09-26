@@ -1,6 +1,6 @@
 import { Eye, FileText, FolderKanban, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { fetchProcessos, type ProcessoSummary } from "../api/processos";
 import { PageHero } from "../components/layout/PageHero";
@@ -11,7 +11,6 @@ type ProcessState =
   | { kind: "error" };
 
 export function MyProcessesPage() {
-  const navigate = useNavigate();
   const [state, setState] = useState<ProcessState>({ kind: "loading" });
   const [query, setQuery] = useState("");
 
@@ -79,7 +78,7 @@ export function MyProcessesPage() {
               processes.map((process) => (
                 <article className="process-table process-row" key={process.processo_id}>
                   <div>
-                    <strong>{process.processo_id}</strong>
+                    <strong><Link className="process-number-link" to={`/processos/${encodeURIComponent(process.processo_id)}`}>{process.processo_id}</Link></strong>
                     <p>{formatDocumentType(process.latest_document_type)} mais recente</p>
                     <small>{process.document_types.map(formatDocumentType).join(" · ")}</small>
                   </div>
@@ -87,12 +86,9 @@ export function MyProcessesPage() {
                   <div><strong>{formatDate(process.latest_movement_at)}</strong><small>{process.latest_document_id}</small></div>
                   <div><strong>{process.pieces_count} peças documentais</strong><small>Famílias vinculadas</small></div>
                   <div className="row-actions">
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/processos/${encodeURIComponent(process.processo_id)}`)}
-                    >
+                    <Link to={`/processos/${encodeURIComponent(process.processo_id)}`}>
                       <Eye size={15} /> Ver processo
-                    </button>
+                    </Link>
                   </div>
                 </article>
               ))

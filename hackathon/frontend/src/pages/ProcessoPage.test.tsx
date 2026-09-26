@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -67,6 +67,7 @@ function renderProcessoPage(processoId = PROCESSO_ID) {
 
 describe("ProcessoPage", () => {
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 

@@ -9,3 +9,374 @@
 
 @media(max-width:820px){.persona-page{display:block;padding:14px 16px 24px}.persona-logo{height:58px}.persona-logo img{width:210px;height:58px}.persona-content{margin-top:10px}.persona-content>h1{font-size:31px}.persona-content>p{font-size:14px}.persona-card{height:275px}.persona-image{height:158px}.persona-image img{height:250px}.demo-status{display:none}.notification-popover{position:fixed;top:60px;right:12px;left:12px;width:auto}.explore-page-idle{min-height:auto}.landing-grid{grid-template-columns:1fr}.landing-family-grid{grid-template-columns:1fr 1fr}.landing-intro{align-items:flex-start}.landing-intro h2{font-size:17px}}
 @media(max-height:780px) and (min-width:821px){.persona-page{padding-top:8px}.persona-logo{height:55px}.persona-logo img{height:55px}.persona-content>h1{font-size:34px}.persona-content>p{margin-bottom:12px}.persona-card{height:286px}.persona-image{height:165px}.persona-image img{height:255px}.persona-continue{margin-top:11px}}
+
+/* Record pages share the product shell while preserving the legacy data views. */
+.detail-page {
+  padding: 18px 20px 42px;
+}
+
+.detail-page .demo-banner {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border: 1px solid #f0d699;
+  border-left: 3px solid var(--yellow-500);
+  border-radius: 8px;
+  background: #fff8e7;
+  color: #755017;
+  box-shadow: var(--shadow-soft);
+}
+
+.detail-page .demo-banner svg {
+  color: #b77900;
+}
+
+.detail-page .detail-layout {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
+}
+
+.detail-page .detail-primary,
+.detail-page .detail-sidebar {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+
+.detail-page .detail-primary {
+  overflow: hidden;
+}
+
+.detail-page .document-header {
+  padding: 22px 24px 20px;
+  border: 0;
+  background: linear-gradient(100deg, rgba(255,255,255,.98), rgba(245,250,255,.82)), url("/assets/electric-sector-panorama.png") right center/cover no-repeat;
+}
+
+.detail-page .back-link {
+  margin: 0 0 14px;
+  color: #075fd8;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.detail-page .back-link:hover,
+.detail-page .process-fact-link:hover,
+.detail-page .process-title-link:hover,
+.detail-page .process-number-link:hover {
+  text-decoration: underline;
+}
+
+.detail-page .back-link::before {
+  content: "←";
+}
+
+.detail-page .eyebrow {
+  margin: 0 0 7px;
+  color: var(--blue-500);
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.detail-page .document-header h1 {
+  margin: 0;
+  color: var(--navy-950);
+  font-family: inherit;
+  font-size: 30px;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+
+.detail-page .intro-copy {
+  max-width: 650px;
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.detail-page .document-facts {
+  margin-top: 15px;
+  gap: 7px;
+  color: #45617f;
+}
+
+.detail-page .document-facts > span,
+.detail-page .process-fact-link {
+  min-height: 30px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(255,255,255,.82);
+  color: #3d5879;
+  font-family: inherit;
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.detail-page .process-fact-link {
+  border-color: #b9d5f5;
+  color: #075fd8;
+  font-weight: 700;
+}
+
+.detail-page .process-fact-link strong {
+  color: var(--navy-950);
+}
+
+.detail-page .document-source-link {
+  width: max-content;
+  margin-top: 13px;
+  color: #075fd8;
+  text-decoration: none;
+}
+
+.detail-page .version-timeline,
+.detail-page .document-text,
+.detail-page .process-pieces,
+.detail-page .response-chain {
+  padding: 19px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-page .document-text,
+.detail-page .response-chain {
+  border-bottom: 0;
+}
+
+.detail-page .section-heading {
+  margin-bottom: 13px;
+  align-items: start;
+}
+
+.detail-page .section-heading h2 {
+  color: var(--navy-950);
+  font-family: inherit;
+  font-size: 18px;
+}
+
+.detail-page .section-heading > span {
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 10px;
+}
+
+.detail-page .version-timeline ul {
+  gap: 8px;
+}
+
+.detail-page .version-timeline li {
+  flex-basis: 155px;
+}
+
+.detail-page .version-timeline button {
+  min-height: 64px;
+  border-color: var(--border);
+  border-radius: 7px;
+  background: #f8fbfe;
+  color: #3e5b7a;
+  font-family: inherit;
+}
+
+.detail-page .version-timeline button:hover,
+.detail-page .version-timeline button[aria-current="true"] {
+  border-color: var(--blue-300);
+  background: #eaf4ff;
+  color: var(--navy-950);
+}
+
+.detail-page .version-timeline button span {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.detail-page .relevant-flag {
+  color: #a86700;
+}
+
+.detail-page .document-body {
+  padding: 17px 19px;
+  border: 1px solid #d7e7f5;
+  border-left: 3px solid var(--blue-500);
+  border-radius: 0 7px 7px 0;
+  background: #f8fbfe;
+  color: #294765;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.detail-page .document-body mark {
+  background: #fff0af;
+}
+
+.detail-page .document-body em {
+  color: #8d5a00;
+  font-family: inherit;
+}
+
+.detail-page .detail-sidebar {
+  position: sticky;
+  top: 82px;
+  padding: 15px;
+}
+
+.detail-page .sidebar-title {
+  margin-bottom: 12px;
+  color: var(--blue-500);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.detail-page .relations-panel h3 {
+  color: var(--navy-950);
+  font-family: inherit;
+  font-size: 17px;
+}
+
+.detail-page .relations-description,
+.detail-page .panel-status,
+.detail-page .relations-panel > p {
+  color: var(--text-secondary);
+}
+
+.detail-page .relation-group {
+  border-color: #e8eef5;
+}
+
+.detail-page .relation-group h4 {
+  color: #58708c;
+  font-family: inherit;
+  letter-spacing: 0;
+}
+
+.detail-page .relation-group li > svg {
+  color: var(--blue-500);
+}
+
+.detail-page .relation-group li a {
+  color: #075fd8;
+}
+
+.detail-page .relation-status,
+.detail-page .relation-evidence {
+  color: var(--text-secondary);
+}
+
+.detail-page .process-pieces ol::before {
+  background: #c7d8e9;
+}
+
+.detail-page .process-pieces li {
+  padding: 0 0 18px 31px;
+}
+
+.detail-page .timeline-point {
+  border-color: var(--blue-500);
+  background: #fff;
+}
+
+.detail-page .process-pieces li p {
+  color: var(--text-secondary);
+  font-family: inherit;
+}
+
+.detail-page .process-pieces li a,
+.detail-page .response-chain li a {
+  color: #075fd8;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.detail-page .process-pieces li a:hover,
+.detail-page .response-chain li a:hover {
+  text-decoration: underline;
+}
+
+.detail-page .response-chain li {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #f8fbfe;
+  color: #52708e;
+  font-family: inherit;
+}
+
+.detail-page .response-chain li svg {
+  color: var(--blue-500);
+}
+
+.process-title-link,
+.process-number-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #075fd8;
+  text-decoration: none;
+}
+
+.process-number-link {
+  color: var(--navy-950);
+}
+
+.row-actions a {
+  min-height: 30px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: #163c67;
+  font-size: 9px;
+  text-decoration: none;
+}
+
+.row-actions a:hover {
+  border-color: var(--blue-300);
+  background: #f1f8ff;
+}
+
+@media(max-width:1180px) {
+  .detail-page .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-page .detail-sidebar {
+    position: static;
+  }
+}
+
+@media(max-width:760px) {
+  .detail-page {
+    padding: 12px;
+  }
+
+  .detail-page .document-header,
+  .detail-page .version-timeline,
+  .detail-page .document-text,
+  .detail-page .process-pieces,
+  .detail-page .response-chain {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .detail-page .document-header h1 {
+    font-size: 25px;
+  }
+
+  .detail-page .document-facts {
+    flex-direction: row;
+  }
+
+  .detail-page .document-facts > span,
+  .detail-page .process-fact-link {
+    width: 100%;
+  }
+}

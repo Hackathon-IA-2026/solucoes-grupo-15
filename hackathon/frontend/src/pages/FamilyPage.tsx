@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, ExternalLink, FileText, FolderTree, GitBranch, Landmark, Layers3 } from "lucide-react";
+import { ArrowUpRight, CalendarDays, ExternalLink, FileText, FolderTree, GitBranch, Landmark, Layers3 } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
 import {
@@ -74,7 +74,7 @@ export function FamilyPage() {
   }, [familyId]);
 
   return (
-    <div className="page detail-page">
+    <div className="page detail-page document-record-page">
       <DemoBanner />
 
       <section aria-label="página de família">
@@ -164,10 +164,13 @@ function FamilyContent({
           <div className="document-facts">
             <span><FolderTree size={16} /> Identificador: {detail.document_id}</span>
             {detail.processo_numero && (
-              <span>
-                <Landmark size={16} /> Processo: {detail.processo_numero}
-                <Link className="fact-action" to={`/processos/${encodeURIComponent(detail.processo_numero)}`}>Abrir processo</Link>
-              </span>
+              <Link
+                className="process-fact-link"
+                to={`/processos/${encodeURIComponent(detail.processo_numero)}`}
+                aria-label={`Abrir processo ${detail.processo_numero}`}
+              >
+                <Landmark size={16} /> Processo: <strong>{detail.processo_numero}</strong> <ArrowUpRight size={15} aria-hidden="true" />
+              </Link>
             )}
             <span><CalendarDays size={16} /> Data ({dateSourceLabel}): {selected.version_date}</span>
           </div>

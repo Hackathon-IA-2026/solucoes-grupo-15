@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -83,6 +83,7 @@ function jsonResponse(body: unknown) {
 
 describe("FamilyPage", () => {
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 
@@ -103,8 +104,14 @@ describe("FamilyPage", () => {
 
     await waitFor(() => expect(screen.getByText("auto_de_infracao")).toBeInTheDocument());
     expect(screen.getByText(/identificador: auto-0007/i)).toBeInTheDocument();
-    expect(screen.getByText(/processo: 48500\.001234\/2024-11/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /abrir processo 48500\.001234\/2024-11/i })).toHaveTextContent(
+      "Processo: 48500.001234/2024-11",
+    );
     expect(screen.getByText(/data \(publicação\): 2024-04-18/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /abrir processo 48500\.001234\/2024-11/i })).toHaveAttribute(
+      "href",
+      "/processos/48500.001234%2F2024-11",
+    );
   });
 
   it("busca sem parametro de versao (pega a mais recente por padrao)", async () => {
@@ -241,7 +248,7 @@ describe("FamilyPage", () => {
       expect(fetchMock).toHaveBeenCalledWith("/v1/documents/fam-auto-0007/graph"),
     );
     await waitFor(() =>
-      expect(screen.getByText("48500.001234/2024-11")).toBeInTheDocument(),
+      expect(screen.getAllByText("48500.001234/2024-11").length).toBeGreaterThanOrEqual(2),
     );
     expect(screen.getByLabelText("painel de relações")).toBeInTheDocument();
   });

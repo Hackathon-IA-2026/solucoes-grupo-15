@@ -63,6 +63,10 @@ describe("ExplorePage integrada", () => {
 
     expect(screen.getByLabelText(/carregando ranking/i)).toBeInTheDocument();
     expect(await screen.findByText("48500.001234/2024-11")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /48500\.001234\/2024-11/i })).toHaveAttribute(
+      "href",
+      "/processos/48500.001234%2F2024-11",
+    );
     expect(screen.getByText("auto-0007 · fam-auto-0007")).toBeInTheDocument();
     expect(screen.getByText("versao retificada com periodo corrigido")).toBeInTheDocument();
     expect(screen.getAllByText("91%").length).toBeGreaterThan(0);

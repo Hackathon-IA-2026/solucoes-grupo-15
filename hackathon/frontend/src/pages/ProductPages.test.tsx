@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -9,7 +9,10 @@ import { ProcessoPage } from "./ProcessoPage";
 import { RelationsMapPage } from "./RelationsMapPage";
 
 describe("páginas do produto", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it("lista o catalogo real e abre o detalhe integrado do processo", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
@@ -53,7 +56,9 @@ describe("páginas do produto", () => {
     expect(await screen.findByText("48500.001234/2024-11")).toBeInTheDocument();
     expect(screen.getByText("3 peças documentais")).toBeInTheDocument();
     expect(screen.getByText("02/05/2024")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /ver processo/i }));
+    const processLink = screen.getByRole("link", { name: /ver processo/i });
+    expect(processLink).toHaveAttribute("href", "/processos/48500.001234%2F2024-11");
+    fireEvent.click(processLink);
     expect(await screen.findByRole("heading", { name: /processo 48500\.001234\/2024-11/i })).toBeInTheDocument();
     expect(screen.getByText(/peticao — defesa-0007/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/cadeia de respostas/i)).toHaveTextContent("fam-defesa-0007");

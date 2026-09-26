@@ -44,7 +44,7 @@ export function ProcessoPage() {
   }, [processoId]);
 
   return (
-    <div className="page detail-page">
+    <div className="page detail-page process-record-page">
       <DemoBanner />
 
       <section aria-label="página de processo">
@@ -95,7 +95,7 @@ function ProcessoContent({ processo }: { processo: Processo }) {
           {processo.responde_a.map((edge) => (
             <li key={`${edge.source_family_id}-${edge.target_family_id}`}>
               <span className="sr-only">{edge.source_family_id} responde a {edge.target_family_id}</span>
-              <span>{edge.source_family_id}</span><ArrowRight size={15} aria-hidden="true" /><span>responde a</span><ArrowRight size={15} aria-hidden="true" /><span>{edge.target_family_id}</span>
+              <Link to={`/documents/${encodeURIComponent(edge.source_family_id)}`}>{edge.source_family_id}</Link><ArrowRight size={15} aria-hidden="true" /><span>responde a</span><ArrowRight size={15} aria-hidden="true" /><Link to={`/documents/${encodeURIComponent(edge.target_family_id)}`}>{edge.target_family_id}</Link>
             </li>
           ))}
         </ul>
