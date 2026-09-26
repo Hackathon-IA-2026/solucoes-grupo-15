@@ -5,6 +5,10 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# Local credentials
+.env
+.env.*
+
 # Node / frontend
 node_modules/
 dist/
@@ -14,6 +18,11 @@ dist-ssr/
 
 # Local prototype outputs
 hackathon/.prototype-downloads/
+
+# Batch extraction pipeline output (issue #68): manifest cache, extraction
+# cache and generated Markdown, all reconstructible from hackathon/data/,
+# which itself is not versioned (see below).
+hackathon/.pipeline-output/
 
 # ANEEL SEI batch downloader raw output (issue #56): originals are too large/
 # numerous for GitHub (several files >100MB, ~3.3GB total). Only the
