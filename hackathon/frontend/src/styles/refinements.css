@@ -845,3 +845,165 @@
     font-size: 19px;
   }
 }
+
+/* Keep the first-access experience flush and preserve the full illustration. */
+.login-page {
+  min-height: 0;
+  background: #03284a;
+}
+
+.login-brand-panel {
+  background: #03284a;
+}
+
+.login-brand-panel img {
+  object-fit: contain;
+  background: #03284a;
+}
+
+.login-form-panel {
+  border-radius: 0;
+}
+
+/* On desktop, keep profile selection within one notebook-height screen. */
+.persona-page {
+  height: 100svh;
+  min-height: 0;
+  grid-template-rows: 72px minmax(0, 1fr);
+  padding: 0 34px 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #062646 0 72px, transparent 72px), linear-gradient(135deg, #edf7fb 0%, #f8fbfd 52%, #e7f2f3 100%);
+}
+
+.persona-logo {
+  height: 72px;
+}
+
+.persona-content {
+  align-self: start;
+  padding-top: 12px;
+}
+
+.persona-content > h1 {
+  font-size: 36px;
+}
+
+.persona-content > .persona-lead {
+  margin-bottom: 14px;
+}
+
+.persona-grid {
+  gap: 16px;
+}
+
+.persona-card {
+  height: clamp(292px, 39svh, 360px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.persona-image {
+  position: static;
+  grid-row: 1;
+  width: 100%;
+  height: auto;
+}
+
+.persona-image img {
+  height: 100%;
+  object-position: center top;
+  transform: none;
+}
+
+.persona-copy {
+  position: static;
+  grid-row: 2;
+  min-height: 104px;
+  padding: 13px 18px 15px;
+  display: grid;
+  align-content: center;
+  background: #fff;
+}
+
+.persona-continue {
+  min-height: 44px;
+  margin-top: 12px;
+}
+
+.persona-back {
+  margin-top: 6px;
+}
+
+.explore-page-idle .explore-landing {
+  align-content: start;
+  padding-top: 16px;
+}
+
+.explore-page-idle .landing-families {
+  max-width: 980px;
+  padding: 18px;
+}
+
+.landing-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+@media (max-width: 820px) {
+  .persona-page {
+    height: auto;
+    min-height: 100svh;
+    overflow: auto;
+  }
+
+  .persona-card {
+    height: 330px;
+  }
+}
+
+@media (max-height: 820px) and (min-width: 821px) {
+  .persona-page {
+    grid-template-rows: 58px minmax(0, 1fr);
+    padding-bottom: 8px;
+    background: linear-gradient(180deg, #062646 0 58px, transparent 58px), linear-gradient(135deg, #edf7fb 0%, #f8fbfd 52%, #e7f2f3 100%);
+  }
+
+  .persona-logo {
+    height: 58px;
+  }
+
+  .persona-content {
+    padding-top: 6px;
+  }
+
+  .persona-content > h1 {
+    font-size: 31px;
+  }
+
+  .persona-content > .persona-lead {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .persona-card {
+    height: clamp(260px, 37svh, 300px);
+  }
+
+  .persona-copy {
+    min-height: 88px;
+    padding: 10px 15px;
+  }
+
+  .persona-card .persona-copy strong {
+    font-size: 18px;
+  }
+
+  .persona-copy > span {
+    font-size: 11px;
+  }
+
+  .persona-continue {
+    min-height: 40px;
+    margin-top: 8px;
+  }
+}

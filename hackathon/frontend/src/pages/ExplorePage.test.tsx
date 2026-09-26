@@ -52,7 +52,7 @@ function renderPage(path = "/explorar") {
 describe("ExplorePage integrada", () => {
   it("abre em uma home sem ranking antes de uma pesquisa", () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: /ainda não há uma pesquisa/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /explore por tema/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Buscar" })).toBeDisabled();
   });
 

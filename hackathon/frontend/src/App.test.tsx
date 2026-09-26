@@ -32,7 +32,7 @@ describe("App", () => {
     expect(screen.getByRole("navigation", { name: /navegação principal do produto/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /meus processos/i })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /notificações, 1 não lidas/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /ainda não há uma pesquisa/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /explore por tema/i })).toBeInTheDocument();
   });
 
   it("mantém sair dentro do menu da conta e encerra a sessão", async () => {

@@ -59,7 +59,7 @@ export function ExplorePage() {
         <div className="filter-row">{mockExploreData.filters.map((filter) => <button type="button" key={filter} className={activeFilter === filter ? "active" : ""} onClick={() => setActiveFilter(filter)}>{filter}</button>)}</div>
       </header>
 
-      {state.kind === "idle" && <ExploreLanding onRunSearch={runSearch} />}
+      {state.kind === "idle" && <ExploreLanding />}
       {state.kind !== "idle" && <nav className="explore-tabs" aria-label="Visões da pesquisa">{tabs.map((tab) => <button type="button" key={tab} className={activeTab === tab ? "active" : ""} onClick={() => setActiveTab(tab)}>{tab}</button>)}</nav>}
       {state.kind === "loading" && <ExploreSkeleton />}
       {state.kind === "error" && <section className="product-error"><FileSearch size={28} /><h2>Não foi possível carregar os dados.</h2><button type="button" onClick={() => runSearch(query)}>Tentar novamente</button></section>}
