@@ -2,11 +2,16 @@
 
 Repositório do Ideathon e Hackathon IA COPPE/UFRJ 2026. Todo o código vive em `hackathon/`; `ideathon/` guarda apenas materiais e documentação.
 
+## Escopo de repositório e autorização (LEIA PRIMEIRO)
+
+- Repositório ativo: org **`Hackathon-IA-2026`** no GitHub (remote local aponta para `Hackathon-IA-2026/solucoes-grupo-15`), que substituiu o repositório antigo (`EricRLeao1311/CapiWatt`). O repo antigo está **descontinuado** — nenhum agente deve ler ou escrever issues/PRs/labels lá, salvo pedido explícito do dono do repo.
+- Qualquer ação que toque um remoto — `git push`, `gh issue`/`gh pr` (criar, comentar, fechar, mudar label), etc. — em **qualquer** repositório, só deve ser executada com autorização explícita do dono para aquela ação específica. Isso vale para todos os agentes (Claude, Codex, ou qualquer outro), não é uma permissão implícita por ter sido liberada uma vez.
+
 ## Agent skills
 
 ### Issue tracker
 
-Issues são rastreadas no GitHub Issues do repo (`EricRLeao1311/CapiWatt`) via `gh`. See `docs/agents/issue-tracker.md`.
+Issues são rastreadas no GitHub Issues do repositório novo (`Hackathon-IA-2026/solucoes-grupo-15`) via `gh` — ver `docs/agents/issue-tracker.md`. Esse fluxo substituiu o rastreamento no repo antigo (`EricRLeao1311/CapiWatt`, descontinuado); não usar `gh` contra o repo antigo.
 
 ### Triage labels
 
