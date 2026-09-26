@@ -12,16 +12,20 @@ updated_at: 2026-09-25
 
 O parecer conclusivo do TB1 é um **objeto estruturado por processo** — não por documento individual, e não uma frase de texto livre. Um processo agrupa múltiplos documentos (movimentos, petições, decisões, etc.) em um **cluster**. A frase é derivada dos campos, nunca a fonte da verdade.
 
-O objeto tem **seis campos principais**:
+O objeto tem **sete campos principais**:
 
 | Campo | Prioridade visual | Uso principal | Descrição |
 |-------|-------------------|---------------|-----------|
+| **Número do processo** | Identificador | Front + Back | Identificador único do processo (ex.: 48500.000123/2024-00) |
 | **Status do processo** | Alta (fonte maior) | Front + Back | Enum com a conclusão jurídica do processo (sempre obrigatório) |
 | **Agente** | Média | Front + Back | Nome da empresa/entidade extraído por LLM (pode ser vazio) |
 | **Tipo de agente** | Média | Front + Back | Classificação do agente: transmissora, geradora, etc. (pode ser vazio) |
 | **Headline** | Baixa (fonte menor) | Front + Back | Resumo curto gerado por LLM, máx. 80 chars |
 | **Número de documentos** | Info | Front | Quantidade de documentos no cluster |
 | **Metadados do cluster** | Técnico | Back | Lista de documentos com detalhes (document_id, tipo, data, etc.) |
+
+### Campo 0: Número do processo (identificador)
+Identificador único do processo administrativo na ANEEL. Formato típico: `48500.000123/2024-00`. **Sempre obrigatório — é a chave primária do processo.** Exibido como primeira coluna para facilitar referência e rastreabilidade.
 
 ### Campo 1: Status do processo (prioridade máxima, sempre obrigatório)
 Enum com a conclusão jurídica. Valores confirmados: `advertencia_mantida`, `advertencia_anulada`, `multa_mantida`, `multa_reduzida` (com valores `de x para y`), `multa_convertida_em_advertencia`, `multa_aumentada`, `processo_arquivado`, `provimento_parcial`, `abstencao` (quando o processo não traz advertência nem multa), e `inconclusivo` (quando não foi possível determinar o status). **Um status por processo. Sempre obrigatório — nunca vazio.**
