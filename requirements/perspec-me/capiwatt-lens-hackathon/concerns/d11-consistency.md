@@ -6,14 +6,15 @@ status: partial
 topics:
   - issue-3 — Como uma família de versões de um documento é identificada e agrupada num único objeto, na ingestão e no resultado da busca?
   - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
-updated_at: 2026-09-25
+  - issue-64 — Ao remover o conceito de família de documentos, como versões e documentos passam a ser identificados, agrupados e exibidos na ingestão, busca e interface?
+updated_at: 2026-09-26
 ---
 
 ## Current resolution
 
 Consistência aqui significa que **a mesma peça documental nunca aparece como duas coisas** e que **duas peças distintas nunca viram uma só sem confirmação humana**:
 
-- Uma versão pertence a exatamente uma família; uma família nunca é dividida entre dois cards de resultado.
+- Uma versão pertence a exatamente uma família. ~~Uma família nunca é dividida entre dois cards de resultado.~~ **Superado pela issue-64 (2026-09-26, Eduardo):** a busca não deduplica por peça na visualização — duas versões da mesma família podem aparecer como cards separados; o invariante de "no máximo um card por família" deixou de existir (ver [[u4-visualization]]).
 - Reingerir o mesmo arquivo (checksum idêntico) não cria nova versão nem reindexa (idempotência do `index`, issue #2; LoD 3 do plano, linha 190).
 - A chave explícita de família é estável entre ingestões: o mesmo `tipo + identificador oficial` sempre resolve para o mesmo `family_id`.
 - O agrupamento por similaridade **só sugere** (decisão de Eduardo, 2026-09-18) — o sistema nunca funde famílias por conta própria, então um falso positivo de similaridade nunca corrompe silenciosamente a base; o custo aceito é que versões sem chave explícita fiquem separadas até alguém confirmar.
@@ -27,6 +28,9 @@ Consistência aqui significa que **a mesma peça documental nunca aparece como d
 
 ## Decisions
 
+- 2026-09-26 (issue-64, Eduardo): confirmado que os invariantes de dados abaixo (`document_version → family_id` como função; sugestão só funde com confirmação humana) continuam valendo por baixo da UI — a #64 remove só o agrupamento *visual*, não a identificação de dados ([[d4-data-dictionary]]).
+- 2026-09-26 (issue-64, Eduardo): a busca não deduplica por peça — mais de um card da mesma família pode aparecer na mesma consulta. Supersede o invariante "cada família no máximo uma vez por consulta" (issue-2/issue-28).
+
 - 2026-09-18 (issue-3): similaridade nunca funde famílias automaticamente; apenas gera sugestão.
 - 2026-09-18 (issue-3): checksum idêntico é a definição de "mesma versão".
 - 2026-09-18 (issue-3): sugestão pendente não muda o agrupamento; a fusão é uma reatribuição de família (não delete+reindex), auditável.
@@ -36,7 +40,7 @@ Consistência aqui significa que **a mesma peça documental nunca aparece como d
 - Invariante: `document_version → family_id` é função; nenhuma versão em duas famílias.
 - Invariante: nunca gerar sugestão de fusão entre famílias com chaves explícitas diferentes.
 - Aceitar uma sugestão de fusão é uma operação auditável (quem, quando) e reversível o suficiente para o hackathon (ao menos registrada).
-- ~~A `SearchResult` do serviço vetorial devolve cada família no máximo uma vez por consulta.~~ **Relocado pela issue-28 (2026-09-25):** o agrupamento fica no `backend` ([[i9-integration]]), então o invariante é da resposta do `backend`, não do `SearchResult` do `ai`, que devolve hits crus por chunk. O invariante vale por **consulta inteira**, não por lote: uma família não pode aparecer no lote 1 e de novo no lote 2 — é o que o conjunto congelado garante.
+- ~~A `SearchResult` do serviço vetorial devolve cada família no máximo uma vez por consulta.~~ **Relocado pela issue-28 (2026-09-25)** e depois **removido pela issue-64 (2026-09-26):** o agrupamento por família no `backend` ([[i9-integration]]) deixa de existir na visualização; a busca não deduplica por peça e o invariante de "no máximo um card por família por consulta" não se aplica mais. O que resta em aberto é se algum invariante de ordenação estável entre lotes (issue-28) ainda se aplica sobre a nova unidade de paginação — ver [[i9-integration]].
 
 ## Open questions
 
@@ -50,3 +54,4 @@ Consistência aqui significa que **a mesma peça documental nunca aparece como d
 ## Topic history
 
 - issue-3: fixou os invariantes de família/versão, a regra de que similaridade só sugere, e que sugestão pendente não altera o agrupamento na busca.
+- issue-64: removeu o invariante "no máximo um card por família por consulta" — a busca não deduplica por peça na visualização; confirmou que os invariantes de dados subjacentes (chave/sugestão/fusão) permanecem intactos por baixo da UI.

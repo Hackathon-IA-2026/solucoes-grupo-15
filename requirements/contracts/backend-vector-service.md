@@ -4,7 +4,7 @@ sources:
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i4-storage.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i9-integration.md
   - requirements/perspec-me/capiwatt-lens-hackathon/MAP.md
-last_synced_with_sources: 2026-09-26
+last_synced_with_sources: 2026-09-26 (issue-64)
 ---
 
 # Contrato de fronteira: backend ↔ serviço vetorial (`ai`)
@@ -36,7 +36,7 @@ Duas camadas: uma interface Python (`VectorService`) em processo dentro do módu
 Comportamento:
 
 - **`index`** recebe **localizador do original** (não conteúdo inline); o `ai` extrai o texto (etapa de extração por IA → Markdown verbatim, precisão da issue-13), escreve num localizador (volume/S3) e devolve por versão: `{document_version, extracted_text_locator, references[], chunks_indexed}`. Idempotente por `(document_version, model_version)`.
-- **`search`** devolve **hits crus por chunk** (agrupamento por família saiu do serviço na issue-28): cada hit com `family_id`, `document_version`, `excerpt`, localizador, score. Envelope carrega `corpus_version` e `model_version`. Agrupamento por família, congelamento da lista ordenada e paginação (`cursor`/`limit`/`next_cursor`/`total`) são responsabilidade do **backend**.
+- **`search`** devolve **hits crus por chunk** (agrupamento por família saiu do serviço na issue-28, e a issue-64 removeu o agrupamento por família também da visualização): cada hit com `family_id`, `document_version`, `excerpt`, localizador, score — `family_id` continua no envelope como atributo de filtro/dado, mas o `backend` não agrupa mais por ele. Envelope carrega `corpus_version` e `model_version`. Congelamento da lista ordenada e paginação (`cursor`/`limit`/`next_cursor`/`total`) são responsabilidade do **backend**; a unidade de paginação é o **chunk casado** (issue-64), não mais a família.
 - **`similar_families`** e `references` (dentro do `IndexReport`) entregam só **candidatos** de arestas do grafo — resolução de id, gravação e curadoria de `document_relations` são do backend.
 - **`delete` / `reindex`** existem porque troca de modelo de embeddings exige reindexar; vetores de modelos diferentes nunca se misturam.
 - **`reassign_family`** move uma versão (e seus chunks/vetores) para outra família sem reembedding.

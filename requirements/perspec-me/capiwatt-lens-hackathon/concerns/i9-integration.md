@@ -10,7 +10,8 @@ topics:
   - issue-15 — O backend (F3) deve ser dono também do armazenamento documental, junto das arestas, para que grafo e leitura de documentos não atravessem HTTP, dado um corpus da ordem de 100 documentos?
   - issue-7 — Como a entrega de e-mail via SES lida com frequência e deduplicação?
   - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
-updated_at: 2026-09-25
+  - issue-64 — Ao remover o conceito de família de documentos, como versões e documentos passam a ser identificados, agrupados e exibidos na ingestão, busca e interface?
+updated_at: 2026-09-26
 ---
 
 ## Current resolution
@@ -23,17 +24,19 @@ updated_at: 2026-09-25
 
 **Revisão (issue-15, Eduardo, 2026-09-18):** o port continua sendo a fronteira `backend` → `ai`, em duas camadas (interface em processo no `ai` + HTTP `/internal/v1/*`), e o `backend` continua sem importar `ai`. O que muda é **o que atravessa**: o `ai` deixa de ser dono do armazenamento documental ([[i4-storage]]), então `get_document` **sai do port** — a leitura de documento e a montagem do grafo são locais ao backend. O port fica com `index`, `search`, `similar_families`, `delete`/`reindex` e `reassign_family`; `index` recebe do backend os `document_version`s com `family_id`, metadados e **localizador do original** (não o conteúdo inline), extrai o texto, escreve-o num localizador e devolve no `IndexReport`, por versão, `extracted_text_locator` + `references`. HTTP fica só onde é inerente: uma chamada por busca do usuário e uma por job de ingestão — o esboço original do plano (linhas 132–133).
 
+**Revisão (issue-64, Eduardo, 2026-09-26): a unidade de paginação passa a ser o chunk casado.** A busca deixou de agrupar ou deduplicar por família na visualização ([[u4-visualization]], [[d11-consistency]]); sem agrupamento, não há mais uma coleção de tamanho variável (chunks por família) para colapsar antes de paginar, então o `offset`/`cursor` pode incidir direto sobre a lista de hits crus que o `ai` já devolve. Isto supersede as duas seções abaixo ("unidade de paginação é a família" e o desempate por `family_id`) — o restante do mecanismo de congelamento (ordenação fixada na primeira chamada, `cursor` opaco, `total` exato) continua válido, só a unidade muda.
+
 **Paginação lazy (issue-28, Eduardo, 2026-09-25).** A busca entrega **lotes de 10 famílias**, carregados sob demanda, sempre na mesma ordenação global.
 
-A unidade de paginação é a **família**, nunca o chunk. Um `offset` sobre chunks não corresponde a um `offset` sobre famílias, porque o agrupamento colapsa um número variável de chunks em cada família. Paginar por chunk quebraria o invariante de [[d11-consistency]] ("cada família no máximo uma vez por consulta") na fronteira entre lotes.
+~~A unidade de paginação é a **família**, nunca o chunk. Um `offset` sobre chunks não corresponde a um `offset` sobre famílias, porque o agrupamento colapsa um número variável de chunks em cada família. Paginar por chunk quebraria o invariante de [[d11-consistency]] ("cada família no máximo uma vez por consulta") na fronteira entre lotes.~~ **Superado pela issue-64:** a unidade de paginação é o **chunk casado**; o invariante que isso protegia (não dividir uma família entre lotes) deixou de existir junto com o dedup por família.
 
-A ordenação é **congelada na primeira chamada**, não recalculada a cada lote. A primeira chamada resolve a busca inteira, agrupa por família e persiste a lista ordenada de `family_id` no `SearchExecution` que a issue-9 já exige ([[i7-reproducibility]], [[m10-versioning]]). O `request_id` dessa execução é a identidade do conjunto congelado. Recalcular o ranking a cada lote permitiria que uma família já exibida saísse do lugar, ou sumisse, entre a página 1 e a 2.
+A ordenação é **congelada na primeira chamada**, não recalculada a cada lote. A primeira chamada resolve a busca inteira e persiste a lista ordenada de hits (chunk casado, cada um com `document_version`) no `SearchExecution` que a issue-9 já exige ([[i7-reproducibility]], [[m10-versioning]]). O `request_id` dessa execução é a identidade do conjunto congelado. Recalcular o ranking a cada lote permitiria que um hit já exibido saísse do lugar, ou sumisse, entre a página 1 e a 2.
 
 Contrato: `POST /v1/search` aceita `cursor?` e `limit` (padrão 10) e devolve `next_cursor?` e `total`. O `cursor` é opaco e codifica `(request_id, posição)`. **Continuações não chamam o `ai`**: a primeira chamada por consulta é a única, como [[i2-model-serving]] e o esboço do plano já exigiam ("uma chamada por busca do usuário"). O lote seguinte é servido da lista congelada mais a hidratação do catálogo ([[i4-storage]]).
 
 `total` é conhecido e exato desde o primeiro lote, porque o conjunto congelado é completo. A interface não precisa estimar ([[u4-visualization]]).
 
-**Empate e ordem total.** A ordenação precisa ser uma ordem *total*, não parcial: score decrescente e, no empate, `family_id` crescente. Sem o desempate determinístico, duas execuções da mesma consulta podem intercalar empatados de forma diferente e a paginação deixa de ser reproduzível. O desempate é parte de `ranking_version` ([[m10-versioning]], que já o inclui: "código e configuração da recuperação, filtros, pesos, agrupamento e desempate").
+**Empate e ordem total.** A ordenação precisa ser uma ordem *total*, não parcial: score decrescente e, no empate, ~~`family_id` crescente~~ **um campo de desempate ainda a definir pela issue-64** (ver Open questions — candidatos são `document_version` ou `chunk_id`, agora que a unidade é o chunk). Sem o desempate determinístico, duas execuções da mesma consulta podem intercalar empatados de forma diferente e a paginação deixa de ser reproduzível. O desempate é parte de `ranking_version` ([[m10-versioning]], que já o inclui: "código e configuração da recuperação, filtros, pesos, agrupamento e desempate").
 
 **Índice atualizado no meio da navegação.** O disparo de ingestão é contínuo ([[u3-frequency]]: qualquer documento novo), então o corpus pode mudar entre dois lotes. O conjunto congelado pertence ao `corpus_version` da primeira chamada e continua sendo servido dele até o fim da navegação — a ordem nunca muda debaixo do usuário. Quando existir `corpus_version` mais recente, a resposta marca `stale_corpus: true`; a interface oferece refazer a busca, e nunca mistura corpora no mesmo conjunto de resultados.
 
@@ -88,6 +91,9 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 
 ## Decisions
 
+- 2026-09-26 (issue-64, Eduardo): `family_id`, a chave de identificação e `reassign_family` continuam **no contrato do port e no backend** — a #64 não remove nada do contrato, só do que a interface expõe. O atributo de filtro `family_id` em `search`/`index` e a operação `reassign_family` permanecem exatamente como especificados.
+- 2026-09-26 (issue-64, Eduardo): a unidade de paginação da busca passa de "família" para **chunk casado** — consequência de a visualização não agrupar nem deduplicar mais por peça ([[u4-visualization]], [[d11-consistency]]). O campo de desempate na ordem total (antes `family_id`) fica em aberto.
+
 - 2026-09-25 (issue-28, Eduardo): o agrupamento por família fica no `backend`; o `ai` devolve hits crus por chunk. **Supersede** a decisão de issue-2 "o agrupamento é obrigação do contrato do serviço". O congelamento do conjunto ordenado acontece depois do agrupamento, no mesmo lado.
 - 2026-09-25 (issue-28, Eduardo): a busca entrega lotes de 10 famílias, carregados sob demanda, na mesma ordenação global; a unidade de paginação é a família, nunca o chunk.
 - 2026-09-25 (issue-28, Eduardo): a ordenação é congelada na primeira chamada e persistida no `SearchExecution`; o `cursor` é opaco e codifica `(request_id, posição)`; continuações não chamam o `ai`.
@@ -138,6 +144,7 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 
 ## Open questions
 
+- (issue-64, aberta) Campo de desempate na ordem total, agora que a unidade é o chunk (antes era `family_id` crescente) — candidatos: `document_version` + posição do chunk, ou um `chunk_id` próprio.
 - (issue-28, respondida 2026-09-25 por Eduardo) De que lado fica o agrupamento: **no `backend`**. A decisão da issue-2 foi superada; o `ai` devolve hits crus e o congelamento acontece depois do agrupamento, no `backend`.
 - (issue-28) Tempo de retenção do conjunto congelado: enquanto durar a navegação, ou enquanto durar a retenção do `SearchExecution` da issue-9? O segundo é mais simples e já existe. Detalhe de F3.
 
@@ -156,6 +163,8 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md` linhas 60, 102, 118, 128–133, 144, 154–162.
 
 ## Topic history
+
+- issue-64 (em andamento): confirmou que `family_id`/`reassign_family` continuam no contrato do port sem alteração; mudou a unidade de paginação de família para chunk casado, consequência da remoção do agrupamento visual; deixou em aberto só o campo de desempate.
 
 - issue-7 (2026-09-20): revisão de disponibilidade aceita por Eduardo; inventário AWS incorporado como autoridade, corte local preservado. Mantidas as demais decisões desta página.
 

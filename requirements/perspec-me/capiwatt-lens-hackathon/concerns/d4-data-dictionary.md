@@ -6,7 +6,8 @@ status: partial
 topics:
   - issue-3 — Como uma família de versões de um documento é identificada e agrupada num único objeto, na ingestão e no resultado da busca?
   - issue-10 — Quais tipos de documento compõem o caso 1 e quais metadados cada um precisa carregar?
-updated_at: 2026-09-22
+  - issue-64 — Ao remover o conceito de família de documentos, como versões e documentos passam a ser identificados, agrupados e exibidos na ingestão, busca e interface?
+updated_at: 2026-09-26
 ---
 
 ## Current resolution
@@ -52,6 +53,8 @@ O dicionário de dados do caso 1 separa três conceitos que o plano já dizia se
 
 ## Decisions
 
+- 2026-09-26 (issue-64, Eduardo): `family_id`, a identificação por chave explícita/sugestão-por-similaridade e `reassign_family` continuam existindo **como dado de backend e no contrato do port**; a #64 remove o conceito só da interface ([[u4-visualization]]), nunca da ingestão/identificação de dados. Todas as decisões abaixo (issue-3, issue-10) permanecem vigentes sem alteração.
+
 - 2026-09-18 (issue-3): família = identidade lógica da mesma peça documental; processo SEI = grafo de peças (issue #4), não família.
 - 2026-09-18 (issue-3): identificação por chave explícita (tipo + identificador oficial) tem precedência; similaridade só produz sugestão pendente de confirmação, nunca agrupamento automático.
 - 2026-09-18 (issue-3): checksum idêntico = mesma versão (não reindexar); vigência é atributo da versão.
@@ -87,3 +90,4 @@ O dicionário de dados do caso 1 separa três conceitos que o plano já dizia se
 
 - issue-3: definiu família/versão/vigência como conceitos distintos, excluiu processo SEI do conceito de família, fixou a precedência chave explícita > similaridade (só sugestão), a ordem das versões por data de publicação e o ciclo da sugestão de fusão.
 - issue-10: acrescentou a taxonomia concreta do caso 1, metadados comuns e específicos, chaves por tipo e critérios conservadores para extrair `responde_a`, `regula`, `revoga` e `altera`; confirmou SEI/ANEEL como origem, a exposição autorizada da cópia CEMIG e a não indexação das normas.
+- issue-64: confirmou que família continua existindo como dado (chave, sugestão, `reassign_family`); a remoção da #64 é só de interface, sem impacto na identificação de dados desta página.
