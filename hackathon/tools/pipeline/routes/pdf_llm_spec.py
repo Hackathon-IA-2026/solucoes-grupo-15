@@ -143,6 +143,26 @@ executor cache entry, `<output_dir>/cache/<sha256>__<extractor_version>.json`
 other document). Both caches only ever key by content, never by a global
 version counter that would force the whole corpus to redo LLM calls (and
 re-spend money) for a change scoped to one document.
+
+## Reused by issue #72 (OCR) via composition, not a second registry entry
+
+`extract()` below does two things: (1) build `raw_text` (page-marker-joined
+`pdftotext -layout` output) and decide, from the *whole document's* average
+character density, whether there is a usable text layer at all; (2) given
+that `raw_text`, generate/reuse an LLM filtering spec and apply it. Step (2)
+is factored into its own method, `extract_from_raw_text(raw_text, page_count,
+out_path)`, precisely so `routes/pdf_ocr.py` (issue #72) can build its own
+`raw_text` — swapping in an OCR/vision transcription for whatever *individual
+pages* it detects as degraded, keeping this route's own step-(1) text
+verbatim for every other page — and call straight into step (2) without
+duplicating the spec-generation/filtering logic, and without a second
+`RouteRegistry` entry competing for `formato == "pdf"` (same precedence
+pattern this module's own class docstring already documents for how it
+falls back to `pdf_text_generic.py`). `PdfOcrRoute` is registered *before*
+this route in `cli.py::build_registry()`; this route's own `extract()` (the
+whole-document average-density check) is not reachable from the registry
+for real PDFs anymore, but stays directly callable/tested — the same
+in-code-only relationship this route already has with `PdfTextGenericRoute`.
 """
 
 from __future__ import annotations
@@ -456,6 +476,18 @@ class PdfLlmSpecRoute:
             raw_lines.extend(text.split("\n"))
         raw_text = "\n".join(raw_lines)
 
+        return self.extract_from_raw_text(raw_text, page_count, out_path)
+
+    def extract_from_raw_text(
+        self, raw_text: str, page_count: int, out_path: Path
+    ) -> ExtractionResult:
+        """Spec generation/reuse + verbatim filtering, given a `raw_text`
+        that already has one `<!-- pdftotext:page N -->` marker per page
+        (see module docstring, "Reused by issue #72"). `extract()` above is
+        the only caller that builds `raw_text` itself (straight
+        `pdftotext -layout`); `PdfOcrRoute` (#72) is the other caller, and
+        builds its own `raw_text` with OCR/vision text swapped in for
+        whichever individual pages it detected as degraded."""
         spec, spec_message = self._get_or_generate_spec(raw_text, out_path)
 
         drop_pages = set(spec.get("drop_pages", []))

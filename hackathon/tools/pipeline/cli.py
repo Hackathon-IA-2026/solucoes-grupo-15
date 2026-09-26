@@ -28,7 +28,7 @@ from manifest import (  # noqa: E402
 )
 from routes import RouteRegistry  # noqa: E402
 from routes.html_sei import HtmlSeiRoute  # noqa: E402
-from routes.pdf_llm_spec import PdfLlmSpecRoute  # noqa: E402
+from routes.pdf_ocr import PdfOcrRoute  # noqa: E402
 from triage import apply_triage  # noqa: E402
 
 DEFAULT_DATA_ROOT = REPO_ROOT / "hackathon" / "data"
@@ -37,22 +37,24 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "hackathon" / ".pipeline-output"
 
 def build_registry() -> RouteRegistry:
     registry = RouteRegistry()
-    # PdfLlmSpecRoute claims formato == "pdf" and is the only PDF route
-    # registered here (issue #71): PdfTextGenericRoute (#68) also claims
-    # "pdf", so registering both would leave the generic route permanently
-    # unreachable (RouteRegistry.dispatch picks the first can_handle
-    # match) — dead code masquerading as a fallback. Instead,
-    # PdfLlmSpecRoute reuses PdfTextGenericRoute's own building blocks
-    # (extract_raw_text/filter_verbatim) directly inside its extract() and
-    # falls back to that exact generic-only behavior in-process — no usable
-    # text layer (an OCR/#72 question) or a failed/invalid Bedrock call —
-    # never by falling through to a second registered route. See
-    # routes/pdf_llm_spec.py's module docstring ("Two-tier cache") and the
-    # precedence note in requirements/contracts/extraction-route.md.
-    # PdfTextGenericRoute stays importable and independently tested
-    # (test_routes_pdf_text_generic.py) — it is what #71 falls back *to*,
-    # just not a second entry in this registry.
-    registry.register(PdfLlmSpecRoute())
+    # PdfOcrRoute claims formato == "pdf" and is the only PDF route
+    # registered here (issue #72): PdfLlmSpecRoute (#71) and
+    # PdfTextGenericRoute (#68) also claim "pdf", so registering more than
+    # one would leave the others permanently unreachable
+    # (RouteRegistry.dispatch picks the first can_handle match) — dead code
+    # masquerading as a fallback. Instead, PdfOcrRoute does its own
+    # page-by-page pdftotext pass, decides per page whether to keep the
+    # native text or OCR/vision-transcribe it, and calls straight into
+    # PdfLlmSpecRoute.extract_from_raw_text() for spec generation/verbatim
+    # filtering — never through a second registered route. See
+    # routes/pdf_ocr.py's module docstring ("Composition, not a second
+    # RouteRegistry entry") and the precedence note in
+    # requirements/contracts/extraction-route.md. PdfLlmSpecRoute and
+    # PdfTextGenericRoute stay importable and independently tested
+    # (test_routes_pdf_llm_spec.py, test_routes_pdf_text_generic.py) — they
+    # are what #72 calls/falls back to internally, just not a second entry
+    # in this registry.
+    registry.register(PdfOcrRoute())
     registry.register(HtmlSeiRoute())
     return registry
 
