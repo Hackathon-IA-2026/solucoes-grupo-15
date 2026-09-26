@@ -257,6 +257,48 @@ def _persist_search_execution(
 # Agrupamento por familia
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Rota de replay (issue #77)
+# ---------------------------------------------------------------------------
+
+class ReplayEnvelope(BaseModel):
+    request_id: str
+    recomputed_response: SearchEnvelope
+    original_response: SearchEnvelope
+    matches: bool
+
+
+@router.post("/search/{request_id}/replay", response_model=ReplayEnvelope)
+def replay(
+    request_id: str,
+    session: Session = Depends(get_db_session),
+) -> ReplayEnvelope:
+    """Reexecuta, sem rede nem IA, a busca registrada sob ``request_id``.
+
+    Chama ``app.replay.replay_search`` (lazy import para evitar ciclo:
+    replay.py importa de routes/search.py). Retorna o envelope
+    recomputado, o envelope original persistido e um booleano
+    ``matches`` indicando se os dois coincidem.
+    """
+    # Lazy import para evitar ciclo: replay.py importa de routes/search.py
+    from app.replay import SearchExecutionNotFound, replay_search  # noqa: PLC0415
+
+    try:
+        result = replay_search(request_id, session)
+    except SearchExecutionNotFound as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Nenhuma execucao de busca encontrada para request_id={request_id!r}",
+        ) from exc
+
+    return ReplayEnvelope(
+        request_id=result.request_id,
+        recomputed_response=result.recomputed_response,
+        original_response=result.original_response,
+        matches=result.matches,
+    )
+
+
 def _group_by_family(
     hits: list[AiSearchHit], session: Session
 ) -> tuple[list[SearchResultOut], str]:

@@ -469,3 +469,58 @@ def test_search_pagination_last_page_has_no_next_cursor(database_url: str) -> No
     assert len(body["results"]) == 1
     assert body["next_cursor"] is None
     assert body["total"] == 2
+
+
+# ---------------------------------------------------------------------------
+# Testes de replay (issue #77)
+# ---------------------------------------------------------------------------
+
+def test_replay_returns_recomputed_and_original_response(database_url: str) -> None:
+    """Replay bem-sucedido devolve recomputed_response, original_response e matches."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="trecho para replay",
+            score=0.8,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    # Faz a busca original para ter um request_id persistido
+    search_resp = client.post("/v1/search", json={"query": "consulta para replay"})
+    assert search_resp.status_code == 200
+    request_id = search_resp.json()["request_id"]
+
+    # Chama o replay
+    replay_resp = client.post(f"/v1/search/{request_id}/replay")
+    assert replay_resp.status_code == 200
+
+    body = replay_resp.json()
+    assert body["request_id"] == request_id
+    assert body["matches"] is True
+
+    # recomputed_response e original_response devem ter os campos do SearchEnvelope
+    for key in ("recomputed_response", "original_response"):
+        envelope = body[key]
+        assert envelope["request_id"] == request_id
+        assert envelope["data_mode"] == "demo"
+        assert envelope["model_version"] == "fixture-demo"
+        assert envelope["ranking_version"] == "demo-ranking-v1"
+        assert len(envelope["results"]) == 1
+        assert envelope["results"][0]["family_id"] == "fam-auto-0007"
+
+    # Os dois envelopes devem ser iguais (matches True)
+    assert body["recomputed_response"] == body["original_response"]
+
+
+def test_replay_returns_404_for_unknown_request_id(database_url: str) -> None:
+    """Replay com request_id inexistente deve retornar HTTP 404."""
+    client = _client(database_url, hits=[])
+
+    fake_id = str(uuid.uuid4())
+    response = client.post(f"/v1/search/{fake_id}/replay")
+
+    assert response.status_code == 404
+    detail = response.json()["detail"]
+    assert fake_id in detail
