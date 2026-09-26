@@ -23,7 +23,9 @@ Além do disparo, cada usuário (não só a Carolina) escolhe o **escopo** do qu
 
 No escopo ampla, correlatos `suggested` (arestas `similar_a` ainda não confirmadas) entram na notificação junto com os `confirmed`, distintos visualmente como já ocorre na página da família ([[u4-visualization]]), em ambos os canais (home e e-mail) — decisão de Eduardo, 2026-09-18. Confirmar/rejeitar uma aresta `suggested` continua acontecendo só na página da família, nunca na notificação ([[u2-forcefulness]]).
 
-A frequência de entrega por e-mail foi definida na issue #7: home imediata, um digest por (usuário, job de ingestão), deduplicação por `(user_id, document_version_id)` e `reindex` sem nova notificação. A política fica no backend antes do port `Mailer` ([[i9-integration]], [[i6-telemetry]]); no primeiro ciclo, o adapter ativo é a prévia, pois SES está indisponível (issue #8). Essas decisões complementam o gatilho e o escopo definidos aqui.
+A frequência de entrega por e-mail foi definida na issue #7: home imediata, um digest por (usuário, job de ingestão), deduplicação por `(user_id, document_version_id)` e `reindex` sem nova notificação. A política fica no backend antes do port `Mailer` ([[i9-integration]], [[i6-telemetry]]).
+
+**⚠️ E-mail: implementado mas não ativado (out of scope operacional).** O código do port `Mailer` e do adapter de prévia (`app/mailer.py`) está completo e testado, mas o canal de e-mail **não é usado** neste ciclo porque o SES não foi disponibilizado pela organização do hackathon (issue #8, [Ambiente AWS — serviços disponíveis](../../../../hackathon/docs/Ambiente%20AWS%20-%20serviços%20disponíveis.md)). A entrega de notificações acontece **apenas pela home** (`notification_delivered_home`). O código de e-mail permanece como evidência do trabalho realizado e pode ser ativado futuramente se o SES for liberado.
 
 ## Confirmed facts
 

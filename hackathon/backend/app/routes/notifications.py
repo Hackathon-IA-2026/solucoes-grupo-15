@@ -1,5 +1,13 @@
 """Rotas publicas de notificacoes (TB1 Ticket 8, issue #24).
 
+⚠️ NOTA SOBRE E-MAIL DIGEST (OUT OF SCOPE OPERACIONAL)
+======================================================
+A rota GET /v1/users/{user_id}/email-digests está implementada e testada,
+mas o canal de e-mail NÃO É USADO operacionalmente neste ciclo porque o
+SES não foi disponibilizado (issue #8). A rota existe como evidência do
+trabalho realizado e retorna os digests gerados pelo adapter de prévia.
+======================================================
+
 ``PUT``/``GET /v1/users/{user_id}/notification-scope`` implementam a
 escolha obrigatoria de escopo (``estrita``/``ampla``, sem padrao -
 decisao fechada em u3-frequency.md). ``user_id`` e so uma string

@@ -70,8 +70,8 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 | **Definição de escopo** | `PUT` | `/v1/users/{user_id}/notification-scope` | `{ scope: "estrita" \| "ampla" }` | `{ scope: NotificationScope }` |
 | **Notificações do usuário** | `GET` | `/v1/users/{user_id}/notifications` | — | `NotificationItem[]` |
 | **Abertura de notificação** | `POST` | `/v1/notifications/{id}/opened` | — | `{ notification_id: number, opened: true }` |
-| **Prévias de e-mail digest** | `GET` | `/v1/users/{user_id}/email-digests` | — | `EmailDigestPreview[]` |
-| **Auditoria de telemetria** | `GET` | `/v1/notification-events` | Query: `user_id?`, `document_version_id?` | `NotificationEvent[]` |
+| **Prévias de e-mail digest** | `GET` | `/v1/users/{user_id}/email-digests` | — | `EmailDigestPreview[]` | **⚠️ Implementado mas não ativado (SES indisponível)** |
+| **Auditoria de telemetria** | `GET` | `/v1/notification-events` | Query: `user_id?`, `document_version_id?` | `NotificationEvent[]` | |
 
 ---
 
@@ -317,6 +317,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 
 - **`GET /v1/users/{user_id}/email-digests`**
   - **Finalidade:** Consultar os digests de e-mail agrupados gerados por job de ingestão para o usuário.
+  - **⚠️ Implementado mas não ativado (out of scope operacional).** O código do port `Mailer`, do adapter `PreviewMailer` e desta rota está completo e testado, mas o canal de e-mail **não é usado** neste ciclo porque o SES não foi disponibilizado pela organização do hackathon. A rota retorna lista vazia ou os digests gerados pelo adapter de prévia (se a geração de digest estiver habilitada no código). O código permanece como evidência do trabalho realizado.
   - **Schema:**
     ```typescript
     export type EmailDigestPreview = {
