@@ -70,8 +70,12 @@ def main() -> int:
             if tmp_path is not None:
                 tmp_path.unlink(missing_ok=True)
 
-        if i % 200 == 0:
-            print(f"  ... {i}/{total_docs} documentos PDF processados ({time.time()-t0:.0f}s)")
+        if i % 50 == 0:
+            print(
+                f"  ... {i}/{total_docs} documentos PDF processados "
+                f"({time.time()-t0:.0f}s, ultimo: {doc.caminho or (doc.origem or {}).get('zip_membro')})",
+                flush=True,
+            )
 
     elapsed = time.time() - t0
     print(f"corpus_version: {corpus_version}")

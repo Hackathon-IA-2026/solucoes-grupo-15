@@ -25,7 +25,7 @@ what happens when every page independently trips the per-page detector.
 
 A page is classified as "sem texto / degradada" when **either** signal fires:
 
-- **Densidade de caracteres** (`_page_char_count` below): the page's own
+- **Densidade de caracteres**: the page's own
   `pdftotext -layout` output has fewer than `MIN_CHARS_PER_PAGE` (imported
   from `pdf_text_generic.py` — same constant, now applied per page instead
   of as a whole-document average) non-whitespace characters. This is the
@@ -265,9 +265,33 @@ def _ocr_cache_key(image_bytes: bytes, model_id: str) -> str:
     return digest.hexdigest()
 
 
-def _page_char_count(pdf_path: Path, page: int) -> int:
-    text = _extract_raw_text.extract_page(pdf_path, page)
-    return len(re.sub(r"\s", "", text))
+def _all_pages_raw_text(pdf_path: Path, page_count: int) -> list[str] | None:
+    """One whole-document `pdftotext -layout` call, split on the page-
+    separator form-feed (`\\x0c`) poppler inserts between pages — instead of
+    `page_count` separate `-f N -l N` subprocess spawns (what
+    `PdfLlmSpecRoute`/`PdfOcrRoute.extract()` do, following the pattern
+    `pdf_text_generic.py` already established). That per-page-subprocess
+    pattern is fine for a normal document, but the real corpus has at least
+    one outlier — a "Processo" dossier PDF with 3648 pages
+    (`022_SEI_0436150_Processo.pdf`, category 03) — where it means 3648
+    process spawns for one file. `classify_pdf_pages` (detection-only, used
+    by `scan_corpus_report.py` for the corpus-wide count) uses this instead;
+    verified byte-for-byte equivalent per page to the `-f N -l N` call
+    except for one trailing newline `pdftotext` adds in single-page mode
+    (irrelevant to the non-whitespace character count both modes feed into
+    `MIN_CHARS_PER_PAGE` — see the evidence pack for the diff). Returns
+    `None` (caller falls back to the per-page calls) if the split doesn't
+    yield exactly `page_count` chunks — defensive, in case some PDF's
+    internal structure doesn't insert a clean form-feed per page."""
+    result = subprocess.run(
+        ["pdftotext", "-layout", str(pdf_path), "-"], check=True, capture_output=True, text=True
+    )
+    pages = result.stdout.split("\x0c")
+    if len(pages) == page_count + 1 and pages[-1] == "":
+        return pages[:-1]
+    if len(pages) == page_count:
+        return pages
+    return None
 
 
 def _page_size_pts(pdf_path: Path, page: int) -> tuple[float, float]:
@@ -398,7 +422,16 @@ class PdfOcrRoute:
             )
 
         try:
-            pages_text = [_extract_raw_text.extract_page(source_path, p) for p in range(1, page_count + 1)]
+            # One whole-document pdftotext call instead of page_count
+            # separate subprocess spawns (see _all_pages_raw_text's
+            # docstring) — matters on the real corpus's outlier documents
+            # (a 3850-page "Processo" dossier was measured taking minutes
+            # under the naive per-page-call version this replaced).
+            pages_text = _all_pages_raw_text(source_path, page_count)
+            if pages_text is None:
+                pages_text = [
+                    _extract_raw_text.extract_page(source_path, p) for p in range(1, page_count + 1)
+                ]
             images_by_page = _list_images_by_page(source_path)
         except Exception as exc:
             return ExtractionResult(
@@ -552,12 +585,20 @@ def classify_pdf_pages(pdf_path: Path) -> tuple[int, list[int]]:
     `scan_corpus_report.py` for the corpus-wide scanned-page count
     (acceptance criterion), and reused here so the count is computed with
     the *exact* same criterion `PdfOcrRoute.extract()` applies, never a
-    second, drifting copy of it. Returns `(page_count, degraded_page_numbers)`."""
+    second, drifting copy of it. Returns `(page_count, degraded_page_numbers)`.
+
+    Uses `_all_pages_raw_text`'s single whole-document `pdftotext` call
+    (falling back to one call per page only if that doesn't cleanly split
+    into `page_count` chunks) — see that function's docstring for why this
+    matters on the real corpus."""
     page_count = _extract_raw_text.count_pages(pdf_path)
     images_by_page = _list_images_by_page(pdf_path)
+    pages_text = _all_pages_raw_text(pdf_path, page_count)
+    if pages_text is None:
+        pages_text = [_extract_raw_text.extract_page(pdf_path, p) for p in range(1, page_count + 1)]
     degraded: list[int] = []
     for page in range(1, page_count + 1):
-        char_count = _page_char_count(pdf_path, page)
+        char_count = len(re.sub(r"\s", "", pages_text[page - 1]))
         is_degraded = char_count < MIN_CHARS_PER_PAGE
         if not is_degraded:
             is_degraded = _page_has_full_page_scan_image(pdf_path, page, images_by_page.get(page, []))
