@@ -114,23 +114,27 @@ class DocumentRelation(Base):
 
 
 class Feedback(Base):
-    """Um voto 👍/👎 num resultado de busca (Ticket 7, issue #23).
+    """Um voto 👍/👎 num resultado de busca (Ticket 7, issue #23;
+    chave de chunk issue #82).
 
     Liga o voto ao ``request_id`` da chamada de POST /v1/search que
-    produziu o card avaliado e ao ``family_id`` avaliado - nenhuma
-    chave estrangeira e declarada para nenhum dos dois (``request_id``
-    nao e persistido em nenhuma tabela; um ``family_id`` poderia em
-    tese ja ter saido do catalogo). Nenhum campo de
-    justificativa/comentario existe aqui, por decisao explicita da
-    issue. ``vote`` e validado como ``"up"``/``"down"`` na camada da
-    rota (Pydantic), nao aqui.
+    produziu o card avaliado. Desde a issue #82 (resultados por chunk,
+    issue #78), a unidade identificada e o chunk: ``document_version`` +
+    ``chunk_index`` sao os campos primarios de identidade; ``family_id``
+    tornou-se opcional (nullable) para preservar feedbacks legados
+    gravados antes da issue #82. Nenhuma chave estrangeira e declarada
+    para nenhum campo. Nenhum campo de justificativa/comentario existe
+    aqui, por decisao explicita da issue original. ``vote`` e validado
+    como ``"up"``/``"down"`` na camada da rota (Pydantic), nao aqui.
     """
 
     __tablename__ = "feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     request_id: Mapped[str] = mapped_column(String, nullable=False)
-    family_id: Mapped[str] = mapped_column(String, nullable=False)
+    document_version: Mapped[str | None] = mapped_column(String, nullable=True)
+    chunk_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    family_id: Mapped[str | None] = mapped_column(String, nullable=True)
     vote: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
