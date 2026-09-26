@@ -1,7 +1,8 @@
-import { ArrowLeft, ArrowRight, Check, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { CapiMark } from "../components/brand/CapiMark";
 import { useSession } from "../features/auth/SessionContext";
 import { mockPersonas } from "../mocks/personas";
 import type { PersonaId } from "../types/product";
@@ -29,7 +30,7 @@ export function PersonaPage() {
   return (
     <main className="persona-page">
       <header className="persona-logo" aria-label="CapiWatt Lens">
-        <span className="persona-logo-symbol"><Zap size={27} fill="currentColor" aria-hidden="true" /></span>
+        <span className="persona-logo-symbol"><CapiMark size={32} /></span>
         <span className="persona-logo-name">Capi<span>Watt</span><small>Lens</small></span>
       </header>
       <section className="persona-content">
