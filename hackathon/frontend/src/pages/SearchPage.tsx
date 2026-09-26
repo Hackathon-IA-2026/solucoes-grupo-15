@@ -118,7 +118,7 @@ export function SearchPage() {
         {state.kind === "result" && state.envelope.results.length > 0 && (
           <>
             <div className="results-heading">
-              <div><p className="eyebrow">Resultados</p><h2>{state.envelope.results.length} família{state.envelope.results.length > 1 ? "s" : ""} encontrada{state.envelope.results.length > 1 ? "s" : ""}</h2></div>
+              <div><p className="eyebrow">Resultados</p><h2>{state.envelope.results.length} documento{state.envelope.results.length > 1 ? "s" : ""} encontrado{state.envelope.results.length > 1 ? "s" : ""}</h2></div>
               <p className="result-meta">Corpus {state.envelope.corpus_version} · modo {state.envelope.data_mode}</p>
             </div>
             <ol className="result-list">
@@ -143,7 +143,7 @@ export function SearchPage() {
                       </div>
                       <div className="result-actions">
                         <Link className="detail-link" to={`/documents/${result.family_id}`} state={{ matchedChunks: result.matched_chunks }}>
-                          Abrir família <ArrowRight size={16} aria-hidden="true" />
+                          Abrir documento <ArrowRight size={16} aria-hidden="true" />
                         </Link>
                         <FeedbackButtons requestId={state.envelope.request_id} familyId={result.family_id} />
                       </div>

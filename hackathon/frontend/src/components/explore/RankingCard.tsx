@@ -12,7 +12,7 @@ export function RankingCard({ result, onOpenDocuments }: { result: RankedPrecede
       <div className={`rank-number rank-${result.rank}`}>{result.rank}</div>
       <div className="ranking-main">
         <div className="ranking-title-row">
-          <div><span className="result-kind">Família documental</span><h3><Link className="process-title-link" to={`/processos/${encodeURIComponent(result.processNumber)}`}>{result.processNumber}<ArrowUpRight size={15} aria-hidden="true" /></Link></h3><small className="document-identity">{result.documents[0]?.label} · {result.familyId}</small></div>
+          <div><span className="result-kind">Processo</span><h3><Link className="process-title-link" to={`/processos/${encodeURIComponent(result.processNumber)}`}>{result.processNumber}<ArrowUpRight size={15} aria-hidden="true" /></Link></h3><small className="document-identity">{result.documents[0]?.label} · {result.documents.length} documento{result.documents.length === 1 ? "" : "s"} localizado{result.documents.length === 1 ? "" : "s"}</small></div>
           <div className="ranking-badges"><span className="status-chip green">{result.relevance}</span><span className={`status-chip ${result.stance === "Precedente contrário" ? "red" : result.stance === "Em andamento" ? "orange" : "blue"}`}>{result.stance}</span><span className="adherence"><strong>{result.adherence}%</strong><small>Aderência</small></span></div>
         </div>
         <p className="ranking-summary">{result.summary}</p>

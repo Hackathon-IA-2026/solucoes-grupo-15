@@ -64,10 +64,10 @@ describe("páginas do produto", () => {
     expect(screen.getByLabelText(/cadeia de respostas/i)).toHaveTextContent("fam-defesa-0007");
   });
 
-  it("lista e pesquisa famílias regulatórias", async () => {
+  it("lista e pesquisa temas regulatórios", async () => {
     render(<FamiliesPage />);
     expect((await screen.findAllByText("Transição Energética", {}, { timeout: 1500 })).length).toBeGreaterThan(0);
-    fireEvent.change(screen.getByLabelText(/pesquisar famílias/i), { target: { value: "encargos setoriais" } });
+    fireEvent.change(screen.getByLabelText(/pesquisar temas/i), { target: { value: "encargos setoriais" } });
     expect(screen.getAllByText("Tarifas e Encargos").length).toBeGreaterThan(0);
     expect(screen.queryByText("Consumidores e Distribuição")).not.toBeInTheDocument();
   });

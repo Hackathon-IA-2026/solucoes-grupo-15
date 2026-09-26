@@ -27,7 +27,7 @@ export function LoginPage() {
 
   return (
     <main className="login-page">
-      <section className="login-brand-panel" aria-label="CapiWatt Lens, feito no Brasil, ligado no futuro"><img src="/assets/login-brand-panel.png" alt="CapiWatt Lens, energia, tecnologia e regulação no Brasil" /></section>
+      <section className="login-brand-panel" aria-label="CapiWatt Lens, feito no Brasil, ligado no futuro"><img src="/assets/login-brand-panel-v2.png" alt="CapiWatt Lens, energia, tecnologia e regulação no Brasil" /></section>
       <section className="login-form-panel">
         <form className="login-card" onSubmit={submit}>
           <div className="login-heading"><span className="mobile-logo">Capi<span>Watt</span> Lens</span><h1>Entrar</h1><p>Acesse sua conta para continuar.</p></div>

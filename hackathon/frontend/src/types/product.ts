@@ -130,7 +130,7 @@ export type AppNotification = {
   title: string;
   reference: string;
   description: string;
-  category: "Processo SEI" | "Norma" | "Consulta Pública" | "Parecer" | "Família";
+  category: "Processo SEI" | "Norma" | "Consulta Pública" | "Parecer" | "Tema";
   createdAt: string;
   read: boolean;
 };

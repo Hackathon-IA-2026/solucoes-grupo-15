@@ -1,4 +1,4 @@
-import { FileCheck2, FolderKanban, Network, Search, Sparkles, SwitchCamera } from "lucide-react";
+import { FolderKanban, Network, Search, Sparkles, SwitchCamera } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { useSession } from "../../features/auth/SessionContext";
@@ -6,9 +6,8 @@ import { useSession } from "../../features/auth/SessionContext";
 const navigation = [
   { label: "Explorar", to: "/explorar", icon: Search },
   { label: "Meus Processos", to: "/meus-processos", icon: FolderKanban },
-  { label: "Famílias", to: "/familias", icon: Sparkles },
+  { label: "Temas", to: "/familias", icon: Sparkles },
   { label: "Mapas e Relações", to: "/mapas-relacoes", icon: Network },
-  { label: "Parecer Conclusivo", to: "/parecer-conclusivo", icon: FileCheck2 },
 ];
 
 export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () => void }) {

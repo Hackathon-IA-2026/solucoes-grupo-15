@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Zap } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -19,16 +19,20 @@ export function PersonaPage() {
 
   return (
     <main className="persona-page">
-      <header className="persona-logo"><img src="/assets/capiwatt-wordmark.png" alt="CapiWatt Lens" /></header>
+      <header className="persona-logo" aria-label="CapiWatt Lens">
+        <span className="persona-logo-symbol"><Zap size={27} fill="currentColor" aria-hidden="true" /></span>
+        <span className="persona-logo-name">Capi<span>Watt</span><small>Lens</small></span>
+      </header>
       <section className="persona-content">
-        <h1>Como você quer usar<br />o CapiWatt Lens hoje?</h1>
-        <p>Escolha o perfil que melhor combina com sua atividade de hoje.</p>
+        <p className="persona-kicker">Comece pelo seu contexto de trabalho</p>
+        <h1>Como você quer usar o CapiWatt Lens hoje?</h1>
+        <p className="persona-lead">Seu perfil organiza as sugestões e o jeito de explorar processos, documentos e normas.</p>
         <div className="persona-grid">
           {mockPersonas.map((persona) => (
             <button key={persona.id} type="button" className={`persona-card persona-${persona.id} ${selected === persona.id ? "selected" : ""}`} onClick={() => setSelected(persona.id)} aria-pressed={selected === persona.id}>
               <span className="persona-image"><img src={persona.image} alt="" /></span>
               {selected === persona.id && <span className="persona-check"><Check size={20} /></span>}
-              <strong>{persona.title}</strong><span>{persona.description}</span>
+              <span className="persona-copy"><small>{persona.label}</small><strong>{persona.title}</strong><span>{persona.description}</span></span>
             </button>
           ))}
         </div>

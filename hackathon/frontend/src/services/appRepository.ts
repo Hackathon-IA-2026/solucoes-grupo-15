@@ -131,8 +131,8 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
     results,
     coverage: average,
     coverageSummary: results.length
-      ? `${results.length} família(s) documental(is) retornada(s) pela fixture ${envelope.corpus_version}.`
-      : "Nenhuma família foi mapeada para esta consulta na fixture atual.",
+      ? `${results.length} documento(s) retornado(s) pela fixture ${envelope.corpus_version}.`
+      : "Nenhum documento foi mapeado para esta consulta na fixture atual.",
     metrics: [
       { label: "Correspondência média", detail: "scores declarados na fixture", value: average, tone: "green" },
       { label: "Melhor correspondência", detail: "maior score retornado", value: Math.max(...scores, 0), tone: "blue" },

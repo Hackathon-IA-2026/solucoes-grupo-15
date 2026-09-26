@@ -11,7 +11,7 @@ const exampleQueries = [
 
 export function ExploreLanding({ onRunSearch }: { onRunSearch: (query: string) => void }) {
   const navigate = useNavigate();
-  const featuredFamilies = mockFamilies.slice(0, 4);
+  const featuredThemes = mockFamilies.slice(0, 4);
 
   return (
     <section className="explore-landing" aria-label="Página inicial de exploração">
@@ -25,9 +25,9 @@ export function ExploreLanding({ onRunSearch }: { onRunSearch: (query: string) =
       </div>
       <div className="landing-grid">
         <section className="landing-panel landing-families">
-          <div className="landing-heading"><div><p className="page-kicker"><Sparkles size={14} /> Famílias em destaque</p><h3>Explore por tema</h3></div><button type="button" onClick={() => navigate("/familias")}>Ver todas <ArrowRight size={15} /></button></div>
+          <div className="landing-heading"><div><p className="page-kicker"><Sparkles size={14} /> Temas em destaque</p><h3>Explore por tema</h3></div><button type="button" onClick={() => navigate("/familias")}>Ver temas <ArrowRight size={15} /></button></div>
           <div className="landing-family-grid">
-            {featuredFamilies.map((family) => (
+            {featuredThemes.map((family) => (
               <button key={family.id} type="button" className={`landing-family-card ${family.tone}`} onClick={() => navigate("/familias")}>
                 <strong>{family.name}</strong><span>{family.documents.toLocaleString("pt-BR")} documentos</span>
               </button>

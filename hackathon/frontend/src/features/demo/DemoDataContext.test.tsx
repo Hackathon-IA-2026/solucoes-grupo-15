@@ -42,7 +42,7 @@ describe("preparação dos dados demo", () => {
     expect(fetchMock).toHaveBeenCalledWith("/v1/ingestions", { method: "POST" });
     const callsBeforeNavigation = fetchMock.mock.calls.length;
 
-    fireEvent.click(screen.getByRole("link", { name: /famílias/i }));
+    fireEvent.click(screen.getByRole("link", { name: /temas/i }));
     await waitFor(() => expect(window.location.pathname).toBe("/familias"));
     expect(fetchMock).toHaveBeenCalledTimes(callsBeforeNavigation);
   });
