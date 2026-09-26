@@ -31,6 +31,10 @@ cd repo
 
 Liste aqui o que precisa estar instalado antes de rodar o projeto (ex: Node 18+, Python 3.10+, Docker, etc.)
 
+## Metodologia de especificação
+
+Para especificar e executar este projeto, nos inspiramos no trabalho de Hugo Villamizar, o **PerspecML**, usando agentes de software engineering e os princípios de **Spec-Driven Development (SDD)**. A especificação — do levantamento de requisitos por múltiplas perspectivas até a execução do código — é conduzida por agentes.
+
 ## Licença
 
 Este projeto está sob a licença MIT — veja o arquivo [LICENSE](./LICENSE) para mais detalhes.
