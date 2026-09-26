@@ -14,3 +14,15 @@ dist-ssr/
 
 # Local prototype outputs
 hackathon/.prototype-downloads/
+
+# ANEEL SEI batch downloader raw output (issue #56): originals are too large/
+# numerous for GitHub (several files >100MB, ~3.3GB total). Only the
+# _indice_*.csv manifests and README are tracked; see
+# hackathon/data/processos aneel/README.md for where the full set lives.
+hackathon/data/processos aneel/**/*.pdf
+hackathon/data/processos aneel/**/*.html
+hackathon/data/processos aneel/**/*.json
+hackathon/data/processos aneel/**/*.zip
+hackathon/data/processos aneel/**/*.jpeg
+hackathon/data/processos aneel/**/*.png
+hackathon/data/processos aneel/**/*.mp4
