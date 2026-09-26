@@ -1,0 +1,13 @@
+{
+  "drop_line_literals": ["Eduardo Baroni Júnior"],
+  "drop_line_contains": [
+    "Assinado de forma digital",
+    "por EDUARDO BARONI",
+    "JUNIOR:0665",
+    "Dados: 202",
+    "-03'00'",
+    "Superintêndencia de Regulação"
+  ],
+  "strip_trailing_rubric_tokens": ["FLM"],
+  "notes": "Same ICP-Brasil digital signature stamp pattern as recurso-48500.009907-2025-96.json (same signer, same cover-letter convention). See that spec's notes. 'FLM' is a reviewer-initials rubric repeated at the end of the address line on every page; stripped as a trailing token so the rest of the line (address/URL) stays verbatim."
+}

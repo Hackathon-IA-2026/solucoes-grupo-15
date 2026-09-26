@@ -1,0 +1,4 @@
+{
+  "drop_line_literals": ["CECL"],
+  "notes": "CECL is a rubric/initials stamp repeated on every page of this PDF (56 occurrences), immediately before the 'Documento assinado digitalmente.' footer. It identifies who initialed each page (Carlos Eduardo Carvalho Lima's initials, the SFE representative who signs the cover Auto de Infração). Removed as per-page signer identification (AC: assinaturas/identificação de quem assinou)."
+}

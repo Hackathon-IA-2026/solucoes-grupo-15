@@ -1,0 +1,12 @@
+{
+  "drop_line_literals": ["Eduardo Baroni Júnior", "MHS"],
+  "drop_line_contains": [
+    "Assinado de forma digital",
+    "por EDUARDO BARONI",
+    "JUNIOR:0665",
+    "Dados: 202",
+    "-03'00'",
+    "Superintêndencia de Regulação"
+  ],
+  "notes": "Cover letter's ICP-Brasil digital signature stamp: pdftotext -layout merges the rotated/boxed stamp graphic with the surrounding column text into a garbled 5-line block (signer's ID certificate number, timestamp with -03'00' offset), followed by the signer's name and role on their own lines. All removed as identification of who signed (AC). 'MHS' is a reviewer-initials rubric repeated standalone on every page (per-page identification of who checked the page)."
+}

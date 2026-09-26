@@ -1,0 +1,38 @@
+{
+  "drop_line_literals": [
+    "PEDRO HENRIQUE",
+    "FANTINI",
+    "044.874.216-08",
+    "Emitido por: AC",
+    "PRODEMGE RFB G4",
+    "Data: 13/05/2020",
+    "Pedro Henrique Fantini Vieira",
+    "Gerente",
+    "Emerson da Silva Ribeiro",
+    "Diretoria de Engenharia, Construção e Serviços",
+    "Ronaldo de Oliveira",
+    "Gerência de Relacionamento com Clientes de Geração Distribuída – RC/GD",
+    "Diretoria de Cemig Distribuição - DCD",
+    "Companhia Energética de Minas Gerais – Cemig D",
+    "Gerência de Relacionamento com Clientes de Geração Distribuída",
+    "w ín ald o de Oliveira",
+    "Av B irb tc e u »   1200 - I ' A ndar - Al* A í - S in to A g o ilia h o   * C E P 3(11911-131",
+    "B doH om ouiç ■MG ■Brasil F n (31)3299-1691 - T d       f31)3299-3711                            tm w a r o p o i t i o r c i U i im m u « fe tía c u",
+    "A i A f t r t t c e b i . IJllfl * I \" A n d a r - A U A2 * S i n t a A g o tiin h o   * C E P 3 0 1 9 0 .I 3 |",
+    "Belo Han/ünte - A-1G Brwil - F n 0 1 } J2WM691 * T d O H 3299-3711                                                Em tua ra p o tU . f n nr ciur ncrna refcténeii"
+  ],
+  "drop_line_contains": [
+    "A v . B a r b a c e n a",
+    "B e l o H o r i z o n t e",
+    "D u r a n t e o s e f e i t o s",
+    "r e g u l a t ó r i o @",
+    "Tel: 55 11 4197-4784",
+    "Av. das Nações Unidas, 12.495",
+    "Brooklin Paulista CEP",
+    "Telefone: 55 (31) 3506-2340",
+    "Email ronaldoo@cemig.com.br",
+    "www.cemig.com.br"
+  ],
+  "strip_trailing_rubric_tokens": ["VIEIRA:04487421608"],
+  "notes": "Three removal targets in this recurso: (1) the petition's own closing signature — the ICP-Brasil certificate fragments (PEDRO HENRIQUE / FANTINI / VIEIRA:04487421608 / 044.874.216-08 / Emitido por: AC / PRODEMGE RFB G4 / Data: 13/05/2020), the signer's name+role (Pedro Henrique Fantini Vieira / Gerente), and the letter-spaced Cemig letterhead/address/phone/pandemic-contact footer that pdftotext renders as 3 garbled lines merged with the page-footer column ('Em sua resposta...' / 'Pág. 22 de 22'). (2) an email exchange reproduced as evidence near the end of the document (pp. 25-26): both correspondents' closing signature blocks (name, role, department, company, phone, personal email, website) are removed as identification of who signed each message; the email routing headers (De/Para/Cc/Assunto) and the message bodies themselves are kept verbatim because they are the substantive evidence the recurso relies on (proof of when a reimbursement happened), not a signature. (3) page 24 embeds a second Cemig letter (about 'conexão rasa') whose text-layer extraction is visibly degraded/garbled (different character substitutions than the rest of the document, e.g. 'Av B irb tc e u »' for 'Av. Barbacena') — likely a scanned/re-photocopied insert rather than a native text PDF page. Its signature line ('w ín ald o de Oliveira' = garbled 'Ronaldo de Oliveira') and its two garbled letterhead-footer lines are removed by exact literal match (still deterministic, since pdftotext produces the same garble every run on this file); everything else on that page is kept as pdftotext extracted it. This is a known extraction-quality limitation of that one page, documented in the prototype README, not a paraphrase — see the README's 'Limitações' section."
+}
