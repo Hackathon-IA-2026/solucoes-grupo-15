@@ -85,7 +85,7 @@ Abertura de e-mail é medida **só pelo clique no link com token** — sem pixel
 
 - [[d14-data-operations-modeling]] (eventos de ingestão já existentes).
 - Resposta de Eduardo, rodada 2 da issue #6 (2026-09-18): "aceito sugestões" (para os três eventos de telemetria propostos).
-- Comentários de resolução das issues [#6](https://github.com/EricRLeao1311/CapiWatt/issues/6) e [#7](https://github.com/EricRLeao1311/CapiWatt/issues/7), seções "Telemetria".
+- Comentários de resolução das issues [#6](https://github.com/Hackathon-IA-2026/solucoes-grupo-15/issues/6) e [#7](https://github.com/Hackathon-IA-2026/solucoes-grupo-15/issues/7), seções "Telemetria".
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md` l.50, 86, 112, 191.
 - `hackathon/scripts/check_aws_capabilities.out` l.317–334 (SES negado; observação sobre sandbox).
 

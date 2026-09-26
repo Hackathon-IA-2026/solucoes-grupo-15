@@ -6,7 +6,7 @@ status: partial
 topics:
   - issue-4 — Como as relações entre documentos são representadas (arestas, origem: metadado explícito vs. similaridade) e onde ficam armazenadas?
   - issue-13 — Que estratégia de chunking e que modelo de embeddings do Bedrock se ajustam aos documentos do caso 1?
-updated_at: 2026-09-22
+updated_at: 2026-09-26
 ---
 
 ## Current resolution
@@ -17,6 +17,8 @@ As **relações entre documentos são produzidas no fim do job de ingestão** (m
 2. **Vizinhança vetorial** — para a versão-face de cada família, os k vizinhos mais próximos no índice. Candidatos **acima do limiar de fusão** viram sugestão de fusão (issue #3), **nunca** aresta `similar_a`; candidatos entre o limiar de relação e o de fusão viram aresta `similar_a` **sugerida**, limitada a top-k por família.
 
 **Grafo resultante:** nós = **famílias** de documentos e **processos SEI** (nó de tipo próprio, identificado pelo número SEI — não um documento). Arestas nunca ligam versões; a evidência da aresta é que aponta para `document_version + localizador`.
+
+**Etapa de extração por IA, antes do chunking (decisão de Eduardo, 2026-09-26)**: todo PDF, de qualquer um dos dois corpora (`case-1-carolina-mmgd/` e o corpus maior da #56), passa por uma IA que extrai o texto para um arquivo Markdown — menor e mais fácil de tratar do que o PDF original. Essa IA **copia o conteúdo**, nunca resume com palavras próprias, e remove: (1) anexos inteiros como relatório de vistoria e laudo técnico, (2) contrato social, e (3) assinaturas e a identificação de quem assinou. O chunking estrutural abaixo passa a rodar sobre o Markdown extraído, não sobre o texto bruto do PDF.
 
 Para a representação vetorial decidida na issue #13, cada versão documental passa por **chunking estrutural** com alvo de 600 tokens, máximo de 800 e sobreposição de 100 tokens apenas entre trechos narrativos adjacentes. Títulos, seções, parágrafos e tabelas orientam os limites; cabeçalhos e rodapés repetidos são removidos. Cada chunk preserva `document_id`, `corpus_version`, `model_version`, versão documental, seção e intervalo de páginas.
 
@@ -56,6 +58,9 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 - 2026-09-22 (issue-13, Eduardo): recuperação *small-to-big* orientada a páginas depois dos três chunks encontrados; o intervalo do chunk é ampliado com a página anterior e a seguinte.
 - 2026-09-22 (issue-13, Eduardo): `Recall@3` é calculado sobre os chunks encontrados antes da expansão; a qualidade da resposta e das citações após expansão é avaliada separadamente.
 - 2026-09-22 (issue-13, Eduardo): `top_k=3` para candidatos de vizinhança; `limiar_relacao` e `limiar_fusao` são calibrados no corpus, sem constantes universais, mantendo `limiar_relacao < limiar_fusao`.
+- 2026-09-26 (issue-13, Eduardo): inserir uma etapa de extração por IA (PDF → Markdown, cópia verbatim, sem resumo) antes do chunking estrutural; aplicada a todo documento de ambos os corpora.
+- 2026-09-26 (issue-13, Eduardo): essa extração remove anexos inteiros (relatório de vistoria, laudo técnico), contrato social, e assinaturas/identificação de quem assinou — não apenas boilerplate de assinatura.
+- 2026-09-26 (issue-13, Eduardo): o corpus maior da #56 não substitui o gabarito de avaliação de D16 (que continua nos 10 PDFs de `case-1-carolina-mmgd/`); ele serve para popular o dataset, dar robustez às métricas de busca e como fonte de futuros casos de teste.
 
 ## Derived requirements and constraints
 
@@ -76,6 +81,8 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 - Instâncias concretas de `regula` e `responde_a` no caso 1 (quais peças do processo de multa respondem a quais; que normas fundamentam o auto) — a leitura provisória está confirmada (abaixo, em Decisions); falta validá-la contra os documentos reais da Carolina. Registrado como comentário na issue #10.
 - Valores numéricos de `limiar_relacao` e `limiar_fusao` — calibrar com pares conhecidos do corpus após a invocação funcional do modelo; `top_k` foi fixado em 3 e a ordenação `limiar_relacao < limiar_fusao` permanece obrigatória.
 - Padrões textuais concretos por tipo fino (regex/NER) — definir quando os documentos do caso existirem. Registrado como comentário na issue #10.
+- **Resolvida em 2026-09-26**: a extração remove seções inteiras de anexo (vistoria, laudo técnico), contrato social e assinaturas (ver Decisions).
+- Como distinguir programaticamente "anexo" de "conteúdo principal" dentro do Markdown extraído (heurística por título de seção, classificação por página, ou decisão da própria IA de extração durante a cópia) não foi especificado — a decisão de 2026-09-26 fixa o quê remover, não o como a IA identifica os limites de cada seção.
 
 ## Evidence
 
@@ -85,8 +92,10 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 - `hackathon/data/case-1-carolina-mmgd/` — corpus real de 10 PDFs usado para caracterizar páginas e estrutura documental.
 - `hackathon/ai/app/routes/index.py` — comportamento provisório de fixtures que será substituído pelo chunking estrutural.
 - Resposta de Eduardo na sessão da issue #13, 2026-09-22 — baseline de chunking, expansão por páginas, orçamento de contexto, métricas separadas e calibração de vizinhança.
+- Resposta de Eduardo na sessão da issue #13, 2026-09-26 — etapa de extração por IA (PDF → Markdown, cópia verbatim, remoção de assinaturas), aplicada a ambos os corpora; papel do corpus maior da #56 (popular dataset, robustez de métricas, futuros casos de teste).
 
 ## Topic history
 
 - issue-4: definiu as duas operações que produzem relações na ingestão, os nós do grafo (família + processo), o vocabulário de tipos de aresta (incluindo os finos `revoga`, `altera`, `responde_a`, `regula`) e a separação entre similaridade-para-fusão e similaridade-para-relação.
 - issue-13: definiu o chunking estrutural, a expansão *small-to-big* por páginas, a proveniência e o orçamento do contexto, separou as métricas pré/pós-expansão e fixou `top_k=3`; os limiares numéricos permanecem para calibração no corpus.
+- issue-13 (2026-09-26): travou o modelo em Titan V2, adiou a medição de `Recall@3`, fechou a #56 e inseriu uma etapa de extração por IA (PDF → Markdown, cópia verbatim) antes do chunking, aplicada a ambos os corpora, removendo anexos inteiros (vistoria, laudo técnico), contrato social e assinaturas; abriu a #57 (D1/U4) para o link do documento na interface.

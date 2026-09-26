@@ -6,7 +6,8 @@ status: resolved
 topics:
   - issue-8 — O que roda local e o que roda na AWS no primeiro ciclo, e como o ambiente local fala com Bedrock e SES (credenciais, custo)?
   - issue-9 — Como corpus_version, model_version e ranking_version são registrados para reproduzir uma execução?
-updated_at: 2026-09-20
+  - issue-13 — Que estratégia de chunking e que modelo de embeddings do Bedrock se ajustam aos documentos do caso 1?
+updated_at: 2026-09-26
 ---
 
 ## Current resolution
@@ -17,7 +18,7 @@ updated_at: 2026-09-20
 
 A reprodutibilidade do primeiro ciclo é ancorada no ambiente local: o Compose sobe sem credenciais com `EMBEDDER=fake` e `MAILER=preview`, e a suíte de testes nunca toca a AWS. Bedrock entra por configuração explícita para gerar embeddings reais; SES está indisponível neste ciclo, conforme a decisão da issue-8. A conta AWS é temporária (72 h).
 
-Na issue-9, Eduardo confirmou a reexecução sem AWS das buscas registradas de avaliação e demonstração, a igualdade nas fixtures e a preservação de cada corpus usado nessas atividades até o encerramento do hackathon. Isso exige preservar localmente os embeddings dos documentos e das consultas, além dos originais e do catálogo; o embedder fake não substitui o modelo real na reexecução. A afirmação anterior de que apenas `pg_dump` e originais bastam é refinada por esse requisito. As três versões apontam para registros imutáveis conforme [M10](m10-versioning.md); o backend registra a execução com os identificadores efetivamente usados pelo módulo `ai`. Na busca real, diferenças são registradas e comparadas, sem exigência de igualdade exata. Resolvido para o primeiro ciclo do hackathon, com aceite de Eduardo em 2026-09-18.
+Na issue-9, Eduardo confirmou a reexecução sem AWS das buscas registradas de avaliação e demonstração, a igualdade nas fixtures e a preservação de cada corpus usado nessas atividades até o encerramento do hackathon. Isso exige preservar localmente os embeddings dos documentos e das consultas, além dos originais e do catálogo; o embedder fake não substitui o modelo real na reexecução. **Precisão de 2026-09-26 (issue-13, Eduardo)**: os embeddings preservados são computados sobre o **Markdown extraído por IA** (cópia verbatim, sem anexos inteiros, contrato social ou assinaturas — decisão em [[d14-data-operations-modeling]]), não sobre o texto bruto do PDF. "Texto extraído" em [[i4-storage]] passa a se referir a esse Markdown já filtrado. A afirmação anterior de que apenas `pg_dump` e originais bastam é refinada por esse requisito. As três versões apontam para registros imutáveis conforme [M10](m10-versioning.md); o backend registra a execução com os identificadores efetivamente usados pelo módulo `ai`. Na busca real, diferenças são registradas e comparadas, sem exigência de igualdade exata. Resolvido para o primeiro ciclo do hackathon, com aceite de Eduardo em 2026-09-18.
 
 ## Confirmed facts
 
@@ -36,6 +37,7 @@ Na issue-9, Eduardo confirmou a reexecução sem AWS das buscas registradas de a
 
 ## Decisions
 
+- 2026-09-26 (issue-13, Eduardo): os embeddings preservados para reexecução offline são calculados sobre o Markdown extraído por IA (verbatim, sem anexos/contrato social/assinaturas), não sobre o texto bruto do PDF.
 - 2026-09-20 (issue-8, Eduardo): mantida a reprodutibilidade local; inventário AWS é autoridade de disponibilidade, com validação funcional do embedding separada.
 
 - 2026-09-18 (issue-8): o Compose e os testes rodam sem credenciais AWS; Bedrock entra só por configuração explícita (`EMBEDDER=bedrock`), nunca por padrão; `MAILER=preview` é o único adapter de e-mail ativo neste ciclo.
@@ -74,6 +76,7 @@ Na issue-9, Eduardo confirmou a reexecução sem AWS das buscas registradas de a
 
 ## Topic history
 
+- issue-13 (2026-09-26): precisou que os embeddings preservados por esta Concern são sobre o Markdown extraído por IA (D14), não o texto bruto do PDF.
 - issue-8 (2026-09-20): revisão de disponibilidade aceita por Eduardo; inventário AWS incorporado como autoridade, corte local preservado. Mantidas as demais decisões desta página.
 
 - issue-8: criou a página; reprodutibilidade ancorada no Compose sem credenciais (Postgres + volumes como fonte de verdade), AWS tratada como descartável (72 h).

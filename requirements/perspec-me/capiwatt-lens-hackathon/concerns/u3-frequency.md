@@ -50,7 +50,7 @@ A frequência de entrega por e-mail foi definida na issue #7: home imediata, um 
 
 ## Evidence
 
-- Comentário de resolução da [issue #7](https://github.com/EricRLeao1311/CapiWatt/issues/7): frequência e deduplicação da entrega por e-mail.
+- Comentário de resolução da [issue #7](https://github.com/Hackathon-IA-2026/solucoes-grupo-15/issues/7): frequência e deduplicação da entrega por e-mail.
 - Resposta de Eduardo, rodada 1 da issue #6 (2026-09-18).
 - Resposta de Eduardo, rodada 2 da issue #6 (2026-09-18): "a seleção da notificação do tipo de notificação não deve ter um padrão, a carolina (ou qualquer usuário) deve sempre escolher um dos tipos de notificação."
 - Resposta de Eduardo, rodada 3 da issue #6 (2026-09-18): "no escopo ampla, os correlatos suggested entram na notificação junto com os confirmed, distintos visualmente como na página da família, em ambos os canais. Confirmar/rejeitar continua acontecendo só na página da família."
