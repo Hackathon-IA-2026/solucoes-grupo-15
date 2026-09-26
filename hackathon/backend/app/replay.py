@@ -7,20 +7,19 @@ corpus preservado, usando o vetor da consulta registrada; consultar a
 resposta salva nao satisfaz esse requisito." Nesta fase demo (sem
 embeddings reais), "o vetor da consulta preservado" e os hits CRUS que
 o ai devolveu para aquela busca (``SearchExecution.raw_hits_json``,
-gravado em app/routes/search.py::_persist_search_execution ANTES do
-agrupamento por familia).
+gravado em app/routes/search.py::_persist_search_execution ANTES de
+qualquer transformacao).
 
-``replay_search`` recomputa o agrupamento por familia (reusa
-``_group_by_family`` de app/routes/search.py - o mesmo codigo que a
+``replay_search`` recomputa os resultados por chunk (reusa
+``_build_chunk_results`` de app/routes/search.py — o mesmo codigo que a
 rota usa, para nao duplicar a logica) a partir desses hits crus
 preservados e do catalogo ATUAL do Postgres (reflete o estado do
-catalogo no momento do replay, nao um catalogo congelado no passado -
-o corpus documental em si e "preservado" por ser o mesmo Postgres,
-nao por um snapshot separado nesta fase demo). Os demais identificadores
-do envelope (``data_mode``, ``corpus_version``, ``model_version``,
-``ranking_version``) NAO sao recomputados - sao remontados a partir do
-que ja foi registrado em ``SearchExecution``, pois sao identificadores
-da execucao original, nao valores derivados do catalogo atual.
+catalogo no momento do replay, nao um catalogo congelado no passado).
+Os demais identificadores do envelope (``data_mode``, ``corpus_version``,
+``model_version``, ``ranking_version``) NAO sao recomputados - sao
+remontados a partir do que ja foi registrado em ``SearchExecution``,
+pois sao identificadores da execucao original, nao valores derivados do
+catalogo atual.
 
 Esta funcao NUNCA chama ``AiClient`` nem faz nenhuma requisicao de
 rede/IA - a propria assinatura (``request_id: str, session: Session``)
@@ -37,7 +36,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.ai_client import AiSearchHit
 from app.models import SearchExecution
-from app.routes.search import SearchEnvelope, _group_by_family
+from app.routes.search import SearchEnvelope, _build_chunk_results
 
 
 class SearchExecutionNotFound(Exception):
@@ -62,19 +61,18 @@ def replay_search(request_id: str, session: Session) -> ReplayResult:
     Busca a linha de ``SearchExecution`` (erro claro via
     ``SearchExecutionNotFound`` se nao existir), desserializa
     ``raw_hits_json`` de volta para ``AiSearchHit`` e reusa
-    ``_group_by_family`` contra o catalogo atual (``session``) para
-    recomputar os resultados agrupados. Remonta o envelope recomputado
-    com os identificadores ja registrados (``data_mode``,
-    ``corpus_version``, ``model_version``, ``ranking_version``) e
-    devolve, junto, a resposta originalmente persistida e um booleano
-    ``matches`` comparando as duas.
+    ``_build_chunk_results`` contra o catalogo atual (``session``) para
+    recomputar os resultados. Remonta o envelope recomputado com os
+    identificadores ja registrados (``data_mode``, ``corpus_version``,
+    ``model_version``, ``ranking_version``) e devolve, junto, a resposta
+    originalmente persistida e um booleano ``matches`` comparando as duas.
     """
     execution = session.get(SearchExecution, request_id)
     if execution is None:
         raise SearchExecutionNotFound(request_id)
 
     raw_hits = [AiSearchHit(**hit) for hit in json.loads(execution.raw_hits_json)]
-    results, _current_corpus_version = _group_by_family(raw_hits, session)
+    results, _current_corpus_version = _build_chunk_results(raw_hits, session)
 
     recomputed_response = SearchEnvelope(
         request_id=execution.request_id,

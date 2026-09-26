@@ -6,6 +6,11 @@ ai real por HTTP) e roda contra um Postgres real de teste (container
 Docker, ver tests/conftest.py), populado via ``run_ingestion``
 (reaproveitada da issue #18) antes de cada teste, para que os IDs
 usados nos hits fake existam no catalogo.
+
+Issue #78: ``SearchResultOut`` representa agora um chunk plano — sem
+agrupamento por familia. Cada hit do ai vira um card separado.
+Ordem total obrigatoria: score desc, desempate por
+(document_version, chunk_index).
 """
 
 import json
@@ -89,21 +94,18 @@ def _seed_catalog(session_factory: sessionmaker[Session]) -> None:
         session.commit()
 
 
-def test_search_groups_hits_from_two_versions_of_same_family_into_one_result(
-    database_url: str,
-) -> None:
+# ---------------------------------------------------------------------------
+# Testes da forma de SearchResultOut (issue #78 — chunk plano)
+# ---------------------------------------------------------------------------
+
+def test_search_chunk_result_has_all_required_fields(database_url: str) -> None:
+    """Cada resultado deve ter todos os campos do contrato chunk flat."""
     hits = [
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
             excerpt="trecho na versao antiga",
             score=0.7,
-        ),
-        AiSearchHit(
-            family_id="fam-auto-0007",
-            document_version="docver-auto-0007-v2",
-            excerpt="trecho na versao nova",
-            score=0.9,
         ),
     ]
     client = _client(database_url, hits)
@@ -114,100 +116,154 @@ def test_search_groups_hits_from_two_versions_of_same_family_into_one_result(
     results = response.json()["results"]
     assert len(results) == 1
     result = results[0]
+    # Campos obrigatorios do contrato chunk flat
     assert result["family_id"] == "fam-auto-0007"
-    assert [c["document_version"] for c in result["matched_chunks"]] == [
-        "docver-auto-0007-v1",
-        "docver-auto-0007-v2",
-    ]
+    assert result["document_version"] == "docver-auto-0007-v1"
+    assert result["excerpt"] == "trecho na versao antiga"
+    assert result["score"] == 0.7
+    assert "localizador" in result  # pode ser str ou None
+    assert result["document_type"] == "auto_de_infracao"
+    assert result["document_id"] == "auto-0007"
+    assert result["processo_numero"] == "48500.001234/2024-11"
+    assert result["version_date"] == "2024-03-04"
+    assert result["chunk_index"] == 0
 
 
-def test_search_face_is_latest_version_even_when_matched_chunk_is_older(
-    database_url: str,
-) -> None:
+def test_search_same_hit_twice_appears_twice(database_url: str) -> None:
+    """O mesmo chunk devolvido duas vezes pelo ai aparece duas vezes — sem dedup."""
     hits = [
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
-            excerpt="trecho na versao antiga",
+            excerpt="trecho repetido",
+            score=0.8,
+        ),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="trecho repetido",
+            score=0.8,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "qualquer consulta"})
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 2
+    # Ambos sao o mesmo document_version
+    assert results[0]["document_version"] == "docver-auto-0007-v1"
+    assert results[1]["document_version"] == "docver-auto-0007-v1"
+
+
+def test_search_results_ordered_by_score_desc(database_url: str) -> None:
+    """Resultado com score maior deve vir primeiro."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="score baixo",
+            score=0.3,
+        ),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="score alto",
+            score=0.9,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "qualquer consulta"})
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 2
+    assert results[0]["score"] == 0.9
+    assert results[1]["score"] == 0.3
+    assert results[0]["document_version"] == "docver-auto-0007-v1"
+    assert results[1]["document_version"] == "docver-defesa-0007-v1"
+
+
+def test_search_deterministic_order_on_tie(database_url: str) -> None:
+    """Mesmos scores: desempate por (document_version lexicografico, chunk_index)."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-norma-1000",
+            document_version="docver-norma-1000-v1",
+            excerpt="norma",
+            score=0.5,
+        ),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="auto v1",
+            score=0.5,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="defesa",
             score=0.5,
         ),
     ]
     client = _client(database_url, hits)
 
-    response = client.post("/v1/search", json={"query": "qualquer consulta"})
+    response = client.post("/v1/search", json={"query": "empate"})
 
-    result = response.json()["results"][0]
-    assert result["face"]["document_version"] == "docver-auto-0007-v2"
-    assert result["face"]["version_date"] == "2024-04-18"
-    assert result["face"]["document_id"] == "auto-0007"
-    assert result["face"]["processo_numero"] == "48500.001234/2024-11"
-    [chunk] = result["matched_chunks"]
-    assert chunk["document_version"] == "docver-auto-0007-v1"
-    assert chunk["is_latest"] is False
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 3
+    # Todos com score 0.5 — desempate por document_version lexicografico
+    doc_versions = [r["document_version"] for r in results]
+    assert doc_versions == sorted(doc_versions), (
+        "Desempate deterministico esperado: ordem lexicografica de document_version"
+    )
 
 
-def test_search_marks_is_latest_true_only_for_the_face_version(database_url: str) -> None:
+def test_search_family_id_present_but_not_deduped(database_url: str) -> None:
+    """family_id presente em cada resultado mas nao usado para colapsar."""
     hits = [
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
-            excerpt="trecho antigo",
+            excerpt="chunk 1 da mesma familia",
+            score=0.8,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="chunk outra familia",
             score=0.6,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v2",
-            excerpt="trecho novo",
-            score=0.95,
-        ),
-    ]
-    client = _client(database_url, hits)
-
-    response = client.post("/v1/search", json={"query": "qualquer consulta"})
-
-    [result] = response.json()["results"]
-    is_latest_by_version = {c["document_version"]: c["is_latest"] for c in result["matched_chunks"]}
-    assert is_latest_by_version == {
-        "docver-auto-0007-v1": False,
-        "docver-auto-0007-v2": True,
-    }
-
-
-def test_search_never_repeats_the_same_family_and_preserves_first_occurrence_order(
-    database_url: str,
-) -> None:
-    hits = [
-        AiSearchHit(
-            family_id="fam-defesa-0007",
-            document_version="docver-defesa-0007-v1",
-            excerpt="trecho defesa",
-            score=0.3,
-        ),
-        AiSearchHit(
-            family_id="fam-decisao-0007",
-            document_version="docver-decisao-0007-v1",
-            excerpt="trecho decisao",
-            score=0.95,
-        ),
-        AiSearchHit(
-            family_id="fam-defesa-0007",
-            document_version="docver-defesa-0007-v1",
-            excerpt="segundo trecho defesa",
+            excerpt="chunk 2 da mesma familia",
             score=0.4,
         ),
     ]
     client = _client(database_url, hits)
 
-    response = client.post("/v1/search", json={"query": "qualquer consulta"})
+    response = client.post("/v1/search", json={"query": "sem dedup"})
 
+    assert response.status_code == 200
     results = response.json()["results"]
+    # Todos os 3 chunks aparecem — nao colapsa por family_id
+    assert len(results) == 3
     family_ids = [r["family_id"] for r in results]
-    assert family_ids == ["fam-defesa-0007", "fam-decisao-0007"]
-    assert len(family_ids) == len(set(family_ids))
-    # score mais alto (fam-decisao-0007) NAO e promovido para primeiro -
-    # a ordem e a de primeira ocorrencia devolvida pelo ai, nunca por score.
-    assert family_ids[0] == "fam-defesa-0007"
+    assert family_ids.count("fam-auto-0007") == 2
+    assert family_ids.count("fam-defesa-0007") == 1
+    # family_id esta presente em cada resultado
+    for result in results:
+        assert "family_id" in result
+        assert result["family_id"]
 
+
+# ---------------------------------------------------------------------------
+# Testes de envelope (adaptados da forma antiga)
+# ---------------------------------------------------------------------------
 
 def test_search_envelope_has_all_required_fields(database_url: str) -> None:
     hits = [
@@ -225,7 +281,7 @@ def test_search_envelope_has_all_required_fields(database_url: str) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["data_mode"] == "demo"
-    assert body["corpus_version"] == "demo-v1"
+    assert body["corpus_version"] == "demo-v2-case1"
     assert body["model_version"] == "fixture-demo"
     assert body["ranking_version"] == "demo-ranking-v1"
     assert uuid.UUID(body["request_id"])
@@ -253,10 +309,7 @@ def test_search_returns_empty_results_and_full_envelope_when_ai_returns_no_hits(
     assert body["data_mode"] == "demo"
     assert body["model_version"] == "fixture-demo"
     assert body["ranking_version"] == "demo-ranking-v1"
-    # Sem nenhuma familia da qual derivar: cai para o fallback de settings
-    # (Settings.default_corpus_version), que hoje coincide com o
-    # corpus_version do corpus fixture ("demo-v1").
-    assert body["corpus_version"] == "demo-v1"
+    assert body["corpus_version"] == "demo-v2-case1"
     assert uuid.UUID(body["request_id"])
 
 
@@ -264,7 +317,7 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
     """Seam 1 do Ticket 9 (issue #25): POST /v1/search grava SearchExecution.
 
     Confere que a linha criada tem todos os campos do contrato,
-    incluindo os hits CRUS (antes do agrupamento) e o envelope final
+    incluindo os hits CRUS (antes de qualquer transformacao) e o envelope final
     serializado - insumos que app/replay.py::replay_search usa depois.
     """
     hits = [
@@ -311,7 +364,7 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
 # ---------------------------------------------------------------------------
 
 def test_search_pagination_first_page_returns_next_cursor(database_url: str) -> None:
-    """Primeira pagina com limit=1 sobre 2 familias devolve next_cursor nao nulo."""
+    """Primeira pagina com limit=1 sobre 2 chunks devolve next_cursor nao nulo."""
     hits = [
         AiSearchHit(
             family_id="fam-auto-0007",
@@ -334,7 +387,8 @@ def test_search_pagination_first_page_returns_next_cursor(database_url: str) -> 
     body = response.json()
     assert body["total"] == 2
     assert len(body["results"]) == 1
-    assert body["results"][0]["family_id"] == "fam-auto-0007"
+    # Primeiro resultado e o de maior score
+    assert body["results"][0]["score"] == 0.9
     assert body["next_cursor"] is not None
 
 
@@ -344,7 +398,7 @@ def test_search_pagination_continuation_does_not_call_ai(database_url: str) -> N
     Verificado indiretamente: o FakeSearchAiClient da continuacao
     levantaria AssertionError se search() fosse chamado, pois
     passamos uma instancia sem hits. O resultado da segunda pagina
-    deve conter a segunda familia congelada na primeira chamada.
+    deve conter o segundo chunk congelado na primeira chamada.
     """
     hits = [
         AiSearchHit(
@@ -410,7 +464,8 @@ def test_search_pagination_continuation_does_not_call_ai(database_url: str) -> N
     second_body = second_resp.json()
 
     assert len(second_body["results"]) == 1
-    assert second_body["results"][0]["family_id"] == "fam-defesa-0007"
+    # O segundo resultado ordenado por score e defesa-0007 (score 0.7)
+    assert second_body["results"][0]["document_version"] == "docver-defesa-0007-v1"
     assert second_body["total"] == 2
     assert second_body["next_cursor"] is None
 
@@ -430,7 +485,7 @@ def test_search_pagination_invalid_cursor_returns_400(database_url: str) -> None
 
 
 def test_search_pagination_custom_limit(database_url: str) -> None:
-    """Limit customizado e respeitado: limit=2 sobre 3 familias devolve 2 resultados
+    """Limit customizado e respeitado: limit=2 sobre 3 chunks devolve 2 resultados
     na primeira pagina e next_cursor nao nulo."""
     hits = [
         AiSearchHit(family_id="fam-auto-0007", document_version="docver-auto-0007-v1", excerpt="t1", score=0.9),
@@ -508,6 +563,8 @@ def test_replay_returns_recomputed_and_original_response(database_url: str) -> N
         assert envelope["model_version"] == "fixture-demo"
         assert envelope["ranking_version"] == "demo-ranking-v1"
         assert len(envelope["results"]) == 1
+        # Chunk plano — tem document_version, nao matched_chunks
+        assert envelope["results"][0]["document_version"] == "docver-auto-0007-v1"
         assert envelope["results"][0]["family_id"] == "fam-auto-0007"
 
     # Os dois envelopes devem ser iguais (matches True)
