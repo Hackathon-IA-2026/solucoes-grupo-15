@@ -10,3 +10,10 @@
 # Install with: python3.12 -m pip install -r hackathon/tools/pipeline/requirements.txt
 beautifulsoup4>=4.12
 lxml>=5.0
+
+# Added by issue #71 (routes/pdf_llm_spec.py): calls Bedrock's Converse API
+# to generate a per-document verbatim-filtering spec. Credentials come from
+# the environment (source .env at the repo root before running) — this
+# module never logs or persists them, same convention as
+# hackathon/tools/prototypes/recall_baseline/embeddings.py.
+boto3>=1.34
