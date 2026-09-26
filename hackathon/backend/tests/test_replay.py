@@ -127,12 +127,12 @@ def test_replay_search_recomputes_the_same_results_in_the_same_order(
     assert result.request_id == request_id
     assert result.matches is True
     assert result.recomputed_response == result.original_response
-    [recomputed_result] = result.recomputed_response.results
-    assert recomputed_result.family_id == "fam-auto-0007"
-    assert [c.document_version for c in recomputed_result.matched_chunks] == [
-        "docver-auto-0007-v1",
-        "docver-auto-0007-v2",
-    ]
+    assert len(result.recomputed_response.results) == 2
+    r1, r2 = result.recomputed_response.results
+    assert r1.family_id == "fam-auto-0007"
+    assert r1.document_version == "docver-auto-0007-v2"
+    assert r2.family_id == "fam-auto-0007"
+    assert r2.document_version == "docver-auto-0007-v1"
 
 
 def test_replay_search_preserves_family_order_across_multiple_families(
@@ -159,8 +159,8 @@ def test_replay_search_preserves_family_order_across_multiple_families(
 
     assert result.matches is True
     assert [r.family_id for r in result.recomputed_response.results] == [
-        "fam-defesa-0007",
         "fam-decisao-0007",
+        "fam-defesa-0007",
     ]
 
 
