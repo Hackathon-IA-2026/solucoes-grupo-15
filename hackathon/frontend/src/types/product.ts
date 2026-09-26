@@ -3,9 +3,9 @@ export type PersonaId = "advocacia" | "pesquisa" | "engenharia";
 export type Persona = {
   id: PersonaId;
   title: string;
-  label: string;
   description: string;
   image: string;
+  available: boolean;
 };
 
 export type SessionUser = {

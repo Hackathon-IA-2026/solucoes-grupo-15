@@ -49,14 +49,14 @@ export function ExplorePage() {
   return (
     <div className={`explore-page ${state.kind === "idle" ? "explore-page-idle" : ""}`}>
       <header className="explore-hero">
-        <p className="page-kicker"><Sparkles size={15} /> Inteligência regulatória</p>
+        <p className="page-kicker"><Sparkles size={15} aria-hidden="true" /> Inteligência regulatória</p>
         <h1>Explorar</h1><p>Encontre precedentes, normas e interpretações para embasar sua atuação regulatória.</p>
         <form className="explore-search" onSubmit={submit}>
-          <Search size={21} />
-          <input aria-label="Consulta de precedentes" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ex.: precedentes sobre conexão de MMGD" />
+          <Search size={21} aria-hidden="true" />
+          <input type="search" enterKeyHint="search" aria-label="Consulta de precedentes" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ex.: precedentes sobre conexão de MMGD" />
           <button className="yellow-button" type="submit" disabled={!query.trim()}>Buscar</button>
         </form>
-        <div className="filter-row">{mockExploreData.filters.map((filter) => <button type="button" key={filter} className={activeFilter === filter ? "active" : ""} onClick={() => setActiveFilter(filter)}>{filter}</button>)}</div>
+        <div className="filter-row" role="group" aria-label="Filtrar por tipo de documento">{mockExploreData.filters.map((filter) => <button type="button" key={filter} aria-pressed={activeFilter === filter} className={activeFilter === filter ? "active" : ""} onClick={() => setActiveFilter(filter)}>{filter}</button>)}</div>
       </header>
 
       {state.kind === "idle" && <ExploreLanding />}

@@ -4,22 +4,22 @@ export const mockPersonas: Persona[] = [
   {
     id: "advocacia",
     title: "Advogados",
-    label: "Advocacia regulatória",
-    description: "Processos, normas, documentos e acompanhamento de casos.",
+    description: "Processos, normas e acompanhamento de casos.",
     image: "/assets/persona-advogados-v2.png",
+    available: true,
   },
   {
     id: "pesquisa",
     title: "Pesquisadores",
-    label: "Pesquisa regulatória",
-    description: "Investigação de processos, documentos, normas e seus vínculos.",
+    description: "Investigação de processos, normas e seus vínculos.",
     image: "/assets/persona-pesquisadores-v2.png",
+    available: false,
   },
   {
     id: "engenharia",
     title: "Especialistas em regulação",
-    label: "Regulação e fiscalização",
     description: "Fiscalização, processos, normas e acompanhamento regulatório.",
     image: "/assets/persona-regulacao-v2.png",
+    available: false,
   },
 ];
