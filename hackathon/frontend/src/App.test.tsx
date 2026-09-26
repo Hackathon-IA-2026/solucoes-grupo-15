@@ -20,6 +20,10 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: /como você quer usar/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /advogados/i })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /agências reguladoras/i })).toHaveTextContent(
+      /fiscalização, processos, normas e acompanhamento regulatório/i,
+    );
+    expect(screen.queryByText(/pareceres/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continuar/i })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /advogados/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
