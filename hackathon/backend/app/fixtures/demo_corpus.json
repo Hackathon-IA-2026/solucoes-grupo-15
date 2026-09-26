@@ -1,7 +1,7 @@
 {
   "provisional": true,
-  "disclaimer": "Corpus fixture demo/provisorio para o TB1 (CapiWatt Lens). Documentos, numeros de processo e textos sao FICTICIOS - nao representam o caso real da Carolina (issue #14, ainda bloqueada). Ninguem deve tratar este arquivo como dado real. family_id/document_version/version_date sao atribuidos diretamente pela fixture: nenhuma regra de chave explicita (tipo + identificador oficial) e derivada deles nesta issue.",
-  "corpus_version": "demo-v1",
+  "disclaimer": "Corpus misto de demonstracao do CapiWatt Lens. Os registros legados com '(ficticio)' permanecem apenas para contratos antigos. Os registros 'case1-' sao metadados e resumos curados dos PDFs publicos fornecidos para o caso Carolina/MMGD, em data/case-1-carolina-mmgd. A recuperacao, a ordem e os scores continuam declarativos: nao ha embeddings, busca vetorial ou conclusao juridica automatica. family_id/document_version/version_date sao atribuidos diretamente pela fixture.",
+  "corpus_version": "demo-v2-case1",
   "documents": [
     {
       "document_id": "auto-0007",
@@ -52,6 +52,116 @@
       "document_type": "norma",
       "processo_numero": null,
       "text": "Resolucao Normativa no 1000/2021 (ficticia). Estabelece os padroes de continuidade do fornecimento de energia eletrica utilizados como referencia nas fiscalizacoes.\n\nEsta norma correlata e citada na Decisao do processo SEI 48500.001234/2024-11 apenas para fins de demonstracao do fluxo de ingestao."
+    },
+    {
+      "document_id": "AI 0032/2018-SFE",
+      "document_version": "case1-enel-auto-2018",
+      "family_id": "case1-enel-auto",
+      "version_date": "2018-12-27",
+      "version_date_source": "publication",
+      "document_type": "auto_de_infracao",
+      "processo_numero": "48500.004024/2017-80",
+      "source_pdf_relpath": "48500.004024-2017-80/auto-infracao-48500.004024-2017-80.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Auto de Infracao 0032/2018-SFE, lavrado contra Enel Distribuicao Ceara no processo 48500.004024/2017-80. O documento registra fiscalizacao relacionada a micro e minigeracao distribuida, multa total de R$ 13.035.844,59 e advertencia. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Recurso Enel CE 011-RB-2019",
+      "document_version": "case1-enel-recurso-2019",
+      "family_id": "case1-enel-recurso",
+      "version_date": "2019-01-18",
+      "version_date_source": "publication",
+      "document_type": "recurso_administrativo",
+      "processo_numero": "48500.004024/2017-80",
+      "source_pdf_relpath": "48500.004024-2017-80/recurso-48500.004024-2017-80.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Recurso da Enel Distribuicao Ceara ao Auto de Infracao 0032/2018-SFE, no processo 48500.004024/2017-80. O documento menciona fiscalizacao sobre micro e minigeracao distribuida, REN 482/2012 e Secao 3.7 do Modulo 3 do PRODIST. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Voto DIR 48500.004024/2017-80",
+      "document_version": "case1-enel-voto-2020",
+      "family_id": "case1-enel-voto",
+      "version_date": "2020-09-29",
+      "version_date_source": "publication",
+      "document_type": "voto",
+      "processo_numero": "48500.004024/2017-80",
+      "source_pdf_relpath": "48500.004024-2017-80/voto-48500.004024-2017-80.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Voto da Diretoria no processo 48500.004024/2017-80, interessado Enel Distribuicao Ceara e relator Diretor Efrain Pereira da Cruz. O assunto e recurso contra o Auto de Infracao 0032/2018-SFE por descumprimento de normas de conexao de micro e minigeracao distribuida. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "AI 0017/2020-SFE",
+      "document_version": "case1-cemig-auto-2020",
+      "family_id": "case1-cemig-auto",
+      "version_date": "2020-04-13",
+      "version_date_source": "publication",
+      "document_type": "auto_de_infracao",
+      "processo_numero": "48500.000639/2019-07",
+      "source_pdf_relpath": "48500.000639-2019-07/auto-infracao-48500.000639-2019-07.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Auto de Infracao 0017/2020-SFE contra Cemig Distribuicao S.A. no processo punitivo 48500.000639/2019-07. O auto informa prazo recursal de 10 dias. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Recurso Cemig RE/RT-0134A/2020",
+      "document_version": "case1-cemig-recurso-2020",
+      "family_id": "case1-cemig-recurso",
+      "version_date": "2020-05-13",
+      "version_date_source": "publication",
+      "document_type": "recurso_administrativo",
+      "processo_numero": "48500.000639/2019-07",
+      "source_pdf_relpath": "48500.000639-2019-07/recurso-48500.000639-2019-07.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Recurso administrativo da Cemig Distribuicao S.A. contra o Auto de Infracao 0017/2020-SFE, processo 48500.000639/2019-07. O documento registra tres penalidades de multa no valor total informado de R$ 13.630.150,66. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Voto DIR 48500.000639/2019-07",
+      "document_version": "case1-cemig-voto-2023",
+      "family_id": "case1-cemig-voto",
+      "version_date": "2023-05-30",
+      "version_date_source": "publication",
+      "document_type": "voto",
+      "processo_numero": "48500.000639/2019-07",
+      "source_pdf_relpath": "48500.000639-2019-07/voto-48500.000639-2019-07.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Voto da 18a Reuniao Publica Ordinaria da Diretoria, de 30 de maio de 2023, no processo 48500.000639/2019-07. Interessada: Cemig Distribuicao S.A.; relator: Diretor Ricardo Lavorato Tili. O voto trata de recurso contra o AI 17/2020 em fiscalizacao sobre procedimentos de micro e minigeracao distribuida. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Exposicao de Motivos / AI 35/2025-SFT",
+      "document_version": "case1-coelba-auto-2025",
+      "family_id": "case1-coelba-auto",
+      "version_date": "2025-02-28",
+      "version_date_source": "publication",
+      "document_type": "exposicao_de_motivos",
+      "processo_numero": "48500.901433/2024-53",
+      "source_pdf_relpath": "48500.901433-2024-53/auto-infracao-48500.901433-2024-53.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Exposicao de Motivos para o Auto de Infracao ligado ao processo 48500.901433/2024-53, sobre fiscalizacao da Neoenergia Coelba. O documento trata de prazos de atendimento a solicitacoes de fornecimento com necessidade de obras, estudos e orcamentos de conexao. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Voto DIR 48500.901433/2024-53",
+      "document_version": "case1-coelba-voto-2025",
+      "family_id": "case1-coelba-voto",
+      "version_date": "2025-12-02",
+      "version_date_source": "publication",
+      "document_type": "voto",
+      "processo_numero": "48500.901433/2024-53",
+      "source_pdf_relpath": "48500.901433-2024-53/voto-48500.901433-2024-53.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Voto da Diretoria no processo 48500.901433/2024-53, interessada Neoenergia Coelba e relator Diretor Fernando Luiz Mosna Ferreira da Silva. O documento registra recurso contra o AI 35/2025-SFT, ligado a fiscalizacao de solicitacoes de ligacao com necessidade de obras e estudos ou orcamentos de conexao. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Recurso Neoenergia Coelba RTC NCLB 022/2025",
+      "document_version": "case1-coelba-recurso-2025",
+      "family_id": "case1-coelba-recurso",
+      "version_date": "2025-03-20",
+      "version_date_source": "publication",
+      "document_type": "recurso_administrativo",
+      "processo_numero": "48500.009907/2025-96",
+      "source_pdf_relpath": "48500.009907-2025-96/recurso-48500.009907-2025-96.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Recurso administrativo da Neoenergia Coelba, no processo 48500.009907/2025-96, contra o Auto de Infracao 0035/2025-SFT/ANEEL. O documento referencia o processo administrativo 48500.001433/2024-53. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
+    },
+    {
+      "document_id": "Complementacao de recurso Neoenergia Coelba RTC NCLB 042/2025",
+      "document_version": "case1-coelba-complemento-2025",
+      "family_id": "case1-coelba-complemento",
+      "version_date": "2025-05-26",
+      "version_date_source": "publication",
+      "document_type": "complementacao_de_recurso",
+      "processo_numero": "48500.017555/2025-42",
+      "source_pdf_relpath": "48500.017555-2025-42/complementacao-recurso-48500.017555-2025-42.pdf",
+      "text": "Resumo demonstrativo do PDF publico fornecido para o caso Carolina. Complementacao de recurso da Neoenergia Coelba, no processo 48500.017555/2025-42, referente ao Auto de Infracao 0035/2025-SFT/ANEEL e ao processo administrativo 48500.001433/2024-53. O PDF original deve prevalecer sobre este resumo para qualquer uso profissional."
     }
   ]
 }

@@ -1,7 +1,101 @@
 {
   "provisional": true,
-  "disclaimer": "Fixture de busca demo/provisoria para o TB1 (CapiWatt Lens). Nao ha busca vetorial real, embeddings ou ranking - cada chave e uma consulta em string EXATA (sem fuzzy matching, sem NLP) mapeada a uma lista ordenada e fixa de hits. Os document_version/family_id usados aqui apontam para o corpus fixture da issue #18 (app/fixtures/demo_corpus.json, no modulo backend) - nao representam o caso real da Carolina (issue #14, ainda bloqueada).",
+  "disclaimer": "Fixture de busca demo/provisoria para o CapiWatt Lens. Nao ha busca vetorial real, embeddings ou ranking: cada chave e uma consulta exata ou alias declarado, mapeado a uma lista fixa de hits. A chave mmgd-precedentes aponta para os PDFs publicos do caso 1 fornecidos por Carolina; a ordem e os scores sao apenas demonstrativos e o PDF fonte prevalece sobre os resumos exibidos.",
+  "aliases": {
+    "precedentes sobre fiscalização do atendimento às solicitações de conexão de MMGD": "mmgd-precedentes",
+    "precedentes sobre fiscalização de atendimento a solicitações de conexão de MMGD": "mmgd-precedentes",
+    "procure precedentes sobre fiscalização do atendimento às solicitações de conexão de microgeração e minigeração distribuída (MMGD)": "mmgd-precedentes",
+    "precedentes sobre conexão de MMGD": "mmgd-precedentes",
+    "voto do processo 48500.000639/2019-07": "cemig-voto",
+    "48500.000639/2019-07": "cemig-voto",
+    "fiscalização de conexões Neoenergia Coelba": "coelba-conexao",
+    "48500.901433/2024-53": "coelba-conexao"
+  },
   "queries": {
+    "mmgd-precedentes": [
+      {
+        "family_id": "case1-enel-auto",
+        "document_version": "case1-enel-auto-2018",
+        "excerpt": "Auto de Infracao 0032/2018-SFE, lavrado contra Enel Distribuicao Ceara no processo 48500.004024/2017-80.",
+        "score": 0.91
+      },
+      {
+        "family_id": "case1-enel-recurso",
+        "document_version": "case1-enel-recurso-2019",
+        "excerpt": "Recurso da Enel Distribuicao Ceara ao Auto de Infracao 0032/2018-SFE, no processo 48500.004024/2017-80.",
+        "score": 0.88
+      },
+      {
+        "family_id": "case1-enel-voto",
+        "document_version": "case1-enel-voto-2020",
+        "excerpt": "Voto da Diretoria no processo 48500.004024/2017-80, interessado Enel Distribuicao Ceara e relator Diretor Efrain Pereira da Cruz.",
+        "score": 0.94
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "document_version": "case1-cemig-auto-2020",
+        "excerpt": "Auto de Infracao 0017/2020-SFE contra Cemig Distribuicao S.A. no processo punitivo 48500.000639/2019-07.",
+        "score": 0.84
+      },
+      {
+        "family_id": "case1-cemig-recurso",
+        "document_version": "case1-cemig-recurso-2020",
+        "excerpt": "Recurso administrativo da Cemig Distribuicao S.A. contra o Auto de Infracao 0017/2020-SFE, processo 48500.000639/2019-07.",
+        "score": 0.87
+      },
+      {
+        "family_id": "case1-cemig-voto",
+        "document_version": "case1-cemig-voto-2023",
+        "excerpt": "Voto da 18a Reuniao Publica Ordinaria da Diretoria, de 30 de maio de 2023, no processo 48500.000639/2019-07.",
+        "score": 0.9
+      },
+      {
+        "family_id": "case1-coelba-auto",
+        "document_version": "case1-coelba-auto-2025",
+        "excerpt": "Exposicao de Motivos para o Auto de Infracao ligado ao processo 48500.901433/2024-53, sobre fiscalizacao da Neoenergia Coelba.",
+        "score": 0.82
+      },
+      {
+        "family_id": "case1-coelba-voto",
+        "document_version": "case1-coelba-voto-2025",
+        "excerpt": "Voto da Diretoria no processo 48500.901433/2024-53, interessada Neoenergia Coelba e relator Diretor Fernando Luiz Mosna Ferreira da Silva.",
+        "score": 0.89
+      },
+      {
+        "family_id": "case1-coelba-recurso",
+        "document_version": "case1-coelba-recurso-2025",
+        "excerpt": "Recurso administrativo da Neoenergia Coelba, no processo 48500.009907/2025-96, contra o Auto de Infracao 0035/2025-SFT/ANEEL.",
+        "score": 0.78
+      },
+      {
+        "family_id": "case1-coelba-complemento",
+        "document_version": "case1-coelba-complemento-2025",
+        "excerpt": "Complementacao de recurso da Neoenergia Coelba, no processo 48500.017555/2025-42, referente ao Auto de Infracao 0035/2025-SFT/ANEEL.",
+        "score": 0.76
+      }
+    ],
+    "cemig-voto": [
+      {
+        "family_id": "case1-cemig-voto",
+        "document_version": "case1-cemig-voto-2023",
+        "excerpt": "Voto da 18a Reuniao Publica Ordinaria da Diretoria, de 30 de maio de 2023, no processo 48500.000639/2019-07.",
+        "score": 0.9
+      }
+    ],
+    "coelba-conexao": [
+      {
+        "family_id": "case1-coelba-auto",
+        "document_version": "case1-coelba-auto-2025",
+        "excerpt": "Exposicao de Motivos para o Auto de Infracao ligado ao processo 48500.901433/2024-53, sobre fiscalizacao da Neoenergia Coelba.",
+        "score": 0.82
+      },
+      {
+        "family_id": "case1-coelba-voto",
+        "document_version": "case1-coelba-voto-2025",
+        "excerpt": "Voto da Diretoria no processo 48500.901433/2024-53, interessada Neoenergia Coelba e relator Diretor Fernando Luiz Mosna Ferreira da Silva.",
+        "score": 0.89
+      }
+    ],
     "padrão de continuidade do fornecimento": [
       {
         "family_id": "fam-auto-0007",

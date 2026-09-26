@@ -82,14 +82,22 @@ export class ApiAppRepository extends MockAppRepository {
 }
 
 function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData {
-  const results = envelope.results.map((result, index) => {
-    const bestScore = Math.max(...result.matched_chunks.map((chunk) => chunk.score), 0);
+  const groupedByProcess = new Map<string, SearchEnvelope["results"]>();
+  for (const result of envelope.results) {
+    const processKey = result.face.processo_numero ?? result.family_id;
+    groupedByProcess.set(processKey, [...(groupedByProcess.get(processKey) ?? []), result]);
+  }
+
+  const results = [...groupedByProcess.entries()].map(([processNumber, processResults], index) => {
+    const result = processResults[0];
+    const allChunks = processResults.flatMap((processResult) => processResult.matched_chunks);
+    const bestScore = Math.max(...allChunks.map((chunk) => chunk.score), 0);
     const type = formatDocumentType(result.face.document_type);
     return {
       rank: index + 1,
       requestId: envelope.request_id,
       familyId: result.family_id,
-      processNumber: result.face.processo_numero ?? result.face.document_id,
+      processNumber,
       adherence: Math.round(bestScore * 100),
       relevance: bestScore >= 0.85 ? "Muito relevante" as const : "Relevante" as const,
       stance: "Resultado documental" as const,
@@ -99,17 +107,17 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
       agency: "ANEEL",
       distributor: result.face.document_id,
       tags: [type, result.face.document_version],
-      reasons: result.matched_chunks.map(
+      reasons: allChunks.map(
         (chunk) => `Trecho na versão ${chunk.document_version}: ${chunk.excerpt}`,
       ),
-      documents: [{
-        id: result.family_id,
-        familyId: result.family_id,
-        type: result.face.document_type,
-        label: result.face.document_id,
+      documents: processResults.map((documentResult) => ({
+        id: documentResult.family_id,
+        familyId: documentResult.family_id,
+        type: documentResult.face.document_type,
+        label: documentResult.face.document_id,
         available: true,
-        matchedChunks: result.matched_chunks,
-      }],
+        matchedChunks: documentResult.matched_chunks,
+      })),
     };
   });
   const scores = results.map((result) => result.adherence);

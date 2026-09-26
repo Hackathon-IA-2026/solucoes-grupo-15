@@ -21,7 +21,7 @@ export function RankingCard({ result, onOpenDocuments }: { result: RankedPrecede
           <button type="button" onClick={() => onOpenDocuments(result)}><FileText size={16} /> {result.documents.length} documento{result.documents.length === 1 ? "-chave" : "s-chave"} <FolderOpen size={16} /></button>
           {result.requestId && result.familyId && <FeedbackButtons requestId={result.requestId} familyId={result.familyId} />}
         </div>
-        {expanded && <div className="ranking-explanation"><strong>Motivos do ranking</strong><ul>{result.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul><p><b>Agente:</b> {result.distributor} · <b>Tema:</b> {result.theme}</p></div>}
+        {expanded && <div className="ranking-explanation"><strong>Motivos do ranking</strong><ul>{result.reasons.map((reason, index) => <li key={`${index}-${reason}`}>{reason}</li>)}</ul><p><b>Agente:</b> {result.distributor} · <b>Tema:</b> {result.theme}</p></div>}
       </div>
     </article>
   );

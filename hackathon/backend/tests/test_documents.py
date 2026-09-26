@@ -12,6 +12,7 @@ ler.
 from pathlib import Path
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -20,6 +21,7 @@ from app.db import Base, get_db_session, make_engine, make_session_factory
 from app.fixtures.loader import load_demo_corpus
 from app.main import create_app
 from app.routes.ingestions import run_ingestion
+from app.routes.documents import _source_pdf_path, get_document_pdf
 
 
 class _SeedAiClient:
@@ -206,3 +208,26 @@ def test_get_document_returns_404_when_extracted_text_file_is_missing(
     response = client.get("/v1/documents/fam-auto-0007")
 
     assert response.status_code == 404
+
+
+def test_case_one_pdf_path_is_confined_to_the_declared_documents_directory() -> None:
+    path = _source_pdf_path("case1-enel-voto-2020")
+
+    assert path is not None
+    assert path.name == "voto-48500.004024-2017-80.pdf"
+    assert path.is_file()
+
+
+def test_case_one_pdf_endpoint_returns_the_declared_pdf_file() -> None:
+    response = get_document_pdf("case1-enel-voto-2020")
+
+    assert response.media_type == "application/pdf"
+    assert response.filename == "voto-48500.004024-2017-80.pdf"
+    assert response.headers["content-disposition"].startswith("inline;")
+
+
+def test_case_one_pdf_endpoint_rejects_an_unknown_document_version() -> None:
+    with pytest.raises(HTTPException) as exc_info:
+        get_document_pdf("nao-declarado")
+
+    assert getattr(exc_info.value, "status_code", None) == 404

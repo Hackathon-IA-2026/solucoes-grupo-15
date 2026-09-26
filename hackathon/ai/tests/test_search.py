@@ -91,6 +91,24 @@ def test_search_returns_empty_hits_for_a_query_not_declared_in_the_fixture() -> 
     assert body["model_version"] == "fixture-demo"
 
 
+def test_search_resolves_the_declared_mmgd_alias_to_the_case_one_documents() -> None:
+    client = _client()
+
+    response = client.post(
+        "/internal/v1/search",
+        json={"query": "precedentes sobre conexão de MMGD"},
+    )
+
+    assert response.status_code == 200
+    hits = response.json()["hits"]
+    assert len(hits) == 10
+    assert [hit["family_id"] for hit in hits[:3]] == [
+        "case1-enel-auto",
+        "case1-enel-recurso",
+        "case1-enel-voto",
+    ]
+
+
 def test_search_respects_top_k_without_reordering() -> None:
     client = _client()
 

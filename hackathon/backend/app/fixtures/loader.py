@@ -28,6 +28,7 @@ class FixtureDocumentVersion:
     document_type: str
     processo_numero: str | None
     text: str
+    source_pdf_relpath: str | None
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,7 @@ def load_demo_corpus(path: Path = _DEFAULT_FIXTURE_PATH) -> FixtureCorpus:
             document_type=doc["document_type"],
             processo_numero=doc.get("processo_numero"),
             text=doc["text"],
+            source_pdf_relpath=doc.get("source_pdf_relpath"),
         )
         for doc in raw["documents"]
     ]

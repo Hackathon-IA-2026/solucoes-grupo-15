@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, FileText, FolderTree, GitBranch, Landmark, Layers3 } from "lucide-react";
+import { CalendarDays, ExternalLink, FileText, FolderTree, GitBranch, Landmark, Layers3 } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
 import {
@@ -171,6 +171,11 @@ function FamilyContent({
             )}
             <span><CalendarDays size={16} /> Data ({dateSourceLabel}): {selected.version_date}</span>
           </div>
+          {detail.source_pdf_url && (
+            <a className="outline-button document-source-link" href={detail.source_pdf_url} target="_blank" rel="noreferrer">
+              <ExternalLink size={16} /> Abrir PDF original
+            </a>
+          )}
         </header>
 
         <nav className="version-timeline" aria-label="linha do tempo de versões">

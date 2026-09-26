@@ -10,7 +10,7 @@ envelope de POST /v1/search quando ``results`` fica vazio (nenhum hit
 devolvido pelo ai, logo nenhuma familia da qual derivar o
 ``corpus_version`` do catalogo) - hoje coincide com o
 ``corpus_version`` do corpus fixture (app/fixtures/demo_corpus.json,
-"demo-v1"), mas fica configuravel por variavel de ambiente para nao
+"demo-v2-case1"), mas fica configuravel por variavel de ambiente para nao
 prender o codigo a esse valor.
 
 ``code_reference`` (Ticket 9, issue #25) e a referencia de
@@ -65,6 +65,6 @@ def get_settings() -> Settings:
             "DATABASE_URL",
             "postgresql+psycopg://capiwatt:capiwatt@postgres:5432/capiwatt",
         ),
-        default_corpus_version=os.environ.get("DEFAULT_CORPUS_VERSION", "demo-v1"),
+        default_corpus_version=os.environ.get("DEFAULT_CORPUS_VERSION", "demo-v2-case1"),
         code_reference=os.environ.get("CODE_REFERENCE") or _read_git_code_reference(),
     )

@@ -78,4 +78,7 @@ def search(
 
 def _load_queries(fixture_path: Path) -> dict[str, list[dict]]:
     raw = json.loads(fixture_path.read_text(encoding="utf-8"))
-    return raw["queries"]
+    queries = dict(raw["queries"])
+    for alias, target in raw.get("aliases", {}).items():
+        queries[alias] = queries.get(target, [])
+    return queries

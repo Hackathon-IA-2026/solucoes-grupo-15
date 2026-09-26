@@ -22,15 +22,18 @@ diretamente daqui. Se o arquivo nao existir por algum motivo, devolve
 Familia inexistente no catalogo -> 404.
 """
 
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.catalog import select_face_version
 from app.db import get_db_session
+from app.fixtures.loader import load_demo_corpus
 from app.models import DocumentVersion
 
 router = APIRouter(prefix="/v1", tags=["documents"])
@@ -56,6 +59,7 @@ class DocumentDetailOut(BaseModel):
     processo_numero: str | None
     versions: list[VersionSummary]
     selected_version: SelectedVersionOut
+    source_pdf_url: str | None
 
 
 @router.get("/documents/{family_id}", response_model=DocumentDetailOut)
@@ -93,6 +97,28 @@ def get_document(
             version_date_source=selected.version_date_source,
             text=text,
         ),
+        source_pdf_url=_source_pdf_url(selected.document_version),
+    )
+
+
+@router.get("/document-pdfs/{document_version}")
+def get_document_pdf(document_version: str) -> FileResponse:
+    """Abre o PDF original de uma versao declarada no corpus demo.
+
+    O endpoint nao aceita caminhos de arquivo vindos da URL. Ele resolve a
+    versao declarada no fixture e procura apenas o caminho relativo declarado no
+    fixture do caso Carolina, mantendo o acesso confinado ao diretorio
+    montado para os documentos do caso.
+    """
+    path = _source_pdf_path(document_version)
+    if path is None or not path.is_file():
+        raise HTTPException(status_code=404, detail="PDF original nao disponivel")
+
+    return FileResponse(
+        path,
+        media_type="application/pdf",
+        filename=path.name,
+        content_disposition_type="inline",
     )
 
 
@@ -115,3 +141,34 @@ def _read_extracted_text(version: DocumentVersion) -> str:
             status_code=404,
             detail="Texto extraido nao encontrado para esta versao",
         ) from exc
+
+
+def _source_pdf_url(document_version: str) -> str | None:
+    path = _source_pdf_path(document_version)
+    if path is None or not path.is_file():
+        return None
+    return f"/v1/document-pdfs/{document_version}"
+
+
+def _source_pdf_path(document_version: str) -> Path | None:
+    source_pdf_relpath = next(
+        (
+            document.source_pdf_relpath
+            for document in load_demo_corpus().documents
+            if document.document_version == document_version
+        ),
+        None,
+    )
+    if source_pdf_relpath is None:
+        return None
+
+    root = Path(
+        os.environ.get(
+            "CASE_DOCUMENTS_DIR",
+            Path(__file__).resolve().parents[3] / "data" / "case-1-carolina-mmgd",
+        )
+    ).resolve()
+    path = (root / source_pdf_relpath).resolve()
+    if not path.is_relative_to(root):
+        return None
+    return path

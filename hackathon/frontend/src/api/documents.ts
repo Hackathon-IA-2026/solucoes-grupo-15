@@ -24,6 +24,7 @@ export type DocumentDetail = {
   processo_numero: string | null;
   versions: VersionSummary[];
   selected_version: SelectedVersion;
+  source_pdf_url: string | null;
 };
 
 /**

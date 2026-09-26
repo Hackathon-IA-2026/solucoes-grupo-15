@@ -26,6 +26,7 @@ services:
       EMBEDDER: fake
       MAILER: preview
       DATABASE_URL: postgresql+psycopg://capiwatt:capiwatt@postgres:5432/capiwatt
+      CASE_DOCUMENTS_DIR: /data/case-documents
     depends_on:
       ai:
         condition: service_started
@@ -38,6 +39,7 @@ services:
         condition: service_healthy
     volumes:
       - documents-data:/data/documents
+      - ./data/case-1-carolina-mmgd:/data/case-documents:ro
 
   ai:
     build: ./ai

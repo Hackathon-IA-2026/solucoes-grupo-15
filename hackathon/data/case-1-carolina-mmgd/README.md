@@ -53,6 +53,28 @@ Perguntas tipicas adicionais:
 - qual o numero SEI do documento Z;
 - qual foi o ultimo andamento processual do processo W.
 
+## Demonstração no frontend
+
+O protótipo usa somente um recorte pequeno e determinístico destes PDFs:
+cinco processos e dez peças. A recuperação não é semântica; consultas de
+demonstração são aliases explícitos e exibem percentuais/lacunas igualmente
+demonstrativos. Cada peça exibida deve abrir o PDF local correspondente.
+
+Consultas disponíveis na página **Explorar**:
+
+- `precedentes sobre conexão de MMGD` — retorna o conjunto dos cinco processos;
+- `voto do processo 48500.000639/2019-07` — retorna o voto da Cemig;
+- `fiscalização de conexões Neoenergia Coelba` — retorna a exposição de motivos
+  e o voto da Coelba.
+
+Processos no recorte:
+
+1. `48500.004024/2017-80` — Enel Distribuição Ceará;
+2. `48500.000639/2019-07` — Cemig Distribuição S.A.;
+3. `48500.901433/2024-53` — Neoenergia Coelba;
+4. `48500.009907/2025-96` — recurso Neoenergia Coelba;
+5. `48500.017555/2025-42` — complementação de recurso Neoenergia Coelba.
+
 ## Gabarito de priorizacao
 
 Top 3 de referencia indicado por Carolina:

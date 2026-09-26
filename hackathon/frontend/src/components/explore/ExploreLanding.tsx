@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 
 import { mockFamilies } from "../../mocks/familias";
 
-export function ExploreLanding() {
+const exampleQueries = [
+  "precedentes sobre conexão de MMGD",
+  "voto do processo 48500.000639/2019-07",
+  "fiscalização de conexões Neoenergia Coelba",
+];
+
+export function ExploreLanding({ onRunSearch }: { onRunSearch: (query: string) => void }) {
   const navigate = useNavigate();
   const featuredFamilies = mockFamilies.slice(0, 4);
 
@@ -33,6 +39,12 @@ export function ExploreLanding() {
           <div><span className="landing-icon green"><BellRing size={20} /></span><h3>Notificações do corpus</h3><p>Escolha seu escopo para receber alertas sobre novos documentos indexados.</p><button type="button" onClick={() => navigate("/notificacoes")}>Configurar notificações <ArrowRight size={15} /></button></div>
         </aside>
       </div>
+      <section className="landing-panel landing-examples" aria-label="Consultas de demonstração">
+        <div className="landing-heading"><div><p className="page-kicker"><Sparkles size={14} /> Casos com PDF disponível</p><h3>Consultas de demonstração</h3></div></div>
+        <div className="landing-example-list">
+          {exampleQueries.map((query) => <button key={query} type="button" onClick={() => onRunSearch(query)}><FileSearch size={15} /> {query}<ArrowRight size={15} /></button>)}
+        </div>
+      </section>
     </section>
   );
 }

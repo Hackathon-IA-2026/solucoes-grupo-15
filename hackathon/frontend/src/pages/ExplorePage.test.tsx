@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -33,7 +33,10 @@ const searchEnvelope = {
   ],
 };
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 function renderPage(path = "/explorar") {
   render(
@@ -63,6 +66,55 @@ describe("ExplorePage integrada", () => {
     expect(screen.getByText("auto-0007 · fam-auto-0007")).toBeInTheDocument();
     expect(screen.getByText("versao retificada com periodo corrigido")).toBeInTheDocument();
     expect(screen.getAllByText("91%").length).toBeGreaterThan(0);
+  });
+
+  it("agrupa as peças retornadas em um único conjunto por processo", async () => {
+    const enelAuto = {
+      ...searchEnvelope.results[0],
+      family_id: "case1-enel-auto",
+      face: {
+        ...searchEnvelope.results[0].face,
+        document_version: "case1-enel-auto-2018",
+        document_type: "auto_de_infracao",
+        document_id: "AI 0032/2018-SFE",
+        processo_numero: "48500.004024/2017-80",
+      },
+    };
+    const mmgdEnvelope = {
+      ...searchEnvelope,
+      results: [
+        enelAuto,
+        {
+          ...enelAuto,
+          family_id: "case1-enel-voto",
+          face: {
+            ...enelAuto.face,
+            document_version: "case1-enel-voto-2020",
+            document_type: "voto",
+            document_id: "Voto DIR 48500.004024/2017-80",
+            processo_numero: "48500.004024/2017-80",
+          },
+        },
+        {
+          ...enelAuto,
+          family_id: "case1-cemig-voto",
+          face: {
+            ...enelAuto.face,
+            document_version: "case1-cemig-voto-2023",
+            document_type: "voto",
+            document_id: "Voto DIR 48500.000639/2019-07",
+            processo_numero: "48500.000639/2019-07",
+          },
+        },
+      ],
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(mmgdEnvelope)));
+
+    renderPage("/explorar?q=precedentes%20sobre%20conex%C3%A3o%20de%20MMGD");
+
+    expect(await screen.findByText("48500.004024/2017-80")).toBeInTheDocument();
+    expect(screen.getByText("48500.000639/2019-07")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /2 documentos-chave/i })).toBeInTheDocument();
   });
 
   it("abre a família documental com o trecho da busca", async () => {

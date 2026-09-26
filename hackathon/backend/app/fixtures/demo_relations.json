@@ -70,6 +70,106 @@
         "document_version": "docver-decisao-0007-v1",
         "locator": "trecho de manutenção da autuação — cita 'Auto de Infração nº 0007/2024 (versão retificada)'"
       }
+    },
+    {
+      "source_id": "case1-enel-auto",
+      "source_kind": "family",
+      "target_id": "48500.004024/2017-80",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-enel-recurso",
+      "source_kind": "family",
+      "target_id": "48500.004024/2017-80",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-enel-voto",
+      "source_kind": "family",
+      "target_id": "48500.004024/2017-80",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-cemig-auto",
+      "source_kind": "family",
+      "target_id": "48500.000639/2019-07",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-cemig-recurso",
+      "source_kind": "family",
+      "target_id": "48500.000639/2019-07",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-cemig-voto",
+      "source_kind": "family",
+      "target_id": "48500.000639/2019-07",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-coelba-auto",
+      "source_kind": "family",
+      "target_id": "48500.901433/2024-53",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-coelba-voto",
+      "source_kind": "family",
+      "target_id": "48500.901433/2024-53",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-coelba-recurso",
+      "source_kind": "family",
+      "target_id": "48500.009907/2025-96",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
+    },
+    {
+      "source_id": "case1-coelba-complemento",
+      "source_kind": "family",
+      "target_id": "48500.017555/2025-42",
+      "target_kind": "processo",
+      "type": "pertence_ao_processo",
+      "origin": "explicit",
+      "status": "confirmed",
+      "evidence": null
     }
   ]
 }
