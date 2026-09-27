@@ -16,8 +16,8 @@ topic-aws-observability, ADR-0002).
   retencao de 3 dias.
 - CloudFront: uma distribuicao, entrada publica unica. ``/v1/*`` -> ALB
   sem cache (CachingDisabled) e com AllViewerExceptHostHeader (repassa
-  ``Authorization``, query string e corpo). O comportamento padrao aponta
-  provisoriamente para o mesmo ALB; o ticket do frontend o troca pelo S3.
+  ``Authorization``, query string e corpo). O comportamento padrao serve o
+  frontend do S3 (``FrontendSite``, issue #107).
 - Neste ticket o backend roda com ``AUTH_MODE=none`` (login Cognito e outro
   ticket): nao deixar o ambiente de pe entre sessoes.
 """
@@ -37,6 +37,7 @@ from aws_cdk import aws_secretsmanager as secretsmanager
 from constructs import Construct
 
 from capiwatt_infra.data_stack import DB_NAME, DataStack
+from capiwatt_infra.frontend import FrontendSite
 from capiwatt_infra.network_stack import APP_PORT, NetworkStack
 
 HACKATHON_DIR = Path(__file__).resolve().parents[2]
@@ -237,15 +238,16 @@ class ComputeStack(Stack):
             cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
             origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
         )
+        self.frontend = FrontendSite(self, "Frontend")
         self.distribution = cloudfront.Distribution(
             self,
             "Distribution",
-            comment="CapiWatt TB1 (issue #106)",
+            comment="CapiWatt TB1 (issues #106, #107)",
             price_class=cloudfront.PriceClass.PRICE_CLASS_100,
-            # Provisorio: o ticket do frontend troca o padrao pelo S3 (OAC).
-            default_behavior=api_behavior,
+            default_behavior=self.frontend.default_behavior,
             additional_behaviors={"/v1/*": api_behavior},
         )
+        self.frontend.publish(self.distribution)
         CfnOutput(self, "CloudFrontUrl", value=f"https://{self.distribution.domain_name}")
         CfnOutput(self, "ClusterName", value=cluster.cluster_name)
         CfnOutput(self, "BackendServiceName", value=self.backend_service.service_name)

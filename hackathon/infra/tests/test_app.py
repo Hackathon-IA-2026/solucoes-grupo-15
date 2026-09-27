@@ -4,6 +4,7 @@ O app e sintetizado uma vez por modulo, exatamente como o ``cdk synth``
 faz (``build_app``), e cada teste le o template de um stack.
 """
 
+import json
 import re
 
 import pytest
@@ -13,10 +14,15 @@ from aws_cdk.assertions import Match, Template
 from capiwatt_infra import build_app
 
 
+def _app(**context) -> App:
+    """App de teste sem bundling: o build do frontend (``npm run build``) so
+    roda no ``cdk synth``/``deploy`` de verdade."""
+    return App(context={"aws:cdk:bundling-stacks": [], **context})
+
+
 @pytest.fixture(scope="module")
 def stacks():
-    app = App()
-    return build_app(app)
+    return build_app(_app())
 
 
 @pytest.fixture(scope="module")
@@ -208,7 +214,7 @@ def test_service_log_groups_keep_three_days(compute):
         g["Properties"]["LogGroupName"]: g["Properties"].get("RetentionInDays")
         for g in compute.find_resources("AWS::Logs::LogGroup").values()
     }
-    assert groups == {"/capiwatt/backend": 3, "/capiwatt/ai": 3}
+    assert groups == {"/capiwatt/backend": 3, "/capiwatt/ai": 3, "/capiwatt/frontend-deploy": 3}
 
 
 def _all_templates(stacks) -> list[tuple[str, Template]]:
@@ -263,7 +269,7 @@ def test_cloudfront_routes_v1_to_the_alb_without_cache(compute):
 def test_search_instance_type_can_be_raised_by_context_without_code_change():
     # Plano B da i4: se o k-NN (nmslib) nao rodar no t3.small.search,
     # ``cdk deploy -c search_instance_type=m6g.large.search``.
-    app = App(context={"search_instance_type": "m6g.large.search"})
+    app = _app(search_instance_type="m6g.large.search")
     data = Template.from_stack(build_app(app).data)
     data.has_resource_properties(
         "AWS::OpenSearchService::Domain",
@@ -317,6 +323,140 @@ def test_opensearch_domain_waits_for_its_service_linked_role(data):
 
 def test_existing_opensearch_service_linked_role_can_be_reused_by_context():
     # Conta que ja tem o role (outro dominio em VPC): nao recriar.
-    app = App(context={"opensearch_service_linked_role": "existing"})
+    app = _app(opensearch_service_linked_role="existing")
     data = Template.from_stack(build_app(app).data)
     data.resource_count_is("AWS::IAM::ServiceLinkedRole", 0)
+
+
+def _distribution_config(compute: Template) -> dict:
+    (dist,) = compute.find_resources("AWS::CloudFront::Distribution").values()
+    return dist["Properties"]["DistributionConfig"]
+
+
+def test_default_behavior_serves_the_frontend_from_a_private_bucket_through_oac(compute):
+    config = _distribution_config(compute)
+    default = config["DefaultCacheBehavior"]
+    (origin,) = (o for o in config["Origins"] if o["Id"] == default["TargetOriginId"])
+    (bucket_id,) = compute.find_resources("AWS::S3::Bucket")
+    assert origin["DomainName"] == {"Fn::GetAtt": [bucket_id, "RegionalDomainName"]}
+    (oac_id,) = compute.find_resources(
+        "AWS::CloudFront::OriginAccessControl",
+        {
+            "Properties": {
+                "OriginAccessControlConfig": Match.object_like(
+                    {"OriginAccessControlOriginType": "s3", "SigningBehavior": "always"}
+                )
+            }
+        },
+    )
+    assert origin["OriginAccessControlId"] == {"Fn::GetAtt": [oac_id, "Id"]}
+    # OAC, nao OAI: nenhuma identidade legada.
+    assert origin["S3OriginConfig"].get("OriginAccessIdentity", "") == ""
+    assert default["ViewerProtocolPolicy"] == "redirect-to-https"
+
+    compute.has_resource_properties(
+        "AWS::S3::Bucket",
+        {
+            "PublicAccessBlockConfiguration": {
+                "BlockPublicAcls": True,
+                "BlockPublicPolicy": True,
+                "IgnorePublicAcls": True,
+                "RestrictPublicBuckets": True,
+            }
+        },
+    )
+    # So a distribuicao le o bucket (principal do CloudFront + SourceArn).
+    (policy,) = compute.find_resources("AWS::S3::BucketPolicy").values()
+    reads = [
+        st
+        for st in policy["Properties"]["PolicyDocument"]["Statement"]
+        if st["Effect"] == "Allow" and "s3:GetObject" in _actions(st)
+    ]
+    assert len(reads) == 1
+    assert reads[0]["Principal"] == {"Service": "cloudfront.amazonaws.com"}
+    assert "AWS:SourceArn" in json.dumps(reads[0]["Condition"])
+
+
+def test_spa_fallback_is_a_viewer_request_function_on_the_default_behavior_only(compute):
+    config = _distribution_config(compute)
+    (function_id,) = compute.find_resources(
+        "AWS::CloudFront::Function",
+        {"Properties": {"FunctionConfig": Match.object_like({"Runtime": "cloudfront-js-2.0"})}},
+    )
+    assert config["DefaultCacheBehavior"]["FunctionAssociations"] == [
+        {"EventType": "viewer-request", "FunctionARN": {"Fn::GetAtt": [function_id, "FunctionARN"]}}
+    ]
+    (v1,) = (b for b in config["CacheBehaviors"] if b["PathPattern"] == "/v1/*")
+    assert "FunctionAssociations" not in v1
+    # Sem error responses globais: os 403/404 da API chegam intactos ao cliente.
+    assert "CustomErrorResponses" not in config
+
+
+_HASHED_ASSETS = ["assets/*.js", "assets/*.css"]
+
+
+def _bucket_deployments(compute: Template) -> dict[str, dict]:
+    return compute.find_resources("Custom::CDKBucketDeployment")
+
+
+def test_hashed_assets_get_long_cache_and_everything_else_no_cache(compute):
+    deployments = _bucket_deployments(compute)
+    by_cache = {
+        d["Properties"]["SystemMetadata"]["cache-control"]: (logical_id, d)
+        for logical_id, d in deployments.items()
+    }
+    assert set(by_cache) == {"public, max-age=31536000, immutable", "no-cache"}
+
+    assets_id, assets = by_cache["public, max-age=31536000, immutable"]
+    assert assets["Properties"]["Exclude"] == ["*"]
+    assert assets["Properties"]["Include"] == _HASHED_ASSETS
+    # Assets antigos ficam no bucket: uma aba com o index.html anterior ainda os pede.
+    assert assets["Properties"]["Prune"] is False
+
+    _, shell = by_cache["no-cache"]
+    # index.html, config.json e o resto (imagens de public/, sem hash).
+    assert shell["Properties"]["Exclude"] == _HASHED_ASSETS
+    assert "Include" not in shell["Properties"]
+    # O index.html novo so entra depois dos assets que ele referencia.
+    assert assets_id in shell["DependsOn"]
+
+
+def test_publishing_the_shell_invalidates_the_distribution(compute):
+    (dist_id,) = compute.find_resources("AWS::CloudFront::Distribution")
+    (shell,) = (
+        d
+        for d in _bucket_deployments(compute).values()
+        if d["Properties"]["SystemMetadata"]["cache-control"] == "no-cache"
+    )
+    assert shell["Properties"]["DistributionId"] == {"Ref": dist_id}
+    assert shell["Properties"].get("DistributionPaths", ["/*"]) == ["/*"]
+
+
+def test_runtime_config_has_no_cognito_so_the_app_opens_in_demo_mode(stacks):
+    import glob
+    import os
+
+    assembly = stacks.compute.node.root.synth()
+    configs = glob.glob(os.path.join(assembly.directory, "asset.*", "config.json"))
+    assert len(configs) == 1
+    with open(configs[0]) as f:
+        assert json.load(f) == {"region": "us-west-2"}
+
+
+def test_destroy_empties_the_frontend_bucket(compute):
+    (bucket_id,) = compute.find_resources("AWS::S3::Bucket")
+    deleters = compute.find_resources("Custom::S3AutoDeleteObjects")
+    assert [d["Properties"]["BucketName"] for d in deleters.values()] == [{"Ref": bucket_id}]
+
+
+def test_every_lambda_logs_to_a_log_group_of_the_stack_with_retention(stacks):
+    # Sem LoggingConfig, a Lambda cria /aws/lambda/<nome> sem retencao em
+    # tempo de execucao, e ele sobra depois do ``cdk destroy``.
+    for name, template in _all_templates(stacks):
+        resources = template.to_json()["Resources"]
+        for logical_id, fn in template.find_resources("AWS::Lambda::Function").items():
+            log_group = fn["Properties"].get("LoggingConfig", {}).get("LogGroup")
+            assert isinstance(log_group, dict) and "Ref" in log_group, (name, logical_id)
+            group = resources[log_group["Ref"]]
+            assert group["Type"] == "AWS::Logs::LogGroup"
+            assert group["Properties"].get("RetentionInDays"), (name, logical_id)
