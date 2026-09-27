@@ -191,6 +191,25 @@ def test_processo_includes_responde_a_chain_between_its_pieces(database_url: str
     assert responde_a[0]["evidence"]["document_version"] == "docver-defesa-0007-v1"
 
 
+def test_processo_piece_includes_source_pdf_url_when_declared(database_url: str) -> None:
+    client = _client(database_url)
+
+    response = client.get("/v1/processos/48500.004024/2017-80")
+
+    pieces = {p["family_id"]: p for p in response.json()["pieces"]}
+    assert pieces["case1-enel-voto"]["source_pdf_url"] == "/v1/document-pdfs/case1-enel-voto-2020"
+
+
+def test_processo_piece_source_pdf_url_is_none_without_a_declared_pdf(database_url: str) -> None:
+    client = _client(database_url)
+
+    response = client.get(f"/v1/processos/{PROCESSO_ID}")
+
+    pieces = response.json()["pieces"]
+    assert pieces
+    assert all(p["source_pdf_url"] is None for p in pieces)
+
+
 def test_processo_without_pieces_returns_404(database_url: str) -> None:
     client = _client(database_url)
 

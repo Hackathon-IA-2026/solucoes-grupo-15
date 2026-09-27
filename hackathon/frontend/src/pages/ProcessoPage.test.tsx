@@ -14,18 +14,21 @@ const PROCESSO_BODY = {
       document_type: "peticao_defesa",
       document_id: "defesa-0007",
       version_date: "2024-03-20",
+      source_pdf_url: null,
     },
     {
       family_id: "fam-auto-0007",
       document_type: "auto_de_infracao",
       document_id: "auto-0007",
       version_date: "2024-04-18",
+      source_pdf_url: "/v1/document-pdfs/docver-auto-0007-v2",
     },
     {
       family_id: "fam-decisao-0007",
       document_type: "decisao",
       document_id: "decisao-0007",
       version_date: "2024-05-02",
+      source_pdf_url: null,
     },
   ],
   responde_a: [
@@ -108,6 +111,26 @@ describe("ProcessoPage", () => {
     );
     const link = screen.getByText(/auto_de_infracao — auto-0007/i).closest("a");
     expect(link).toHaveAttribute("href", "/documents/fam-auto-0007");
+  });
+
+  it("mostra o link para o PDF original da peça quando disponível", async () => {
+    vi.stubGlobal("fetch", mockProcessoAndGraphFetch(jsonResponse(PROCESSO_BODY)));
+
+    renderProcessoPage();
+
+    await waitFor(() => expect(screen.getByText(/abrir pdf original/i)).toBeInTheDocument());
+    const pdfLink = screen.getByText(/abrir pdf original/i).closest("a");
+    expect(pdfLink).toHaveAttribute("href", "/v1/document-pdfs/docver-auto-0007-v2");
+    expect(pdfLink).toHaveAttribute("target", "_blank");
+  });
+
+  it("não mostra link de PDF para peças sem PDF original declarado", async () => {
+    vi.stubGlobal("fetch", mockProcessoAndGraphFetch(jsonResponse(PROCESSO_BODY)));
+
+    renderProcessoPage();
+
+    await waitFor(() => expect(screen.getByText(`Processo ${PROCESSO_ID}`)).toBeInTheDocument());
+    expect(screen.getAllByText(/abrir pdf original/i)).toHaveLength(1);
   });
 
   it("mostra a cadeia responde_a de forma visível", async () => {

@@ -15,6 +15,7 @@ export type ProcessoPiece = {
   document_type: string;
   document_id: string;
   version_date: string;
+  source_pdf_url: string | null;
 };
 
 export type RespondeAEdge = {

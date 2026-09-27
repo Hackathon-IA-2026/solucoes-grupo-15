@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, FileText, GitBranch, Landmark, Network } from "lucide-react";
+import { ArrowRight, CalendarDays, ExternalLink, FileText, GitBranch, Landmark, Network } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import { fetchProcesso, ProcessoNotFoundError, type Processo } from "../api/processos";
@@ -80,6 +80,16 @@ function ProcessoContent({ processo }: { processo: Processo }) {
                 <Link to={`/documents/${encodeURIComponent(piece.family_id)}`}>
                   {piece.document_type} — {piece.document_id} <ArrowRight size={15} aria-hidden="true" />
                 </Link>
+                {piece.source_pdf_url && (
+                  <a
+                    className="outline-button document-source-link"
+                    href={piece.source_pdf_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ExternalLink size={14} /> Abrir PDF original
+                  </a>
+                )}
               </div>
             </li>
           ))}
