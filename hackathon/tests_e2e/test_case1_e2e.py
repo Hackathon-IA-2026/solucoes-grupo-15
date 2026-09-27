@@ -360,20 +360,28 @@ def test_frontend_search_shape_matches_real_envelope(
         assert FRONTEND_SEARCH_RESULT_KEYS <= set(result), sorted(result)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "frontend/src/api/feedback.ts envia {request_id, family_id, vote}; o backend "
-        "exige document_version + chunk_index desde a #82"
-    ),
-)
+# Chaves que hackathon/frontend/src/api/feedback.ts (submitFeedback) envia no
+# corpo de POST /v1/feedback desde a #94: a chave por chunk, sem family_id.
+FRONTEND_FEEDBACK_PAYLOAD_KEYS = {"request_id", "document_version", "chunk_index", "vote"}
+
+
 def test_frontend_feedback_payload_is_accepted(backend: httpx.Client, ingested: dict) -> None:
     envelope = _search(backend, top_k=3)
     hit = envelope["results"][0]
+    payload = {
+        "request_id": envelope["request_id"],
+        "document_version": hit["document_version"],
+        "chunk_index": hit["chunk_index"],
+        "vote": "up",
+    }
+    assert set(payload) == FRONTEND_FEEDBACK_PAYLOAD_KEYS
 
-    response = backend.post(
-        "/v1/feedback",
-        json={"request_id": envelope["request_id"], "family_id": hit["family_id"], "vote": "up"},
-    )
+    response = backend.post("/v1/feedback", json=payload)
 
     assert response.status_code == 200, response.text
+    stored = response.json()
+    assert (stored["document_version"], stored["chunk_index"], stored["family_id"]) == (
+        hit["document_version"],
+        hit["chunk_index"],
+        None,
+    )

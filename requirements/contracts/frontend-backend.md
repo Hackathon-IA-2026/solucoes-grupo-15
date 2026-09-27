@@ -5,9 +5,10 @@ sources:
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/u4-visualization.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i6-telemetry.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i9-integration.md
+  - requirements/perspec-me/capiwatt-lens-hackathon/concerns/u6-acceptance.md
   - requirements/perspec-me/capiwatt-lens-hackathon/MAP.md
   - hackathon/docs/adr/0001-stack-scaffold-local.md
-last_synced_with_sources: 2026-09-26
+last_synced_with_sources: 2026-09-27
 ---
 
 # Contrato de fronteira: frontend ↔ backend
@@ -64,8 +65,8 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 | **Grafo egocêntrico** | `GET` | `/v1/documents/{node_id:path}/graph` | — | `Graph` |
 | **Listagem de processos** | `GET` | `/v1/processos` | — | `ProcessoSummary[]` |
 | **Detalhes do processo** | `GET` | `/v1/processos/{processo_id:path}` | — | `Processo` |
-| **Envio de feedback** | `POST` | `/v1/feedback` | `{ request_id, family_id, vote }` | `Feedback` |
-| **Consulta de feedback** | `GET` | `/v1/feedback` | Query: `request_id?`, `family_id?`, `limit?` | `Feedback[]` |
+| **Envio de feedback** | `POST` | `/v1/feedback` | `{ request_id, document_version, chunk_index, vote }` | `Feedback` |
+| **Consulta de feedback** | `GET` | `/v1/feedback` | Query: `request_id?`, `document_version?`, `chunk_index?`, `family_id?`, `limit?` | `Feedback[]` |
 | **Consulta de escopo** | `GET` | `/v1/users/{user_id}/notification-scope` | — | `{ scope: NotificationScope \| null }` |
 | **Definição de escopo** | `PUT` | `/v1/users/{user_id}/notification-scope` | `{ scope: "estrita" \| "ampla" }` | `{ scope: NotificationScope }` |
 | **Notificações do usuário** | `GET` | `/v1/users/{user_id}/notifications` | — | `NotificationItem[]` |
@@ -244,22 +245,26 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 ### 5. Avaliação e feedback de relevância
 
 - **`POST /v1/feedback`**
-  - **Finalidade:** Registrar a avaliação de utilidade (polegar para cima / polegar para baixo) feita pelo usuário sobre um card de resultado de busca.
-  - **Comportamento:** Associa o voto obrigatoriamente ao `request_id` da busca original e ao `family_id` do card. Validação estrita: `vote` deve ser `"up"` ou `"down"` (qualquer outro valor resulta em 422). Nenhum campo de comentário textual é exigido ou aceito.
+  - **Finalidade:** Registrar a avaliação de utilidade (polegar para cima / polegar para baixo) feita pelo usuário sobre um resultado de busca.
+  - **Comportamento:** Associa o voto obrigatoriamente ao `request_id` da busca original e ao chunk avaliado, identificado por `document_version` + `chunk_index` (issue #82; `chunk_index` é o índice real do chunk no documento, o mesmo devolvido em cada resultado de `POST /v1/search` desde a issue #96). `family_id` é opcional no backend, só por compatibilidade legada, e o frontend não o envia (issue #94). Validação estrita: `vote` deve ser `"up"` ou `"down"`, e a falta de `document_version`/`chunk_index` resulta em 422. Nenhum campo de comentário textual é exigido ou aceito.
+  - **Alvo do voto no frontend (issue #94):** enquanto as telas ainda consomem a busca agrupada (`face`/`matched_chunks`, divergência aberta na #93), o voto de um card vai para o chunk de maior score do card ([`u6-acceptance`](../perspec-me/capiwatt-lens-hackathon/concerns/u6-acceptance.md)).
   - **Schema:**
     ```typescript
     export type Vote = "up" | "down";
 
     export type FeedbackPayload = {
       request_id: string;
-      family_id: string;
+      document_version: string;
+      chunk_index: number;
       vote: Vote;
     };
 
     export type Feedback = {
       id: number;
       request_id: string;
-      family_id: string;
+      document_version: string | null;
+      chunk_index: number | null;
+      family_id: string | null;
       vote: Vote;
       created_at: string;
     };
@@ -267,7 +272,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 
 - **`GET /v1/feedback`**
   - **Finalidade:** Consulta administrativa de feedbacks coletados (para validação manual da equipe e refinamento dos modelos de ranqueamento).
-  - **Parâmetros de Query:** `request_id?` (string), `family_id?` (string), `limit?` (int). Retorna lista ordenada pelo id decrescente (`Feedback[]`).
+  - **Parâmetros de Query:** `request_id?` (string), `document_version?` (string), `chunk_index?` (int), `family_id?` (string), `limit?` (int). Retorna lista ordenada pelo id decrescente (`Feedback[]`).
 
 ### 6. Notificações, preferências e digest de e-mail
 

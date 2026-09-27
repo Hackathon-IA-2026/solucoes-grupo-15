@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ArrowRight, CalendarDays, FileText, Search, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { searchDocuments, type SearchEnvelope } from "../api/search";
+import { bestMatchedChunk, searchDocuments, type SearchEnvelope, type SearchResult } from "../api/search";
 import { DemoBanner } from "../components/DemoBanner";
 import { FeedbackButtons } from "../components/FeedbackButtons";
 
@@ -20,7 +20,8 @@ import { FeedbackButtons } from "../components/FeedbackButtons";
  * exato; o dado em si continua vindo so da fixture.
  *
  * Cada card de resultado tambem tem os botoes 👍/👎 do Ticket 7 (issue
- * #23) - ver components/FeedbackButtons.tsx.
+ * #23) - ver components/FeedbackButtons.tsx. O voto do card aponta para
+ * o seu chunk de maior score (document_version + chunk_index, issue #94).
  */
 const SUGGESTED_QUERIES = [
   "padrão de continuidade do fornecimento",
@@ -145,7 +146,7 @@ export function SearchPage() {
                         <Link className="detail-link" to={`/documents/${result.family_id}`} state={{ matchedChunks: result.matched_chunks }}>
                           Abrir documento <ArrowRight size={16} aria-hidden="true" />
                         </Link>
-                        <FeedbackButtons requestId={state.envelope.request_id} familyId={result.family_id} />
+                        <CardFeedback requestId={state.envelope.request_id} result={result} />
                       </div>
                     </div>
                   </article>
@@ -156,6 +157,18 @@ export function SearchPage() {
         )}
       </section>
     </div>
+  );
+}
+
+function CardFeedback({ requestId, result }: { requestId: string; result: SearchResult }) {
+  const chunk = bestMatchedChunk(result.matched_chunks);
+  if (!chunk) {
+    return null;
+  }
+  return (
+    <FeedbackButtons
+      target={{ requestId, documentVersion: chunk.document_version, chunkIndex: chunk.chunk_index }}
+    />
   );
 }
 

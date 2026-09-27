@@ -3,7 +3,7 @@ import { mockFamilies } from "../mocks/familias";
 import { mockNotifications } from "../mocks/notificacoes";
 import { mockOpinion } from "../mocks/parecer";
 import { mockProcessDashboard } from "../mocks/processos";
-import { searchDocuments, type SearchEnvelope } from "../api/search";
+import { bestMatchedChunk, searchDocuments, type SearchEnvelope } from "../api/search";
 import type {
   AppNotification,
   ExploreData,
@@ -92,11 +92,16 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
     const result = processResults[0];
     const allChunks = processResults.flatMap((processResult) => processResult.matched_chunks);
     const bestScore = Math.max(...allChunks.map((chunk) => chunk.score), 0);
+    const bestChunk = bestMatchedChunk(allChunks);
     const type = formatDocumentType(result.face.document_type);
     return {
       rank: index + 1,
       requestId: envelope.request_id,
       familyId: result.family_id,
+      feedbackChunk: bestChunk && {
+        documentVersion: bestChunk.document_version,
+        chunkIndex: bestChunk.chunk_index,
+      },
       processNumber,
       adherence: Math.round(bestScore * 100),
       relevance: bestScore >= 0.85 ? "Muito relevante" as const : "Relevante" as const,

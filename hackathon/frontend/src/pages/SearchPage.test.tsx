@@ -36,6 +36,7 @@ const SEARCH_ENVELOPE_WITH_ONE_RESULT = {
           excerpt: "trecho novo",
           score: 0.9,
           is_latest: true,
+          chunk_index: 4,
         },
       ],
     },
@@ -166,7 +167,7 @@ describe("SearchPage", () => {
     );
   });
 
-  it("envia POST /v1/feedback com request_id, family_id e o voto ao clicar 👍", async () => {
+  it("envia POST /v1/feedback com request_id, a chave do chunk (document_version + chunk_index) e o voto ao clicar 👍", async () => {
     const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
       if (url === "/v1/search") {
@@ -180,7 +181,9 @@ describe("SearchPage", () => {
         json: async () => ({
           id: 1,
           request_id: "r1",
-          family_id: "fam-auto-0007",
+          document_version: "docver-auto-0007-v2",
+          chunk_index: 4,
+          family_id: null,
           vote: "up",
           created_at: "2026-09-20T00:00:00Z",
         }),
@@ -202,11 +205,59 @@ describe("SearchPage", () => {
       "/v1/feedback",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ request_id: "r1", family_id: "fam-auto-0007", vote: "up" }),
+        body: JSON.stringify({
+          request_id: "r1",
+          document_version: "docver-auto-0007-v2",
+          chunk_index: 4,
+          vote: "up",
+        }),
       }),
     );
     expect(screen.getByRole("button", { name: /votar positivamente/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /votar negativamente/i })).toBeDisabled();
+  });
+
+  it("registra o voto do card no seu chunk de maior score, não no primeiro da lista", async () => {
+    const envelope = {
+      ...SEARCH_ENVELOPE_WITH_ONE_RESULT,
+      results: [
+        {
+          ...SEARCH_ENVELOPE_WITH_ONE_RESULT.results[0],
+          matched_chunks: [
+            { document_version: "docver-auto-0007-v1", excerpt: "trecho antigo", score: 0.7, is_latest: false, chunk_index: 1 },
+            { document_version: "docver-auto-0007-v2", excerpt: "trecho novo", score: 0.9, is_latest: true, chunk_index: 3 },
+          ],
+        },
+      ],
+    };
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) =>
+      Promise.resolve({
+        ok: true,
+        json: async () => (String(input) === "/v1/search" ? envelope : { id: 1 }),
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderSearchPage();
+    clickSuggestion(/auto de infração retificado/i);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /votar negativamente/i })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /votar negativamente/i }));
+
+    await waitFor(() => expect(screen.getByText(/obrigado pelo feedback/i)).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/v1/feedback",
+      expect.objectContaining({
+        body: JSON.stringify({
+          request_id: "r1",
+          document_version: "docver-auto-0007-v2",
+          chunk_index: 3,
+          vote: "down",
+        }),
+      }),
+    );
   });
 
   it("mostra mensagem de erro simples quando o envio de feedback falha, sem travar a página", async () => {

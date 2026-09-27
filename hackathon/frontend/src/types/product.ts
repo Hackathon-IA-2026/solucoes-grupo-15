@@ -34,6 +34,8 @@ export type RankedPrecedent = {
   rank: number;
   requestId?: string;
   familyId?: string;
+  // Chunk de maior score do resultado: alvo do voto de feedback (issue #94).
+  feedbackChunk?: { documentVersion: string; chunkIndex: number };
   processNumber: string;
   adherence: number;
   relevance: "Muito relevante" | "Relevante";

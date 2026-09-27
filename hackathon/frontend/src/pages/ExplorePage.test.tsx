@@ -27,6 +27,7 @@ const searchEnvelope = {
           excerpt: "versao retificada com periodo corrigido",
           score: 0.91,
           is_latest: true,
+          chunk_index: 2,
         },
       ],
     },
@@ -156,12 +157,12 @@ describe("ExplorePage integrada", () => {
     expect(screen.getByText(/trecho da busca/i)).toBeInTheDocument();
   });
 
-  it("envia feedback com o request e a família retornados", async () => {
+  it("envia feedback com o request e a chave do chunk de maior score do resultado", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse(searchEnvelope))
       .mockResolvedValueOnce(
-        jsonResponse({ id: 1, request_id: "request-35", family_id: "fam-auto-0007", vote: "up", created_at: "2026-09-25" }),
+        jsonResponse({ id: 1, request_id: "request-35", document_version: "docver-auto-0007-v2", chunk_index: 2, family_id: null, vote: "up", created_at: "2026-09-25" }),
       );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -172,7 +173,7 @@ describe("ExplorePage integrada", () => {
     expect(await screen.findByText(/obrigado pelo feedback/i)).toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenLastCalledWith("/v1/feedback", expect.objectContaining({
       method: "POST",
-      body: JSON.stringify({ request_id: "request-35", family_id: "fam-auto-0007", vote: "up" }),
+      body: JSON.stringify({ request_id: "request-35", document_version: "docver-auto-0007-v2", chunk_index: 2, vote: "up" }),
     })));
   });
 });
