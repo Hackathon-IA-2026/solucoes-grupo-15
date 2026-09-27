@@ -1,0 +1,3 @@
+PASS search: 200 10 chunks rendered in 10 cards
+PASS feedback: 200 document_version and chunk_index present; success message rendered
+PASS no page errors

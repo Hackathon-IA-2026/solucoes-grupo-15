@@ -31,6 +31,11 @@ POST /v1/search e GET /v1/documents/{family_id}), ordenadas por essa
 data; inclui tambem as arestas ``responde_a`` entre pecas do mesmo
 processo, para o frontend desenhar a cadeia. Processo sem nenhuma
 aresta ``pertence_ao_processo`` -> 404.
+
+Cada peca tambem carrega ``source_pdf_url`` (issue #123), resolvido
+pelo mesmo helper ``_source_pdf_url`` de app/routes/documents.py a
+partir do ``document_version`` da face - ``None`` quando o corpus nao
+declara ``source_pdf_relpath`` para essa versao.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -41,6 +46,7 @@ from sqlalchemy.orm import Session
 from app.catalog import select_face_version
 from app.db import get_db_session
 from app.models import DocumentFamily, DocumentRelation, DocumentVersion
+from app.routes.documents import _source_pdf_url
 
 router = APIRouter(prefix="/v1", tags=["relations"])
 
@@ -72,6 +78,7 @@ class ProcessoPieceOut(BaseModel):
     document_type: str
     document_id: str
     version_date: str
+    source_pdf_url: str | None
 
 
 class RespondeAEdgeOut(BaseModel):
@@ -244,6 +251,7 @@ def _pieces_for_families(session: Session, family_ids: list[str]) -> list[Proces
                 document_type=face.document_type,
                 document_id=face.document_id,
                 version_date=face.version_date,
+                source_pdf_url=_source_pdf_url(face.document_version),
             )
         )
     return pieces
