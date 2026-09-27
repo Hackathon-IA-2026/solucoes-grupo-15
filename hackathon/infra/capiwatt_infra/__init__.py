@@ -53,6 +53,9 @@ def build_app(app: App) -> CapiwattStacks:
         "CapiwattData",
         network=network,
         search_instance_type=search_instance_type,
+        create_search_service_linked_role=(
+            app.node.try_get_context("opensearch_service_linked_role") != "existing"
+        ),
         env=env,
     )
     compute = ComputeStack(

@@ -21,6 +21,7 @@ from aws_cdk import RemovalPolicy, Stack
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_efs as efs
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_opensearchservice as opensearch
 from aws_cdk import aws_rds as rds
 from constructs import Construct
@@ -40,6 +41,7 @@ class DataStack(Stack):
         *,
         network: NetworkStack,
         search_instance_type: str,
+        create_search_service_linked_role: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -96,6 +98,19 @@ class DataStack(Stack):
             enforce_https=True,
             removal_policy=RemovalPolicy.DESTROY,
         )
+        # Dominio em VPC exige o service-linked role do OpenSearch na conta.
+        # Conta nova do workshop nao tem: o stack cria e o destroy remove.
+        # Conta que ja tem (outro dominio em VPC): ``-c
+        # opensearch_service_linked_role=existing``.
+        if create_search_service_linked_role:
+            search_slr = iam.CfnServiceLinkedRole(
+                self,
+                "SearchServiceLinkedRole",
+                aws_service_name="opensearchservice.amazonaws.com",
+            )
+            search_slr.apply_removal_policy(RemovalPolicy.DESTROY)
+            self.search.node.add_dependency(search_slr)
+
         # Access policy direto no L1: a prop ``access_policies`` do L2 cria
         # um custom resource (Lambda) so para isso.
         domain_arn = self.format_arn(

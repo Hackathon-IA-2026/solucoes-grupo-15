@@ -299,3 +299,24 @@ def test_security_group_descriptions_use_only_characters_ec2_accepts(stacks):
         if isinstance(description, str) and not _EC2_DESCRIPTION.match(description)
     ]
     assert invalid == []
+
+
+def test_opensearch_domain_waits_for_its_service_linked_role(data):
+    # Erro real do segundo ``cdk deploy`` numa conta nova do workshop:
+    # "you must enable a service-linked role" para dominio em VPC.
+    roles = data.find_resources(
+        "AWS::IAM::ServiceLinkedRole",
+        {"Properties": {"AWSServiceName": "opensearchservice.amazonaws.com"}},
+    )
+    assert len(roles) == 1
+    (role_id,) = roles
+    assert roles[role_id].get("DeletionPolicy") == "Delete"
+    (domain,) = data.find_resources("AWS::OpenSearchService::Domain").values()
+    assert role_id in domain.get("DependsOn", [])
+
+
+def test_existing_opensearch_service_linked_role_can_be_reused_by_context():
+    # Conta que ja tem o role (outro dominio em VPC): nao recriar.
+    app = App(context={"opensearch_service_linked_role": "existing"})
+    data = Template.from_stack(build_app(app).data)
+    data.resource_count_is("AWS::IAM::ServiceLinkedRole", 0)
