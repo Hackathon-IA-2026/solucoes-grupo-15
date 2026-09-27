@@ -460,3 +460,16 @@ def test_every_lambda_logs_to_a_log_group_of_the_stack_with_retention(stacks):
             group = resources[log_group["Ref"]]
             assert group["Type"] == "AWS::Logs::LogGroup"
             assert group["Properties"].get("RetentionInDays"), (name, logical_id)
+
+
+def test_frontend_log_group_is_deleted_after_its_custom_resources(compute):
+    resources = compute.to_json()["Resources"]
+    (log_group_id,) = (
+        logical_id
+        for logical_id, resource in resources.items()
+        if resource["Type"] == "AWS::Logs::LogGroup"
+        and resource["Properties"]["LogGroupName"] == "/capiwatt/frontend-deploy"
+    )
+    for kind in ("Custom::CDKBucketDeployment", "Custom::S3AutoDeleteObjects"):
+        for resource in compute.find_resources(kind).values():
+            assert log_group_id in resource.get("DependsOn", [])

@@ -99,6 +99,9 @@ class FrontendSite(Construct):
             removal_policy=RemovalPolicy.DESTROY,
         )
         _log_auto_delete_handler_to(self.handler_logs, Stack.of(self))
+        self.bucket.node.find_child("AutoDeleteObjectsCustomResource").node.add_dependency(
+            self.handler_logs
+        )
         spa_rewrite = cloudfront.Function(
             self,
             "SpaRewrite",
@@ -144,6 +147,8 @@ class FrontendSite(Construct):
             distribution_paths=["/*"],
         )
         shell.node.add_dependency(assets)
+        assets.node.add_dependency(self.handler_logs)
+        shell.node.add_dependency(self.handler_logs)
 
 
 def runtime_config(scope: Construct) -> dict[str, str]:
