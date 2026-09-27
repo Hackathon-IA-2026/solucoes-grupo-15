@@ -1,6 +1,6 @@
 {
   "provisional": true,
-  "disclaimer": "Fixture de busca demo/provisoria para o CapiWatt Lens. Nao ha busca vetorial real, embeddings ou ranking: cada chave e uma consulta exata ou alias declarado, mapeado a uma lista fixa de hits. A chave mmgd-precedentes aponta para os PDFs publicos do caso 1 fornecidos por Carolina; a ordem e os scores sao apenas demonstrativos e o PDF fonte prevalece sobre os resumos exibidos.",
+  "disclaimer": "Busca demo por consultas exatas ou aliases declarados. Trechos de case1 reproduzem extratos dos Markdown dos PDFs publicos do caso Carolina/MMGD e estao sincronizados com demo_corpus.json por family_id/document_version. Ordem e scores sao demonstrativos; consulte os PDFs originais.",
   "aliases": {
     "precedentes sobre fiscalização do atendimento às solicitações de conexão de MMGD": "mmgd-precedentes",
     "precedentes sobre fiscalização de atendimento a solicitações de conexão de MMGD": "mmgd-precedentes",
@@ -17,70 +17,70 @@
         "family_id": "case1-enel-auto",
         "document_version": "case1-enel-auto-2018",
         "chunk_id": "case1-enel-auto-2018#chunk-0000",
-        "excerpt": "Auto de Infracao 0032/2018-SFE, lavrado contra Enel Distribuicao Ceara no processo 48500.004024/2017-80.",
+        "excerpt": "AUTO DE INFRAÇÃO - AI ARTIGO 22 DA RESOLUÇÃO NORMATIVA ANEEL nº 63, DE 12/05/2004 1. LAVRATURA AI nº: 0032/2018-SFE LOCAL: SGAN 603 MÓDULO I e J, Brasília - DF, CEP 70.830-110 DATA: 27/12/2018 TELEFONE: (61) 2192-8951 FAX: (61) 2192-8726 2. AGENTE AUTUADO ENEL CE-COMPANHIA ENERGETICA DO CEARA",
         "score": 0.91
       },
       {
         "family_id": "case1-enel-recurso",
         "document_version": "case1-enel-recurso-2019",
         "chunk_id": "case1-enel-recurso-2019#chunk-0000",
-        "excerpt": "Recurso da Enel Distribuicao Ceara ao Auto de Infracao 0032/2018-SFE, no processo 48500.004024/2017-80.",
+        "excerpt": "Regulação Brasil Rua Padre Valdevino, 150 4º andar Fortaleza-CE - Brasil T +55 85 3453 4392 Giácomo Francisco Almeida SFE/ANEEL SGAN 603 Módulos I/J Brasília/DF – Brasil 70.830-110 Fortaleza 18/01/2019 Carta Enel Ceará 011-RB-2019 Referência: Auto de Infração nº 0032/2018-SFE Termo de Notificação nº 0002/2018 SFE Processo Administrativo:",
         "score": 0.88
       },
       {
         "family_id": "case1-enel-voto",
         "document_version": "case1-enel-voto-2020",
         "chunk_id": "case1-enel-voto-2020#chunk-0000",
-        "excerpt": "Voto da Diretoria no processo 48500.004024/2017-80, interessado Enel Distribuicao Ceara e relator Diretor Efrain Pereira da Cruz.",
+        "excerpt": "VOTO PROCESSO: 48500.004024/2017-80 INTERESSADO: Enel Distribuição Ceará RELATOR: Diretor Efrain Pereira da Cruz RESPONSÁVEL: Diretoria – DIR ASSUNTO: Recurso Administrativo interposto pela Enel Distribuição Ceará em face do Auto de Infração nº 32, de 2018, lavrado pela Superintendência de Fiscalização dos Serviços de Eletricidade – SFE, que aplicou",
         "score": 0.94
       },
       {
         "family_id": "case1-cemig-auto",
         "document_version": "case1-cemig-auto-2020",
         "chunk_id": "case1-cemig-auto-2020#chunk-0000",
-        "excerpt": "Auto de Infracao 0017/2020-SFE contra Cemig Distribuicao S.A. no processo punitivo 48500.000639/2019-07.",
+        "excerpt": "AUTO DE INFRAÇÃO - AI ARTIGO 29 DA RESOLUÇÃO NORMATIVA ANEEL nº 846, de 11/11/2019 AI nº: 0017/2020-SFE Número Sic do AI: 48534.001352/2020-00 1. ÓRGÃO FISCALIZADOR NOME: Agência Nacional de Energia Elétrica - ANEEL ENDEREÇO: Quadra SGAN 603, Brasília, DF, 70830-030 TELEFONE: 55+(61) 2192-8287 FAX: 2. AGENTE AUTUADO",
         "score": 0.84
       },
       {
         "family_id": "case1-cemig-recurso",
         "document_version": "case1-cemig-recurso-2020",
         "chunk_id": "case1-cemig-recurso-2020#chunk-0000",
-        "excerpt": "Recurso administrativo da Cemig Distribuicao S.A. contra o Auto de Infracao 0017/2020-SFE, processo 48500.000639/2019-07.",
+        "excerpt": "CLASSIFICAÇÃO: Reservada Ao Senhor Giácomo Francisco Bassi Almeida Superintendente de Fiscalização dos Serviços de Eletricidade Agência Nacional de Energia Elétrica - ANEEL Brasília - DF Nossa Referência: RE/RT-0134A/2020 Data: 13/05/2020 Sua Referência: Auto de Infração nº 0017/2020-SFE/ANEEL Assunto: Recurso Administrativo – Auto de Infração - Processo 48500.000639/2019-07 Senhor",
         "score": 0.87
       },
       {
         "family_id": "case1-cemig-voto",
         "document_version": "case1-cemig-voto-2023",
         "chunk_id": "case1-cemig-voto-2023#chunk-0000",
-        "excerpt": "Voto da 18a Reuniao Publica Ordinaria da Diretoria, de 30 de maio de 2023, no processo 48500.000639/2019-07.",
+        "excerpt": "18ª Reunião Pública Ordinária da Diretoria Brasília, 30/05/2023 VOTO PROCESSO: 48500.000639/2019-07. INTERESSADA: Cemig Distribuição S.A. – CEMIG D. RELATOR: Diretor Ricardo Lavorato Tili. RESPONSÁVEL: DIRETORIA – DIR. ASSUNTO: Recurso Administrativo interposto pela Cemig Distribuição S.A. – Cemig D em face do Auto de Infração nº 17/2020, lavrado pela",
         "score": 0.9
       },
       {
         "family_id": "case1-coelba-auto",
         "document_version": "case1-coelba-auto-2025",
         "chunk_id": "case1-coelba-auto-2025#chunk-0000",
-        "excerpt": "Exposicao de Motivos para o Auto de Infracao ligado ao processo 48500.901433/2024-53, sobre fiscalizacao da Neoenergia Coelba.",
+        "excerpt": "EXPOSIÇÃO DE MOTIVOS PARA O AUTO DE INFRAÇÃO EXPOSIÇÃO DE MOTIVOS PARA O AUTO DE INFRAÇÃO I – DA IDENTIFICAÇÃO Agente: Companhia de Eletricidade do Estado da Bahia - (Neoenergia Coelba) Órgão Fiscalizador: Superintendência de Fiscalização Técnica dos Serviços de Energia Elétrica – SFT. Termo de Notificação nº:",
         "score": 0.82
       },
       {
         "family_id": "case1-coelba-voto",
         "document_version": "case1-coelba-voto-2025",
         "chunk_id": "case1-coelba-voto-2025#chunk-0000",
-        "excerpt": "Voto da Diretoria no processo 48500.901433/2024-53, interessada Neoenergia Coelba e relator Diretor Fernando Luiz Mosna Ferreira da Silva.",
+        "excerpt": "VOTO PROCESSO: 48500.901433/2024-53. INTERESSADO: Companhia de Eletricidade do Estado da Bahia – Neoenergia Coelba. RELATOR: Diretor Fernando Luiz Mosna Ferreira da Silva. RESPONSÁVEL: Diretoria – DIR. ASSUNTO:Recurso Administra vo interposto pela Companhia de Eletricidade do Estado da Bahia – Neoenergia Coelba em face do Auto de Infração nº",
         "score": 0.89
       },
       {
         "family_id": "case1-coelba-recurso",
         "document_version": "case1-coelba-recurso-2025",
         "chunk_id": "case1-coelba-recurso-2025#chunk-0000",
-        "excerpt": "Recurso administrativo da Neoenergia Coelba, no processo 48500.009907/2025-96, contra o Auto de Infracao 0035/2025-SFT/ANEEL.",
+        "excerpt": "Destinatário: Giácomo Francisco Bassi Almeida Superintendente de Fiscalização Técnica dos Serviços de Energia Elétrica - SFT Agência Nacional de energia Elétrica – ANEEL. SGAN 603 Módulos I e J. Brasília DF – CEP 70.830-110. Salvador, 20 de março de 2025 RTC – NCLB 022/2025 Assunto: Recurso Administrativo Referências:",
         "score": 0.78
       },
       {
         "family_id": "case1-coelba-complemento",
         "document_version": "case1-coelba-complemento-2025",
         "chunk_id": "case1-coelba-complemento-2025#chunk-0000",
-        "excerpt": "Complementacao de recurso da Neoenergia Coelba, no processo 48500.017555/2025-42, referente ao Auto de Infracao 0035/2025-SFT/ANEEL.",
+        "excerpt": "Destinatário: Giácomo Francisco Bassi Almeida Superintendênte de Fiscalização Técnica dos Serviços de Energia Elétrica - SFT Salvador, 26 de maio de 2025 Agência Nacional de Energia Elétrica – ANEEL SGAN 603 Módulos I e J RTC NCLB nº 042/2025 Brasília DF – CEP 70.830-110 Referências: Processo Administrativo nº",
         "score": 0.76
       }
     ],
@@ -89,7 +89,7 @@
         "family_id": "case1-cemig-voto",
         "document_version": "case1-cemig-voto-2023",
         "chunk_id": "case1-cemig-voto-2023#chunk-0000",
-        "excerpt": "Voto da 18a Reuniao Publica Ordinaria da Diretoria, de 30 de maio de 2023, no processo 48500.000639/2019-07.",
+        "excerpt": "18ª Reunião Pública Ordinária da Diretoria Brasília, 30/05/2023 VOTO PROCESSO: 48500.000639/2019-07. INTERESSADA: Cemig Distribuição S.A. – CEMIG D. RELATOR: Diretor Ricardo Lavorato Tili. RESPONSÁVEL: DIRETORIA – DIR. ASSUNTO: Recurso Administrativo interposto pela Cemig Distribuição S.A. – Cemig D em face do Auto de Infração nº 17/2020, lavrado pela",
         "score": 0.9
       }
     ],
@@ -98,14 +98,14 @@
         "family_id": "case1-coelba-auto",
         "document_version": "case1-coelba-auto-2025",
         "chunk_id": "case1-coelba-auto-2025#chunk-0000",
-        "excerpt": "Exposicao de Motivos para o Auto de Infracao ligado ao processo 48500.901433/2024-53, sobre fiscalizacao da Neoenergia Coelba.",
+        "excerpt": "EXPOSIÇÃO DE MOTIVOS PARA O AUTO DE INFRAÇÃO EXPOSIÇÃO DE MOTIVOS PARA O AUTO DE INFRAÇÃO I – DA IDENTIFICAÇÃO Agente: Companhia de Eletricidade do Estado da Bahia - (Neoenergia Coelba) Órgão Fiscalizador: Superintendência de Fiscalização Técnica dos Serviços de Energia Elétrica – SFT. Termo de Notificação nº:",
         "score": 0.82
       },
       {
         "family_id": "case1-coelba-voto",
         "document_version": "case1-coelba-voto-2025",
         "chunk_id": "case1-coelba-voto-2025#chunk-0000",
-        "excerpt": "Voto da Diretoria no processo 48500.901433/2024-53, interessada Neoenergia Coelba e relator Diretor Fernando Luiz Mosna Ferreira da Silva.",
+        "excerpt": "VOTO PROCESSO: 48500.901433/2024-53. INTERESSADO: Companhia de Eletricidade do Estado da Bahia – Neoenergia Coelba. RELATOR: Diretor Fernando Luiz Mosna Ferreira da Silva. RESPONSÁVEL: Diretoria – DIR. ASSUNTO:Recurso Administra vo interposto pela Companhia de Eletricidade do Estado da Bahia – Neoenergia Coelba em face do Auto de Infração nº",
         "score": 0.89
       }
     ],

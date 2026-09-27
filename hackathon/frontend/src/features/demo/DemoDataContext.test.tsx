@@ -40,7 +40,7 @@ describe("preparação dos dados demo", () => {
     expect(await screen.findByText("Dados demo prontos")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/v1/health");
     expect(fetchMock).toHaveBeenCalledWith("/v1/ingestions", { method: "POST" });
-    fireEvent.click(screen.getByRole("link", { name: /temas/i }));
+    fireEvent.click(screen.getByRole("link", { name: /famílias documentais/i }));
     await waitFor(() => expect(window.location.pathname).toBe("/familias"));
     expect(fetchMock.mock.calls.filter(([url]) => String(url) === "/v1/ingestions")).toHaveLength(1);
   });

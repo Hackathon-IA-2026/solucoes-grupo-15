@@ -12,6 +12,7 @@ import { FamilyPage } from "./pages/FamilyPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MyProcessesPage } from "./pages/MyProcessesPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { OpinionPage } from "./pages/OpinionPage";
 import { PersonaPage } from "./pages/PersonaPage";
 import { ProductNotificationsPage } from "./pages/ProductNotificationsPage";
 import { ProcessoPage } from "./pages/ProcessoPage";
@@ -42,6 +43,7 @@ function AppRoutes() {
                   <Route path="/explorar" element={<ExplorePage />} />
                   <Route path="/meus-processos" element={<MyProcessesPage />} />
                   <Route path="/familias" element={<FamiliesPage />} />
+                  <Route path="/parecer" element={<OpinionPage />} />
                   <Route path="/mapas-relacoes" element={<RelationsMapPage />} />
                   <Route path="/notificacoes" element={<ProductNotificationsPage />} />
                   <Route path="/documents/:familyId" element={<FamilyPage />} />

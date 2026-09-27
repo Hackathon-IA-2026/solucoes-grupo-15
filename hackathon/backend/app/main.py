@@ -44,6 +44,7 @@ from app.routes.feedback import router as feedback_router
 from app.routes.health import router as health_router
 from app.routes.ingestions import router as ingestions_router
 from app.routes.notifications import router as notifications_router
+from app.routes.opinion import router as opinion_router
 from app.routes.relations import router as relations_router
 from app.routes.search import router as search_router
 
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(relations_router, dependencies=authenticated)
     app.include_router(feedback_router, dependencies=authenticated)
     app.include_router(notifications_router, dependencies=authenticated)
+    app.include_router(opinion_router, dependencies=authenticated)
     return app
 
 

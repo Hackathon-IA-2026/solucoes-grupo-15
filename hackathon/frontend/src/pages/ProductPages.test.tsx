@@ -64,24 +64,49 @@ describe("páginas do produto", () => {
     expect(screen.getByLabelText(/cadeia de respostas/i)).toHaveTextContent("fam-defesa-0007");
   });
 
-  it("lista e pesquisa temas regulatórios", async () => {
-    render(<FamiliesPage />);
-    expect((await screen.findAllByText("Transição Energética", {}, { timeout: 1500 })).length).toBeGreaterThan(0);
-    fireEvent.change(screen.getByLabelText(/pesquisar temas/i), { target: { value: "encargos setoriais" } });
-    expect(screen.getAllByText("Tarifas e Encargos").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Consumidores e Distribuição")).not.toBeInTheDocument();
+  it("lista famílias documentais do backend e abre o detalhe", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([
+      { family_id: "case1-enel-auto", document_id: "AI 0032/2018-SFE", document_type: "auto_de_infracao", processo_numero: "48500.004024/2017-80", versions_count: 1, latest_version_date: "2018-12-27" },
+      { family_id: "case1-cemig-voto", document_id: "Voto CEMIG", document_type: "voto", processo_numero: "48500.000639/2019-07", versions_count: 1, latest_version_date: "2023-05-30" },
+    ]), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<MemoryRouter><FamiliesPage /></MemoryRouter>);
+    expect(await screen.findByText("AI 0032/2018-SFE")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/pesquisar famílias/i), { target: { value: "CEMIG" } });
+    expect(screen.getAllByText("Voto CEMIG").length).toBeGreaterThan(0);
+    expect(screen.queryByText("AI 0032/2018-SFE")).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/v1/families");
   });
 
   it("renderiza o parecer e alterna suas seções", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      title: "Parecer demonstrativo", processNumber: "48500.901433/2024-53", family: "Caso 1", theme: "MMGD",
+      code: "DEMO-CASE1-MMGD", issuedAt: "2025-06-01", status: "Demonstração documental",
+      verdict: "Trechos de precedentes para revisão", verdictSummary: "Trecho do voto Coelba",
+      situation: "Trecho do voto Cemig", suggestedUnderstanding: "Trecho do voto Enel",
+      attentionPoints: ["Consultar PDF"], figures: [], confidence: null, coverage: null,
+    }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
     render(<OpinionPage />);
-    expect(await screen.findByText("Favorável com ressalvas", {}, { timeout: 1500 })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Evidências (10)" }));
-    expect(screen.getByRole("heading", { name: "Evidências (10)" })).toBeInTheDocument();
+    expect(await screen.findByText("Trechos de precedentes para revisão")).toBeInTheDocument();
+    expect(screen.getByText("Trecho do voto Coelba")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/v1/opinion");
+    fireEvent.click(screen.getByRole("button", { name: "Evidências" }));
+    expect(screen.getByRole("heading", { name: "Evidências" })).toBeInTheDocument();
   });
 
-  it("permite selecionar nós no mapa de relações", () => {
-    render(<RelationsMapPage />);
-    fireEvent.click(screen.getByRole("button", { name: /Voto da Diretoria/i }));
-    expect(screen.getByText(/Fundamentos e conclusão submetidos/i)).toBeInTheDocument();
+  it("mostra nós do grafo retornados pelo backend", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const path = String(input);
+      if (path === "/v1/processos") return Promise.resolve(new Response(JSON.stringify([{ processo_id: "48500.004024/2017-80", latest_movement_at: "2020-01-01", latest_document_type: "voto", latest_document_id: "Voto Enel", pieces_count: 1, document_types: ["voto"] }]), { status: 200 }));
+      if (path === "/v1/families") return Promise.resolve(new Response(JSON.stringify([{ family_id: "case1-enel-voto", document_id: "Voto Enel", document_type: "voto", processo_numero: "48500.004024/2017-80", versions_count: 1, latest_version_date: "2020-01-01" }]), { status: 200 }));
+      if (path.startsWith("/v1/documents/")) return Promise.resolve(new Response(JSON.stringify({ node_id: "48500.004024/2017-80", node_kind: "processo", edges: [{ type: "pertence_ao_processo", origin: "explicit", status: "confirmed", neighbor_id: "case1-enel-voto", neighbor_kind: "family", evidence: null }] }), { status: 200 }));
+      return Promise.resolve(new Response(null, { status: 404 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<MemoryRouter><RelationsMapPage /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole("button", { name: /Voto Enel/i }));
+    expect(screen.getByText("pertence_ao_processo")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/v1/documents/48500.004024%2F2017-80/graph");
   });
 });

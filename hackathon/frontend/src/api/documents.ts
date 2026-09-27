@@ -29,6 +29,21 @@ export type DocumentDetail = {
   source_pdf_url: string | null;
 };
 
+export type FamilySummary = {
+  family_id: string;
+  document_id: string;
+  document_type: string;
+  processo_numero: string | null;
+  versions_count: number;
+  latest_version_date: string;
+};
+
+export async function fetchFamilies(): Promise<FamilySummary[]> {
+  const response = await apiFetch("/v1/families");
+  if (!response.ok) throw new Error(`Consulta de famílias falhou com status ${response.status}`);
+  return (await response.json()) as FamilySummary[];
+}
+
 /**
  * Sinaliza especificamente o 404 de "familia nao encontrada", para a
  * pagina distinguir esse caso (mensagem clara) de uma falha de rede

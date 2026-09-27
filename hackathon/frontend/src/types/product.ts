@@ -1,4 +1,5 @@
 import type { SearchEnvelope } from "../api/search";
+import type { ProcessoSummary } from "../api/processos";
 
 export type PersonaId = "advocacia" | "pesquisa" | "engenharia";
 
@@ -82,7 +83,6 @@ export type SearchPagination = {
 export type ExploreData = {
   query: string;
   pagination?: SearchPagination;
-  filters: string[];
   results: RankedPrecedent[];
   coverage: number;
   coverageSummary: string;
@@ -90,29 +90,8 @@ export type ExploreData = {
   gaps: ResearchGap[];
 };
 
-export type TrackedProcess = {
-  id: string;
-  subject: string;
-  agency: string;
-  origin: string;
-  updatedAt: string;
-  unread: number;
-  status: "Novo documento" | "Prazo próximo" | "Em análise" | "Arquivado";
-  tags: string[];
-  documents: string[];
-  favorite?: boolean;
-};
-
-export type RecentActivity = {
-  id: string;
-  label: string;
-  processNumber: string;
-  time: string;
-};
-
 export type ProcessDashboard = {
-  processes: TrackedProcess[];
-  activity: RecentActivity[];
+  processes: ProcessoSummary[];
 };
 
 export type Family = {
@@ -139,8 +118,8 @@ export type OpinionData = {
   suggestedUnderstanding: string;
   attentionPoints: string[];
   figures: Array<{ label: string; value: string; tone: string }>;
-  confidence: number;
-  coverage: number;
+  confidence: number | null;
+  coverage: number | null;
 };
 
 export type AppNotification = {
