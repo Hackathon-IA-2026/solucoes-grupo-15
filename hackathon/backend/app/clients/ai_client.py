@@ -82,9 +82,15 @@ class AiSearchResponse(BaseModel):
 class AiClient:
     """Cliente tipado a partir dos nomes de operacao do port VectorService."""
 
-    def __init__(self, base_url: str, timeout: float = 10.0) -> None:
+    def __init__(self, base_url: str, timeout: float = 10.0, index_timeout: float = 900.0) -> None:
+        """``timeout`` vale para ``health``/``search``; ``index_timeout``
+        para ``index``/``reindex``, que fazem uma chamada Bedrock por
+        chunk dentro de uma unica requisicao (EMBEDDER=bedrock) - 10 s
+        estourou no primeiro ``POST /v1/ingestions`` na AWS (issue #106).
+        """
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
+        self._index_timeout = index_timeout
 
     def health(self) -> bool:
         """Consulta GET /internal/v1/health no ai.
@@ -110,7 +116,7 @@ class AiClient:
         response = httpx.post(
             f"{self._base_url}/internal/v1/index",
             json={"documents": [_document_payload(doc) for doc in documents]},
-            timeout=self._timeout,
+            timeout=self._index_timeout,
         )
         response.raise_for_status()
         return [IndexReport(**report) for report in response.json()["reports"]]
@@ -127,7 +133,7 @@ class AiClient:
         response = httpx.post(
             f"{self._base_url}/internal/v1/reindex",
             json={"documents": [_document_payload(doc) for doc in documents]},
-            timeout=self._timeout,
+            timeout=self._index_timeout,
         )
         response.raise_for_status()
         return [IndexReport(**report) for report in response.json()["reports"]]
