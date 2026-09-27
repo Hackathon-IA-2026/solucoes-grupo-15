@@ -35,6 +35,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from app.chunking import chunk_index_from_id
 from app.config import REAL_PIPELINE_EMBEDDERS, get_settings
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
 from app.embeddings import BedrockEmbedder
@@ -58,8 +59,20 @@ class SearchRequest(BaseModel):
 
 
 class SearchHitOut(BaseModel):
+    """Um hit cru por chunk.
+
+    ``chunk_id`` (issue #96) e o id estavel do chunk no indice
+    (``"<document_version>#chunk-NNNN"``, ver app/chunking.py) e
+    ``chunk_index`` e o indice real do chunk dentro do documento
+    (0-based) - nunca a posicao do hit nesta lista. Juntos com
+    ``document_version`` identificam o chunk para feedback (#82) e
+    ``evidence_refs`` (#66).
+    """
+
     family_id: str
     document_version: str
+    chunk_id: str
+    chunk_index: int
     excerpt: str
     score: float
 
@@ -97,7 +110,10 @@ def _search_fake(payload: SearchRequest, fixture_path: Path) -> SearchResponse:
     if payload.top_k is not None:
         hits = hits[: payload.top_k]
     return SearchResponse(
-        hits=[SearchHitOut(**hit) for hit in hits],
+        hits=[
+            SearchHitOut(**hit, chunk_index=chunk_index_from_id(hit["chunk_id"]))
+            for hit in hits
+        ],
         model_version=MODEL_VERSION,
     )
 
@@ -114,6 +130,8 @@ def _search_real(
             SearchHitOut(
                 family_id=hit.family_id,
                 document_version=hit.document_version,
+                chunk_id=hit.chunk_id,
+                chunk_index=chunk_index_from_id(hit.chunk_id),
                 excerpt=hit.excerpt,
                 score=hit.score,
             )

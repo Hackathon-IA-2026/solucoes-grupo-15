@@ -10,8 +10,11 @@ representa um chunk, nao uma familia).
 Cada resultado carrega: ``family_id``, ``document_version``, ``excerpt``,
 ``score``, ``localizador`` (``extracted_text_locator`` da
 ``DocumentVersion``), ``document_type``, ``document_id``,
-``processo_numero``, ``version_date`` e ``chunk_index`` (posicao do hit
-na lista original do ai, 0-based, para desempate deterministico).
+``processo_numero``, ``version_date``, ``chunk_id`` e ``chunk_index``
+(issue #96: id estavel do chunk no indice e indice real do chunk dentro
+do documento, 0-based, ambos vindos do ai - nunca a posicao do hit na
+lista; ``(document_version, chunk_index)`` e a chave de chunk usada pelo
+feedback, #82).
 
 Envelope da resposta: ``request_id`` (uuid4 novo por chamada),
 ``data_mode`` (issue #69: ``"demo"`` quando ``Settings.embedder ==
@@ -30,7 +33,8 @@ futura, issue #16 secao "Versionamento e reprodutibilidade").
 
 Ordem total obrigatoria (issue #78): ``(-score, document_version,
 chunk_index)`` — score decrescente, desempate lexicografico por
-``document_version``, desempate final por posicao original.
+``document_version``, desempate final pelo indice real do chunk no
+documento (issue #96).
 
 ``family_id`` permanece em cada resultado como atributo de filtro/dado,
 mas **nao colapsa** resultados: o mesmo hit devolvido duas vezes pelo ai
@@ -136,7 +140,8 @@ class SearchResultOut(BaseModel):
     document_id: str
     processo_numero: str | None
     version_date: str
-    chunk_index: int  # posicao do hit na lista original do ai (0-based)
+    chunk_id: str  # id estavel do chunk no indice do ai (issue #96)
+    chunk_index: int  # indice real do chunk no documento (0-based, issue #96)
 
 
 class SearchEnvelope(BaseModel):
@@ -300,7 +305,9 @@ def _build_chunk_results(
 
     Ordenacao final: ``(-score, document_version, chunk_index)``
     — score decrescente, desempate lexicografico por ``document_version``,
-    desempate final por posicao original (``chunk_index``) na lista do ai.
+    desempate final pelo indice real do chunk no documento (``chunk_index``,
+    vindo do ai - issue #96). A ordenacao e estavel: hits com a chave
+    inteira igual (o mesmo chunk devolvido duas vezes) mantem a ordem do ai.
 
     ``corpus_version`` vem da primeira ``DocumentVersion`` encontrada; cai
     para ``Settings.default_corpus_version`` quando nenhum hit resolve para
@@ -309,7 +316,7 @@ def _build_chunk_results(
     results: list[SearchResultOut] = []
     corpus_version: str | None = None
 
-    for chunk_index, hit in enumerate(hits):
+    for hit in hits:
         version = session.get(DocumentVersion, hit.document_version)
         if version is None:
             # O ai devolveu um document_version ausente do catalogo — pula
@@ -330,7 +337,8 @@ def _build_chunk_results(
                 document_id=version.document_id,
                 processo_numero=version.processo_numero,
                 version_date=version.version_date,
-                chunk_index=chunk_index,
+                chunk_id=hit.chunk_id,
+                chunk_index=hit.chunk_index,
             )
         )
 

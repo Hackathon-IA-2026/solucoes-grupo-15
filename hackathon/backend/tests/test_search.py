@@ -104,6 +104,8 @@ def test_search_chunk_result_has_all_required_fields(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho na versao antiga",
             score=0.7,
         ),
@@ -129,18 +131,59 @@ def test_search_chunk_result_has_all_required_fields(database_url: str) -> None:
     assert result["chunk_index"] == 0
 
 
+def test_search_chunk_index_is_the_chunk_position_in_the_document_not_in_the_list(
+    database_url: str,
+) -> None:
+    """Issue #96: ``chunk_index``/``chunk_id`` vem do ai (indice real do
+    chunk no documento) e sao estaveis entre consultas - nunca a posicao
+    do hit na lista devolvida pelo ai."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0007",
+            chunk_index=7,
+            excerpt="oitavo chunk do auto",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0002",
+            chunk_index=2,
+            excerpt="terceiro chunk do auto",
+            score=0.9,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "qualquer consulta"})
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    # Empate de score e document_version: desempata pelo indice real do chunk.
+    assert [(r["chunk_id"], r["chunk_index"], r["excerpt"]) for r in results] == [
+        ("docver-auto-0007-v1#chunk-0002", 2, "terceiro chunk do auto"),
+        ("docver-auto-0007-v1#chunk-0007", 7, "oitavo chunk do auto"),
+    ]
+
+
 def test_search_same_hit_twice_appears_twice(database_url: str) -> None:
     """O mesmo chunk devolvido duas vezes pelo ai aparece duas vezes — sem dedup."""
     hits = [
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho repetido",
             score=0.8,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho repetido",
             score=0.8,
         ),
@@ -163,12 +206,16 @@ def test_search_results_ordered_by_score_desc(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="score baixo",
             score=0.3,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="score alto",
             score=0.9,
         ),
@@ -192,18 +239,24 @@ def test_search_deterministic_order_on_tie(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-norma-1000",
             document_version="docver-norma-1000-v1",
+            chunk_id="docver-norma-1000-v1#chunk-0000",
+            chunk_index=0,
             excerpt="norma",
             score=0.5,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="auto v1",
             score=0.5,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="defesa",
             score=0.5,
         ),
@@ -228,18 +281,24 @@ def test_search_family_id_present_but_not_deduped(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk 1 da mesma familia",
             score=0.8,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk outra familia",
             score=0.6,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v2",
+            chunk_id="docver-auto-0007-v2#chunk-0000",
+            chunk_index=0,
             excerpt="chunk 2 da mesma familia",
             score=0.4,
         ),
@@ -270,6 +329,8 @@ def test_search_envelope_has_all_required_fields(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-norma-1000",
             document_version="docver-norma-1000-v1",
+            chunk_id="docver-norma-1000-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho norma",
             score=0.8,
         ),
@@ -324,6 +385,8 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho na versao antiga",
             score=0.7,
         ),
@@ -352,6 +415,8 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
         {
             "family_id": "fam-auto-0007",
             "document_version": "docver-auto-0007-v1",
+            "chunk_id": "docver-auto-0007-v1#chunk-0000",
+            "chunk_index": 0,
             "excerpt": "trecho na versao antiga",
             "score": 0.7,
         }
@@ -414,12 +479,16 @@ def test_search_data_mode_real_is_preserved_across_cursor_continuation(
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho auto",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho defesa",
             score=0.7,
         ),
@@ -461,12 +530,16 @@ def test_search_pagination_first_page_returns_next_cursor(database_url: str) -> 
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho auto",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho defesa",
             score=0.7,
         ),
@@ -496,12 +569,16 @@ def test_search_pagination_continuation_does_not_call_ai(database_url: str) -> N
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho auto",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho defesa",
             score=0.7,
         ),
@@ -580,9 +657,30 @@ def test_search_pagination_custom_limit(database_url: str) -> None:
     """Limit customizado e respeitado: limit=2 sobre 3 chunks devolve 2 resultados
     na primeira pagina e next_cursor nao nulo."""
     hits = [
-        AiSearchHit(family_id="fam-auto-0007", document_version="docver-auto-0007-v1", excerpt="t1", score=0.9),
-        AiSearchHit(family_id="fam-defesa-0007", document_version="docver-defesa-0007-v1", excerpt="t2", score=0.8),
-        AiSearchHit(family_id="fam-decisao-0007", document_version="docver-decisao-0007-v1", excerpt="t3", score=0.7),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t1",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t2",
+            score=0.8,
+        ),
+        AiSearchHit(
+            family_id="fam-decisao-0007",
+            document_version="docver-decisao-0007-v1",
+            chunk_id="docver-decisao-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t3",
+            score=0.7,
+        ),
     ]
     client = _client(database_url, hits)
 
@@ -598,8 +696,22 @@ def test_search_pagination_custom_limit(database_url: str) -> None:
 def test_search_pagination_last_page_has_no_next_cursor(database_url: str) -> None:
     """Ultima pagina tem next_cursor nulo."""
     hits = [
-        AiSearchHit(family_id="fam-auto-0007", document_version="docver-auto-0007-v1", excerpt="t1", score=0.9),
-        AiSearchHit(family_id="fam-defesa-0007", document_version="docver-defesa-0007-v1", excerpt="t2", score=0.8),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t1",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t2",
+            score=0.8,
+        ),
     ]
     client = _client(database_url, hits)
 
@@ -628,6 +740,8 @@ def test_replay_returns_recomputed_and_original_response(database_url: str) -> N
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho para replay",
             score=0.8,
         ),
@@ -685,6 +799,8 @@ def test_search_stale_corpus_false_on_first_call(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho qualquer",
             score=0.8,
         ),
@@ -706,12 +822,16 @@ def test_search_stale_corpus_false_on_continuation_with_same_corpus(
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="primeiro chunk",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="segundo chunk",
             score=0.7,
         ),
@@ -746,12 +866,16 @@ def test_search_stale_corpus_true_on_continuation_after_corpus_update(
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk stale",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk stale 2",
             score=0.7,
         ),

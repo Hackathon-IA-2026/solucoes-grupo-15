@@ -64,10 +64,17 @@ class AiSearchHit(BaseModel):
     (face = versao mais recente, chunks etiquetados por versao) e
     responsabilidade exclusiva do backend (app/routes/search.py),
     nunca deste cliente nem do ai.
+
+    ``chunk_id``/``chunk_index`` (issue #96) identificam o chunk de forma
+    estavel: ``chunk_id`` e o id do chunk no indice do ai e
+    ``chunk_index`` o indice real do chunk dentro do documento (0-based),
+    ja resolvido pelo ai - o backend nunca faz parsing do ``chunk_id``.
     """
 
     family_id: str
     document_version: str
+    chunk_id: str
+    chunk_index: int
     excerpt: str
     score: float
 

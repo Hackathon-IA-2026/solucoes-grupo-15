@@ -109,12 +109,16 @@ def test_replay_search_recomputes_the_same_results_in_the_same_order(
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho na versao antiga",
             score=0.7,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v2",
+            chunk_id="docver-auto-0007-v2#chunk-0000",
+            chunk_index=0,
             excerpt="trecho na versao nova",
             score=0.9,
         ),
@@ -142,12 +146,16 @@ def test_replay_search_preserves_family_order_across_multiple_families(
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho defesa",
             score=0.3,
         ),
         AiSearchHit(
             family_id="fam-decisao-0007",
             document_version="docver-decisao-0007-v1",
+            chunk_id="docver-decisao-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho decisao",
             score=0.95,
         ),

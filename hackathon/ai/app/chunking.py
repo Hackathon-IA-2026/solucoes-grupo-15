@@ -121,6 +121,22 @@ class Chunk:
         self.chunk_id = f"{self.document_version}#chunk-{self.chunk_index:04d}"
 
 
+_CHUNK_ID_RE = re.compile(r"#chunk-(\d+)$")
+
+
+def chunk_index_from_id(chunk_id: str) -> int:
+    """Indice do chunk dentro do documento, lido do ``chunk_id`` (issue #96).
+
+    Inverso de ``Chunk.finalize_id``: ``"<document_version>#chunk-0003"``
+    -> ``3``. O formato do ``chunk_id`` e deste modulo; quem consome a
+    busca recebe o indice ja resolvido, nunca faz parsing do id.
+    """
+    match = _CHUNK_ID_RE.search(chunk_id)
+    if match is None:
+        raise ValueError(f"chunk_id fora do formato '<document_version>#chunk-NNNN': {chunk_id!r}")
+    return int(match.group(1))
+
+
 def split_into_blocks(markdown_text: str) -> list[Block]:
     """Divide um documento `.md` em blocos heading/paragraph/table.
 

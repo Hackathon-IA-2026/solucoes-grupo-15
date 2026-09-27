@@ -4,7 +4,11 @@ issue #23; chave de chunk issue #82).
 ``POST /v1/feedback`` persiste um voto sobre um card de resultado de
 busca. Desde a issue #82 (resultados por chunk, issue #78), o payload
 primario identifica o chunk exato: ``document_version`` + ``chunk_index``
-sao obrigatorios; ``family_id`` e opcional (pode ser omitido). O campo
+sao obrigatorios; ``family_id`` e opcional (pode ser omitido).
+Desde a issue #96, ``chunk_index`` e o indice real do chunk no documento
+(o mesmo devolvido em cada resultado de ``POST /v1/search``, vindo do
+``chunk_id`` do indice do ai), nao a posicao do card na lista - o voto
+aponta para um chunk estavel entre consultas. O campo
 ``request_id`` permanece obrigatorio para ligar o voto a execucao de
 busca que gerou o resultado.
 

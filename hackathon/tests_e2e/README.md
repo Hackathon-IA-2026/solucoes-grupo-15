@@ -39,6 +39,7 @@ Pré-requisitos: Docker, e o arquivo de vetores brutos da #73. Ele fica fora do 
 | Busca real | `data_mode="real"`, `model_version` do Titan V2, `Recall@3 >= 2/3` |
 | Paginação (#76/#78) | 1ª página chama o `ai` uma vez (log de acesso do container); continuações não chamam; ordem `(-score, document_version, chunk_index)`; `total` exato |
 | Replay (#77) | `matches: true` |
+| Chunk estável (#96) | cada resultado traz `chunk_id` presente nos vetores brutos da #73 e `chunk_index` = índice real do chunk no documento, igual entre consultas com `top_k` diferentes |
 | Feedback (#82) | voto com `request_id` + `document_version` + `chunk_index` de um hit real |
 | Stale corpus (#79) | continuação após ingerir um `corpus_version` mais novo devolve `stale_corpus: true` |
 | Reindex (#73) | `tools/case1_recall/reindex_from_raw_vectors.py` reconstrói o índice sem AWS e o ranking não muda |

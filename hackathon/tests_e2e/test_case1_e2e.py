@@ -155,6 +155,30 @@ def test_real_search_envelope_and_recall_at_3(
     assert recall_at_3 >= 2 / 3, (retrieved, recall_at_3)
 
 
+def test_search_hits_carry_stable_chunk_ids_from_the_index(
+    stack: Stack, backend: httpx.Client, ingested: dict
+) -> None:
+    """Issue #96: cada resultado aponta para um chunk real do indice
+    (``chunk_id`` dos vetores brutos da #73) e ``chunk_index`` e o indice
+    do chunk no documento - o mesmo chunk tem o mesmo ``chunk_index`` em
+    consultas cujas listas tem tamanhos (e posicoes) diferentes."""
+    raw_chunk_ids = _raw_vector_chunk_ids(stack)
+    wide = _search(backend, top_k=10, limit=10)["results"]
+    narrow = _search(backend, top_k=3, limit=3)["results"]
+
+    for result in wide + narrow:
+        assert result["chunk_id"] in raw_chunk_ids
+        assert result["chunk_id"] == (
+            f"{result['document_version']}#chunk-{result['chunk_index']:04d}"
+        )
+    index_by_chunk = {r["chunk_id"]: r["chunk_index"] for r in wide}
+    shared = [r for r in narrow if r["chunk_id"] in index_by_chunk]
+    assert shared
+    assert all(index_by_chunk[r["chunk_id"]] == r["chunk_index"] for r in shared)
+    # Chunk estavel != posicao na lista: algum hit real nao e o chunk 0..n-1 da lista.
+    assert [r["chunk_index"] for r in wide] != list(range(len(wide)))
+
+
 # ---------------------------------------------------------------------------
 # Paginacao (#76/#78)
 # ---------------------------------------------------------------------------
