@@ -1,0 +1,30 @@
+
+/
+HTTP/2 200 
+content-type: text/html
+cache-control: no-cache
+etag: "b179c36b11a1e5d85940536b8325bcff"
+
+/index.html
+HTTP/2 200 
+content-type: text/html
+cache-control: no-cache
+etag: "b179c36b11a1e5d85940536b8325bcff"
+
+/config.json
+HTTP/2 200 
+content-type: application/json
+cache-control: no-cache
+etag: "38617a037b5568421f1498fbec784328"
+
+/explorar
+HTTP/2 200 
+content-type: text/html
+cache-control: no-cache
+etag: "b179c36b11a1e5d85940536b8325bcff"
+
+/assets/index-Blm2ZB54.js
+HTTP/2 200 
+content-type: text/javascript
+etag: "4c814dbcc6825fb0827a78872113079f"
+cache-control: public, max-age=31536000, immutable

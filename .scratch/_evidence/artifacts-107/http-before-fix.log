@@ -1,0 +1,5 @@
+/ 200 text/html
+/config.json 200 application/json
+/explorar 200 text/html
+/processos/48500.901433%2F2024-53 200 text/html
+/v1/documents/does-not-exist-107 404 application/json

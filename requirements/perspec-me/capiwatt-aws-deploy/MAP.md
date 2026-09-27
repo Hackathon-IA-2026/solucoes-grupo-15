@@ -1,4 +1,4 @@
-**Backend:** local — Wayfinder map issue: [CapiWatt Lens — Implantação AWS (M4): mapa de decisões](https://github.com/Hackathon-IA-2026/solucoes-grupo-15/issues/89) — Topics espelhados como sub-issues: #90 (índice vetorial) e #91 (Cognito), resolvidos localmente; #99 (observabilidade) e #100 (TB1 AWS × local), abertos
+**Backend:** local — Wayfinder map issue: [CapiWatt Lens — Implantação AWS (M4): mapa de decisões](https://github.com/Hackathon-IA-2026/solucoes-grupo-15/issues/89) — Topics espelhados como sub-issues: #90 (índice vetorial) e #91 (Cognito), resolvidos localmente; #99 (observabilidade) e #100 (TB1 AWS × local), resolvidos localmente em 2026-09-27
 
 # CapiWatt Lens — Implantação AWS (M4) — Map
 
@@ -6,9 +6,9 @@ Seed: pedido de Eduardo em 2026-09-26 — "usando a issue #75 e todas as suas su
 
 ## Destination
 
-A arquitetura de implantação do TB1 na conta do hackathon está decidida o suficiente para virar tickets de implementação sem reabrir decisão de projeto: ferramenta de IaC comprovada na conta, rede, onde rodam Postgres/OpenSearch/arquivos, porta de entrada HTTPS do backend, hospedagem do frontend e login via Cognito com o `user_id` do backend derivado do token — mantendo o Compose local funcionando como hoje.
+A arquitetura de implantação do TB1 na conta do hackathon está decidida o suficiente para virar tickets de implementação sem reabrir decisão de projeto: ferramenta de IaC comprovada na conta, rede, onde rodam Postgres/OpenSearch/arquivos, porta de entrada HTTPS do backend, hospedagem do frontend e login via Cognito com o `user_id` do backend derivado do token — mantendo o Compose local funcionando como hoje —, além da observabilidade mínima na AWS e do critério para comparar o TB1 repetido na AWS com a avaliação local (saída do M4).
 
-_Confirmada por Eduardo em 2026-09-26._
+_Confirmada por Eduardo em 2026-09-26; ampliada em 2026-09-27 (observabilidade e comparação AWS × local) por delegação de Eduardo em topic-tb1-aws-vs-local._
 
 ## Current understanding
 
@@ -20,8 +20,8 @@ O TB1 roda hoje só no Compose local (backend F3 da #75 completo, sub-issues #76
 |---|---|---|---|---|---|---|---|
 | O — System Objectives | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | U — User Experience | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| I — Infrastructure | 0 | 1 | 5 | 1 | 0 | 0 | 0 |
-| M — Model | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| I — Infrastructure | 0 | 0 | 4 | 3 | 0 | 0 | 0 |
+| M — Model | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | D — Data | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## Decisions so far
@@ -34,17 +34,18 @@ O TB1 roda hoje só no Compose local (backend F3 da #75 completo, sub-issues #76
 - [topic-frontend-hosting](topics/topic-frontend-hosting.md) — `BucketDeployment` no `cdk deploy`, CloudFront Function para o fallback SPA (preserva 403/404 da API), `config.json` em runtime; sem Cognito → modo demo local sem login. Concerns: [I9](concerns/i9-integration.md), [U6](concerns/u6-acceptance.md) `partial`.
 - [topic-cognito-auth](topics/topic-cognito-auth.md) — login SRP no app (Amplify, sem Hosted UI, sem auto-cadastro), backend `AUTH_MODE=none|cognito` com `user_id` = `username` do access token, 403 fora do próprio caminho, grupo `admin` para ingestão/reset; contas `carolina`/`equipe`/`admin` (extras via `.env`) por script idempotente, senhas fixas (`DEMO_PASSWORD` compartilhada, `ADMIN_PASSWORD` separada), login por e-mail ou usuário. Concerns: [I9](concerns/i9-integration.md) `resolved`, [U6](concerns/u6-acceptance.md) `resolved`, [I6](concerns/i6-telemetry.md) `partial`.
 - [topic-vector-index-hosting](topics/topic-vector-index-hosting.md) — OpenSearch 2.19 gerenciado (`t3.small.search`, 10 GB, só SG, `nmslib`), populado pelo seed `/v1/ingestions` com só o caso 1; Bedrock segue em us-east-1 (testado, substitui o padrão us-west-2 de topic-backend-entry); **nenhuma mudança no código do `ai`**. Concerns: [I4](concerns/i4-storage.md), [I2](concerns/i2-model-serving.md), [I7](concerns/i7-reproducibility.md) `partial`.
+- [topic-aws-observability](topics/topic-aws-observability.md) (#99, 2026-09-27, Eduardo por delegação) — `awslogs` com um grupo por serviço (`/capiwatt/backend`, `/capiwatt/ai`), retenção de 3 dias; linha JSON por requisição no backend com `user_id`, `trace_id` (`X-Amzn-Trace-Id`) e `search_request_id`, que liga à `SearchExecution`/replay; `ai` sem mudança de código; borda só com métricas gratuitas; limite de atribuição da senha compartilhada aceito; custo total do M4 ≈ US$ 13 em 72 h. Concerns: [I6](concerns/i6-telemetry.md) `resolved`, [I11](concerns/i11-cost.md) `resolved`.
+- [topic-tb1-aws-vs-local](topics/topic-tb1-aws-vs-local.md) (#100, 2026-09-27, Eduardo por delegação) — comparação entra na Destination; caso 1 e a pergunta com gabarito; baseline = `results.json` commitado; AWS pela API pública com token de `equipe`; gate = mesmas versões, mesmo conjunto de processos no top 3 e mesmo `Recall@3` (2/3); ordem e |Δscore| ≤ 0,001 só informativos; artefato `output/aws_vs_local.json`. Concerns: [M5](concerns/m5-performance-metrics.md) `resolved`, [I7](concerns/i7-reproducibility.md) `partial`.
 
 ## Frontier
 
-_Renderização de **list frontier** em 2026-09-26:_
+_Renderização de **list frontier** em 2026-09-27:_
 
-- [topic-aws-observability](topics/topic-aws-observability.md) — #99
-- [topic-tb1-aws-vs-local](topics/topic-tb1-aws-vs-local.md) — #100
+- (vazia — todos os Topics resolvidos)
 
 ## Blocked
 
-_Renderização em 2026-09-26:_
+_Renderização em 2026-09-27:_
 
 - (nenhum)
 

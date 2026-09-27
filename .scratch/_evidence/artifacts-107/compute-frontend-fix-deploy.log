@@ -1,0 +1,42 @@
+AI agent detected
+
+> capiwatt-frontend@0.1.0 build
+> tsc -b && vite build --outDir /home/eduardo/Documents/hackatons/solucoes-grupo-15/hackathon/infra/cdk.out/asset.751d87397da4e3509adba885cf44e94f59db9163ba7ee3b947995f11dfc09bf0-building --emptyOutDir
+
+vite v5.4.21 building for production...
+transforming...
+✓ 1948 modules transformed.
+rendering chunks...
+computing gzip size...
+../infra/cdk.out/asset.751d87397da4e3509adba885cf44e94f59db9163ba7ee3b947995f11dfc09bf0-building/index.html                   0.66 kB │ gzip:  0.37 kB
+../infra/cdk.out/asset.751d87397da4e3509adba885cf44e94f59db9163ba7ee3b947995f11dfc09bf0-building/assets/index-BMa7KH1O.css   81.34 kB │ gzip: 16.08 kB
+../infra/cdk.out/asset.751d87397da4e3509adba885cf44e94f59db9163ba7ee3b947995f11dfc09bf0-building/assets/index-Blm2ZB54.js   281.92 kB │ gzip: 82.89 kB
+✓ built in 2.06s
+Bundling asset CapiwattCompute/Frontend/HashedAssets/Asset1/Stage...
+
+✨  Synthesis time: 9.38s
+
+CapiwattCompute: start: Building Frontend/HashedAssets/Asset1
+CapiwattCompute: success: Built Frontend/HashedAssets/Asset1
+CapiwattCompute: start: Building CapiwattCompute Template
+CapiwattCompute: success: Built CapiwattCompute Template
+CapiwattCompute: start: Publishing Frontend/HashedAssets/Asset1 (current_account-us-west-2-6bd3de64)
+CapiwattCompute: start: Publishing CapiwattCompute Template (current_account-us-west-2-dcddaa54)
+CapiwattCompute: success: Published CapiwattCompute Template (current_account-us-west-2-dcddaa54)
+CapiwattCompute: success: Published Frontend/HashedAssets/Asset1 (current_account-us-west-2-6bd3de64)
+CapiwattCompute: creating CloudFormation changeset...
+CapiwattCompute: deploying... [1/1]
+
+✅  CapiwattCompute
+
+✨  Deployment time: 185.89s
+
+Outputs:
+CapiwattCompute.BackendServiceName = CapiwattCompute-backendserviceServiceF18B0139-jjd12hAjsps2
+CapiwattCompute.CloudFrontUrl = https://d2qxsl6i284pz0.cloudfront.net
+CapiwattCompute.ClusterName = CapiwattCompute-ClusterEB0386A7-QgToNMrXUiAd
+Stack ARN:
+arn:aws:cloudformation:us-west-2:640205779371:stack/CapiwattCompute/36eac670-ba72-11f1-8d18-0242e2e750c5
+
+✨  Total time: 230.12s
+
