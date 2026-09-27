@@ -40,6 +40,7 @@ from app.db import Base, make_engine, make_session_factory
 from app.request_log import RequestLogMiddleware
 from app.routes.demo import router as demo_router
 from app.routes.documents import router as documents_router
+from app.routes.families import router as families_router
 from app.routes.feedback import router as feedback_router
 from app.routes.health import router as health_router
 from app.routes.ingestions import router as ingestions_router
@@ -76,6 +77,7 @@ def create_app() -> FastAPI:
     app.include_router(ingestions_router, dependencies=admin_only)
     app.include_router(search_router, dependencies=authenticated)
     app.include_router(documents_router, dependencies=authenticated)
+    app.include_router(families_router, dependencies=authenticated)
     app.include_router(relations_router, dependencies=authenticated)
     app.include_router(feedback_router, dependencies=authenticated)
     app.include_router(notifications_router, dependencies=authenticated)

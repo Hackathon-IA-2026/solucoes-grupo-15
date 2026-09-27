@@ -31,6 +31,7 @@ describe("preparação dos dados demo", () => {
       if (url === "/v1/health") return jsonResponse({ backend: "ok", ai: "ok" });
       if (url === "/v1/ingestions") return jsonResponse({ ingestion_job_id: "job-1", families_count: 4, versions_count: 5, relations_count: 6 });
       if (url.endsWith("/notification-scope")) return jsonResponse({ scope: null });
+      if (url.includes("/v1/families")) return jsonResponse([]);
       return jsonResponse({}, 404);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -55,6 +56,7 @@ describe("preparação dos dados demo", () => {
       }
       if (url === "/v1/ingestions") return jsonResponse({ ingestion_job_id: "job-2", families_count: 4, versions_count: 5, relations_count: 6 });
       if (url.endsWith("/notification-scope")) return jsonResponse({ scope: null });
+      if (url.includes("/v1/families")) return jsonResponse([]);
       return jsonResponse({}, 404);
     });
     vi.stubGlobal("fetch", fetchMock);
