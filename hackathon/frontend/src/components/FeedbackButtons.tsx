@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
-import { submitFeedback, type Vote } from "../api/feedback";
+import { submitFeedback, type FeedbackTarget, type Vote } from "../api/feedback";
 
 /**
  * Botões 👍/👎 de um card de resultado de busca (TB1 Ticket 7, issue #23).
  *
- * Chama POST /v1/feedback com ``requestId`` (do envelope de busca,
- * ticket 3) e a identidade do chunk no card. Depois de um voto bem-sucedido,
- * mostra uma mensagem simples e desabilita os dois botões - so para
- * não votar duas vezes por engano nesse card; não é exigido pela
- * issue, mas é razoável para uma UI operacional. Sem edição de voto,
+ * Chama POST /v1/feedback com o ``target`` do voto: ``requestId`` (do
+ * envelope de busca, ticket 3) e a chave do chunk avaliado,
+ * ``documentVersion`` + ``chunkIndex`` (issues #82/#94). Depois de um
+ * voto bem-sucedido, mostra uma mensagem simples e desabilita os dois
+ * botões - so para não votar duas vezes por engano nesse card; não é
+ * exigido pela issue, mas é razoável para uma UI operacional. Sem edição de voto,
  * sem comentário (fora de escopo). Falha de rede mostra uma mensagem
  * de erro simples, sem travar o restante da página - os botões
  * continuam habilitados para tentar de novo.
@@ -22,22 +23,12 @@ type ButtonsState =
   | { kind: "done"; vote: Vote }
   | { kind: "error" };
 
-export function FeedbackButtons({
-  requestId,
-  familyId,
-  documentVersion,
-  chunkIndex,
-}: {
-  requestId: string;
-  familyId: string;
-  documentVersion: string;
-  chunkIndex: number;
-}) {
+export function FeedbackButtons({ target }: { target: FeedbackTarget }) {
   const [state, setState] = useState<ButtonsState>({ kind: "idle" });
 
   function vote(vote: Vote) {
     setState({ kind: "submitting", vote });
-    submitFeedback(requestId, familyId, documentVersion, chunkIndex, vote)
+    submitFeedback(target, vote)
       .then(() => setState({ kind: "done", vote }))
       .catch(() => setState({ kind: "error" }));
   }

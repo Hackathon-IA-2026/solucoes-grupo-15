@@ -5,8 +5,9 @@ perspective: data
 status: partial
 topics:
   - issue-4 — Como as relações entre documentos são representadas (arestas, origem: metadado explícito vs. similaridade) e onde ficam armazenadas?
+  - issue-92 — Como os candidatos do `ai` (`similar_families`, `references[]`) viram arestas, respeitando os limiares calibrados na #74?
   - issue-13 — Que estratégia de chunking e que modelo de embeddings do Bedrock se ajustam aos documentos do caso 1?
-updated_at: 2026-09-26
+updated_at: 2026-09-27
 ---
 
 ## Current resolution
@@ -38,6 +39,12 @@ Depois de recuperar os três chunks mais relevantes, a variante *small-to-big* a
 
 Referências cujo alvo **não está no corpus** ficam como aresta **pendente de alvo**, guardando o identificador citado — insumo da futura detecção de baixa cobertura, não descarte.
 
+**Implementação da etapa "relações" (issue-92, 2026-09-27).** O fim do job de ingestão do `backend` (`app/ai_relations.py`) consome os candidatos do `ai` assim:
+
+- **Vizinhança:** para cada família do corpus ingerido, pede `similar_families(family_id, top_k=3)`. Quando `limiar_relacao (0.80) <= score < limiar_fusao (0.97)`, grava uma aresta `similar_a` com `origin: similarity`, `status: suggested` e `score`. A vizinhança é simétrica, então cada par é gravado uma única vez, com as pontas em ordem lexicográfica. Quando `score >= limiar_fusao`, o candidato é de fusão e nunca vira `similar_a`. Como o backend ainda não tem a máquina de sugestão de fusão (#22), esse candidato é descartado. Abaixo de `limiar_relacao`, o candidato também é descartado. Vizinho fora do catálogo é ignorado. Numa reingestão, só o `score` é atualizado; o `status` de uma aresta existente é preservado.
+- **Referências:** cada `identifier_raw` de auto de infração é resolvido pela chave `(número, ano, sigla?)` contra o `document_id` das versões do catálogo (ex.: "AI 0017/2020-SFE"). A sigla precisa bater quando os dois lados a têm. Quando a resolução dá um único alvo diferente da própria família, grava uma aresta `referencia` (ou o `relation_type` fino enviado) com `origin: explicit`, `status: confirmed` e evidência `(document_version, chunk_id)` da primeira ocorrência.
+- No caso 1 real (e2e), isso produz exatamente os 11 pares `similar_a` da calibração da #74, com os mesmos scores, e 7 arestas `referencia` recurso/voto/complementação → auto de infração.
+
 ## Confirmed facts
 
 - Plano (linha 44): F2 implementa "relações documentais"; (linha 81): "relações mínimas começam como metadados com evidência", Neptune é evolução.
@@ -58,6 +65,7 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 - 2026-09-22 (issue-13, Eduardo): recuperação *small-to-big* orientada a páginas depois dos três chunks encontrados; o intervalo do chunk é ampliado com a página anterior e a seguinte.
 - 2026-09-22 (issue-13, Eduardo): `Recall@3` é calculado sobre os chunks encontrados antes da expansão; a qualidade da resposta e das citações após expansão é avaliada separadamente.
 - 2026-09-22 (issue-13, Eduardo): `top_k=3` para candidatos de vizinhança; `limiar_relacao` e `limiar_fusao` são calibrados no corpus, sem constantes universais, mantendo `limiar_relacao < limiar_fusao`.
+- 2026-09-27 (issue-92, agente): `limiar_relacao = 0.80`, `limiar_fusao = 0.97` e `top_k = 3` passam a ser lidos pelo código de produção (`backend/app/ai_relations.py`). O vetor de família do `ai` (`ai/app/family_similarity.py`) usa a mesma agregação (média renormalizada de todos os chunks da família) sobre a qual os limiares foram calibrados.
 - 2026-09-26 (issue-13, Eduardo): inserir uma etapa de extração por IA (PDF → Markdown, cópia verbatim, sem resumo) antes do chunking estrutural; aplicada a todo documento de ambos os corpora.
 - 2026-09-26 (issue-13, Eduardo): essa extração remove anexos inteiros (relatório de vistoria, laudo técnico), contrato social, e assinaturas/identificação de quem assinou — não apenas boilerplate de assinatura.
 - 2026-09-26 (issue-13, Eduardo): o corpus maior da #56 não substitui o gabarito de avaliação de D16 (que continua nos 10 PDFs de `case-1-carolina-mmgd/`); ele serve para popular o dataset, dar robustez às métricas de busca e como fonte de futuros casos de teste.
@@ -86,6 +94,12 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 - **Resolvida em 2026-09-26**: a extração remove seções inteiras de anexo (vistoria, laudo técnico), contrato social e assinaturas (ver Decisions).
 - Como distinguir programaticamente "anexo" de "conteúdo principal" dentro do Markdown extraído (heurística por título de seção, classificação por página, ou decisão da própria IA de extração durante a cópia) não foi especificado — a decisão de 2026-09-26 fixa o quê remover, não o como a IA identifica os limites de cada seção.
 
+- (issue-92, aberta — decisão conservadora do agente, pendente de Eduardo) Referência com alvo fora do corpus ou ambíguo **não é gravada** por ora, porque a "aresta pendente de alvo" decidida na issue-4 ainda não tem representação no schema (`target_external_ref`, novo `target_kind`) nem na interface. Falta decidir essa representação.
+- (issue-92, aberta) Candidato com `score >= limiar_fusao` é só descartado, porque não existe tabela de sugestão de fusão (#22). No caso 1 isso não acontece (teto 0,9278).
+- (issue-92, aberta) O reconhecedor de referências só cobre auto de infração ("Auto de Infração [– AI –] nº N/AAAA[-SIGLA]"); leis, REN, número SEI e tipos finos (`revoga`/`altera`/`responde_a`/`regula`) continuam sem padrão definido. Número SEI citado resolveria para um nó `processo`, e o vocabulário não tem tipo de aresta família → processo além de `pertence_ao_processo`.
+- (issue-92, aberta) d14 fala em vizinhança "da versão-face de cada família". O `ai` não conhece datas de versão e agrega todos os chunks da família, como a calibração da #74 fez. No caso 1 isso é equivalente, porque cada família tem uma versão só; para famílias com várias versões, é preciso decidir.
+- (issue-92, aberta) Arestas `similar_a` que deixam de se qualificar numa reingestão (ex.: troca de modelo) não são removidas.
+
 ## Evidence
 
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md` linhas 44, 81, 162.
@@ -99,6 +113,8 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 - `hackathon/tools/case1_recall/similarity_calibration/` (issue #74, 2026-09-26) — mesma calibração, agora contra os vetores REAIS persistidos pelo serviço `ai` (issue #73, `RawVectorStore`): mesma matriz de 45 pares (scores idênticos aos da #61), distribuição de similaridade por bucket `mesmo_processo`/`mesmo_tema`/`temas_diferentes`, e avaliação registrada da alternativa de vetor de agregação "só motivação" (descartada — não computável para o par positivo conhecido).
 
 ## Topic history
+
+- issue-92 (2026-09-27): ligou a etapa "relações" ao código — `similar_families`/`references[]` no `ai`, e limiares da #74 aplicados pelo `backend` ao gravar `similar_a` e `referencia` em `document_relations`; registrou as lacunas (alvo pendente, fusão, tipos finos, versão-face) como questões abertas.
 
 - issue-4: definiu as duas operações que produzem relações na ingestão, os nós do grafo (família + processo), o vocabulário de tipos de aresta (incluindo os finos `revoga`, `altera`, `responde_a`, `regula`) e a separação entre similaridade-para-fusão e similaridade-para-relação.
 - issue-13: definiu o chunking estrutural, a expansão *small-to-big* por páginas, a proveniência e o orçamento do contexto, separou as métricas pré/pós-expansão e fixou `top_k=3`; os limiares numéricos permanecem para calibração no corpus.

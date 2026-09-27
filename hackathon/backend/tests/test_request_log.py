@@ -117,6 +117,8 @@ def test_search_line_carries_the_envelope_request_id_and_no_secret(database_url,
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho casado",
             score=0.7,
         ),
@@ -158,6 +160,8 @@ def test_search_cursor_continuation_line_carries_the_original_request_id(databas
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id=f"docver-auto-0007-v1#chunk-{i:04d}",
+            chunk_index=i,
             excerpt=f"trecho {i}",
             score=0.9 - i / 10,
         )

@@ -11,6 +11,10 @@ Ticket 5) e faz upsert de ``document_relations`` - nenhuma extracao de
 padrao textual roda aqui, as arestas vem literalmente da fixture (ver
 app/fixtures/relations_loader.py).
 
+Desde a issue #92, o fim do job tambem grava as arestas derivadas dos
+candidatos do ai (``references[]`` dos ``IndexReport``s e
+``similar_families`` por familia) - ver app/ai_relations.py.
+
 Idempotencia: reingerir a mesma fixture faz upsert por PK (nao duplica
 linhas de catalogo) e por chave natural
 ``(source_id, source_kind, target_id, target_kind, type)`` (nao
@@ -28,15 +32,20 @@ e relacoes - com zero usuarios de escopo escolhido (cenario dos testes
 dos Tickets 2-5/7/9) e um no-op seguro.
 """
 
+import datetime
 import uuid
 from dataclasses import dataclass
+from typing import Literal
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.ai_relations import run_ai_relations
 from app.clients.ai_client import AiClient, IndexDocumentPayload, IndexReport, get_ai_client
 from app.db import get_db_session
+from app.fixtures.case1_loader import CASE1_REAL_CORPUS_VERSION, load_case1_real_corpus
 from app.fixtures.loader import FixtureCorpus, FixtureDocumentVersion, load_demo_corpus
 from app.fixtures.relations_loader import (
     FixtureRelation,
@@ -61,13 +70,37 @@ class IngestionResult:
     total_input_tokens: int | None = None
 
 
+class IngestionRequestIn(BaseModel):
+    """Corpo opcional de POST /v1/ingestions (issue #88).
+
+    Sem corpo (ou ``corpus="demo"``), mantem o comportamento original:
+    fixture demo + relacoes da fixture. ``corpus="case1-real"`` ingere os
+    10 documentos reais do caso 1 (Markdown completo da issue #59, ver
+    app/fixtures/case1_loader.py) sem relacoes de fixture - arestas de um
+    corpus real devem vir do ai (``similar_families``/``references``),
+    nunca de dado demo. ``corpus_version`` (so para ``case1-real``)
+    registra o hash do manifesto da issue #68 no catalogo.
+    """
+
+    corpus: Literal["demo", "case1-real"] = "demo"
+    corpus_version: str | None = None
+
+
 @router.post("/ingestions")
 def create_ingestion(
+    payload: IngestionRequestIn | None = None,
     ai_client: AiClient = Depends(get_ai_client),
     session: Session = Depends(get_db_session),
 ) -> dict[str, str | int]:
-    corpus = load_demo_corpus()
-    relations = load_demo_relations()
+    payload = payload or IngestionRequestIn()
+    if payload.corpus == "case1-real":
+        corpus = load_case1_real_corpus(
+            corpus_version=payload.corpus_version or CASE1_REAL_CORPUS_VERSION
+        )
+        relations = None
+    else:
+        corpus = load_demo_corpus()
+        relations = load_demo_relations()
     result = run_ingestion(
         corpus, ai_client=ai_client, session=session, relations=relations
     )
@@ -94,6 +127,9 @@ def run_ingestion(
     de relacoes carregada (ver ``create_ingestion`` acima).
     """
     ingestion_job_id = str(uuid.uuid4())
+    # Um instante por job (issue #97): todas as linhas desta ingestao
+    # compartilham o mesmo ``ingested_at``, que ordena os corpora.
+    ingested_at = datetime.datetime.now(datetime.UTC)
 
     reports_by_version = _index_corpus(corpus, ai_client)
 
@@ -103,13 +139,18 @@ def run_ingestion(
     for doc in corpus.documents:
         report = reports_by_version[doc.document_version]
         _upsert_family(session, doc.family_id)
-        _upsert_version(session, doc, report, corpus.corpus_version)
+        _upsert_version(session, doc, report, corpus.corpus_version, ingested_at)
         family_ids.add(doc.family_id)
         version_ids.add(doc.document_version)
 
     relations_count = 0
     if relations is not None:
         relations_count = run_relations_ingestion(relations, session=session)
+    # Candidatos do ai (references[] + similar_families, issue #92) - no
+    # modo fixture o ai nao devolve nenhum, entao so a fixture conta.
+    relations_count += run_ai_relations(
+        corpus, reports_by_version, ai_client=ai_client, session=session
+    )
 
     run_notifications(corpus, session=session, ingestion_job_id=ingestion_job_id)
 
@@ -199,6 +240,7 @@ def _upsert_version(
     doc: FixtureDocumentVersion,
     report: IndexReport,
     corpus_version: str,
+    ingested_at: datetime.datetime,
 ) -> None:
     version = session.get(DocumentVersion, doc.document_version)
     if version is None:
@@ -214,3 +256,4 @@ def _upsert_version(
     version.extracted_text_locator = report.extracted_text_locator
     version.corpus_version = corpus_version
     version.model_version = report.model_version
+    version.ingested_at = ingested_at

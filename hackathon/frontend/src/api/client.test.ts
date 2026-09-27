@@ -70,7 +70,7 @@ describe("apiFetch (ponto único do cliente /v1)", () => {
     await fetchGraph("48500.001234/2024-11");
     await fetchProcessos();
     await fetchProcesso("48500.001234/2024-11");
-    await submitFeedback("r1", "fam-1", "v1", 0, "up");
+    await submitFeedback({ requestId: "r1", documentVersion: "v1", chunkIndex: 0 }, "up");
     await fetchNotificationScope("carol ina");
     await chooseNotificationScope("carol ina", "ampla");
     await fetchNotifications("carol ina");

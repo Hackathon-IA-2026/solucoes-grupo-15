@@ -23,7 +23,7 @@ from app.routes.index import (
     get_raw_vector_store,
     get_vector_store,
 )
-from app.vector_store import InMemoryVectorStore
+from app.vector_store import ChunkDoc, InMemoryVectorStore, index_name_for_model_version
 from tests.test_embeddings import FakeBedrockRuntimeClient
 
 
@@ -93,7 +93,14 @@ def test_search_returns_real_hits_with_family_id_and_score(client: TestClient) -
     assert body["model_version"] == REAL_MODEL_VERSION
     assert len(body["hits"]) >= 1
     hit = body["hits"][0]
-    assert set(hit.keys()) == {"family_id", "document_version", "excerpt", "score"}
+    assert set(hit.keys()) == {
+        "family_id",
+        "document_version",
+        "chunk_id",
+        "chunk_index",
+        "excerpt",
+        "score",
+    }
     # A mesma consulta indexada literalmente deve rankear em primeiro.
     assert hit["family_id"] == "fam-mmgd"
 
@@ -114,3 +121,41 @@ def test_search_on_empty_index_returns_no_hits(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json()["hits"] == []
     assert response.json()["model_version"] == REAL_MODEL_VERSION
+
+
+def test_search_hit_carries_the_stable_chunk_id_and_its_index_in_the_document(
+    client: TestClient, store: InMemoryVectorStore
+) -> None:
+    """Issue #96: cada hit carrega o ``chunk_id`` gravado no indice e o
+    indice real do chunk dentro do documento - nunca a posicao do hit na
+    lista. Aqui o chunk 3 de ``docver-x`` rankeia em primeiro (posicao 0)."""
+    query = "fiscalizacao de conexao de MMGD"
+    query_vector = BedrockEmbedder(FakeBedrockRuntimeClient()).embed_text(query).vector
+    orthogonal = [0.0] * len(query_vector)
+    orthogonal[0] = 1.0
+    store.index_chunks(
+        index_name_for_model_version(REAL_MODEL_VERSION),
+        [
+            ChunkDoc(
+                chunk_id=f"docver-x#chunk-{i:04d}",
+                document_version="docver-x",
+                family_id="fam-x",
+                corpus_version="corpus-v1",
+                model_version=REAL_MODEL_VERSION,
+                section=None,
+                page_start=1,
+                page_end=1,
+                text=f"trecho {i}",
+                embedding=query_vector if i == 3 else orthogonal,
+            )
+            for i in range(5)
+        ],
+    )
+
+    response = client.post("/internal/v1/search", json={"query": query, "top_k": 2})
+
+    assert response.status_code == 200
+    top = response.json()["hits"][0]
+    assert top["chunk_id"] == "docver-x#chunk-0003"
+    assert top["chunk_index"] == 3
+    assert top["excerpt"] == "trecho 3"

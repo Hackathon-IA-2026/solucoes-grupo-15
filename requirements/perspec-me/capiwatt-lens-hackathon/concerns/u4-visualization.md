@@ -8,10 +8,16 @@ topics:
   - issue-5 — Como a interface expõe a exploração do grafo de relações e o objeto-documento com versões, a partir dos protótipos juridico_referencia?
   - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
   - issue-64 — Ao remover o conceito de família de documentos, como versões e documentos passam a ser identificados, agrupados e exibidos na ingestão, busca e interface?
-updated_at: 2026-09-26
+  - issue-93 — Como as telas consomem a busca plana por chunk (sem face/matched_chunks), com paginação por cursor?
+updated_at: 2026-09-27
 ---
 
 ## Current resolution
+
+**Implementação (issue-93, 2026-09-27): as telas consomem a busca plana por chunk.** A suíte e2e da #88 mostrou que o frontend ainda lia `face`/`matched_chunks`, que o backend não devolve desde a #78. Agora `frontend/src/api/search.ts` espelha o envelope real: cada resultado traz `family_id`, `document_version`, `chunk_id`, `chunk_index`, `excerpt`, `score`, `localizador`, `document_type`, `document_id`, `processo_numero` e `version_date`, e o envelope traz `total`, `next_cursor` e `stale_corpus`. As decisões da issue-28 e da issue-64 abaixo passam a valer na interface:
+- **Tela de consulta (`/consulta-api`, `SearchPage`).** Um card por chunk casado, sem deduplicação por peça. Cada card leva a etiqueta "Trecho na versão X", e o rótulo da contagem vem de `total`. O botão "Carregar mais" (um `<button>`, alcançável por teclado) pede `{query, cursor}` e acrescenta a página ao fim da lista, sem reordenar nada. Com `stale_corpus`, a tela avisa que o corpus foi atualizado e oferece "Refazer a busca"; a lista aberta nunca recebe resultados de outro corpus.
+- **Tela de exploração (`/explorar`, `ExplorePage`).** Continua ranqueando **processos**: agrupa por `processo_numero` os trechos que chegam, na ordem do backend, e cada peça aparece uma vez entre os documentos-chave. Tem o mesmo "Carregar mais" e o mesmo aviso de `stale_corpus`, e os processos já exibidos não mudam de posição quando a página seguinte chega.
+- **Página do documento.** Ela recebe os trechos casados como `{document_version, excerpt}` e deriva a etiqueta "versão mais recente / não é a versão mais recente" da própria linha do tempo, já que o resultado plano não carrega mais `is_latest`. Abrir um card continua levando à página da família, com a versão mais recente selecionada e a versão do trecho marcada na linha do tempo. A página de destino continua em aberto (ver Open questions).
 
 **Revisão (issue-64, Eduardo, 2026-09-26):** o agrupamento por família é removido **na visualização para o usuário final**. A busca deixa de exibir um card por família ou por `document_version` e passa a exibir **um card por chunk casado** — o dado cru que o port `search` já devolve, sem etapa de agrupamento no meio. Não há deduplicação por peça: duas ou mais chunks da mesma versão, ou de versões diferentes da mesma peça, podem render cards separados na mesma busca. Nenhum indicador de "há outra versão desta peça" é mostrado — nem aviso no card, nem aresta de grafo dedicada; se isso vier a ser necessário, é um Topic futuro, não parte desta decisão. Isto supersede a decisão abaixo ("um card por família", issue-3) e a página dedicada da família (issue-5) quanto à sua forma de agrupamento. O que ainda falta fechar é a página de destino ao abrir um card (ver Open questions). O restante desta página permanece válido como registro histórico do que estava decidido antes desta revisão, exceto onde marcado como superado.
 
@@ -47,6 +53,7 @@ Confirmar uma aresta `similar_a` sugerida, ou uma sugestão de fusão de famíli
 
 ## Decisions
 
+- 2026-09-27 (issue-93): a `SearchPage` exibe um card por chunk, com contagem por `total`, "Carregar mais" por cursor e aviso de `stale_corpus` com "Refazer a busca". A `ExplorePage` mantém o ranking por processo (agrupamento de apresentação por processo SEI, não por família), montado sobre os chunks na ordem do backend e com a mesma paginação. Decisão do agente, pendente de confirmação (ver Open questions).
 - 2026-09-26 (issue-64, Eduardo): remove-se o agrupamento por família **na visualização para o usuário final** — motivo declarado é quebrar esse agrupamento do ponto de vista de exibição, não uma mudança de identificação de dados por si só (ver Open questions para o que ainda falta fechar: página de substituição da família, e se algum vínculo entre versões continua visível). Supersede a decisão de issue-3 "um card por família com a versão mais recente como face" e a decisão de issue-5 sobre a página dedicada da família, ambas quanto à forma de agrupamento.
 - 2026-09-26 (issue-64, Eduardo): a busca **não deduplica por peça** — pode exibir mais de um card da mesma peça (ex.: duas versões que casaram com a consulta) lado a lado nos resultados, sem nenhum agrupamento por trás. Supersede o invariante de [[d11-consistency]] "cada família no máximo uma vez por consulta".
 - 2026-09-26 (issue-64, Eduardo): o card de resultado é **por chunk casado**, não por `document_version` nem por família — a mesma versão pode render mais de um card se mais de um trecho seu casar. Nenhum indicador de versão relacionada (aviso, aresta) é exibido.
@@ -78,6 +85,9 @@ Confirmar uma aresta `similar_a` sugerida, ou uma sugestão de fusão de famíli
 
 ## Open questions
 
+- (issue-93, pendente de confirmação do Eduardo) A `ExplorePage` continua agrupando os chunks por processo SEI. Esse agrupamento é de apresentação, porque a tela ranqueia processos, e não é o agrupamento por família que a issue-64 removeu. Se a decisão "um card por chunk" valer também para essa tela, o `RankingCard` precisa ser redesenhado.
+- (issue-93, aberta) Com os defaults atuais (`top_k` padrão do `ai` = 10 e `limit` padrão do backend = 10), uma busca da interface devolve no máximo 10 chunks e `next_cursor` vem nulo. Por isso o "Carregar mais" não aparece contra o stack real, a menos que o `top_k` suba. A interface não envia `top_k`; qual deve ser o tamanho do conjunto congelado ([[i9-integration]])?
+
 - (issue-64, aberta) A página dedicada da família (issue-5: cabeçalho + linha do tempo + painel "Relações") é substituída por uma página por `document_version` só com o texto dessa versão e o painel "Relações" (sem cabeçalho de família nem linha do tempo entre versões), ou alguma forma reduzida de navegação entre versões da mesma peça permanece?
 - (issue-64, aberta) `family_id` e a sugestão de fusão continuam existindo como dado de backend ([[d4-data-dictionary]]), mas o card e a página que as exibiam e confirmavam inline (issue-3/issue-5) somem. Sugestões pendentes ficam simplesmente não confirmáveis por ninguém neste ciclo, ou precisam de algum lugar mínimo (fora da busca) para aceitar/rejeitar?
 - Desenho visual final (cores, densidade, layout responsivo) do card, da linha do tempo e do painel "Relações": trabalho de F1 na implementação, não decisão de especificação.
@@ -92,6 +102,7 @@ Confirmar uma aresta `similar_a` sugerida, ou uma sugestão de fusão de famíli
 
 ## Topic history
 
+- issue-93: as telas passaram a consumir o envelope plano por chunk com paginação por cursor e aviso de `stale_corpus`; a página do documento deriva "versão mais recente" da linha do tempo.
 - issue-3: fixou um card por família com a versão mais recente como face, trechos etiquetados por versão, e o aviso de sugestão de fusão pendente no card.
 - issue-5: fixou a página da família (cabeçalho, linha do tempo, texto da versão selecionada, painel "Relações" egocêntrico de um salto), a página do processo SEI, a ausência de grafo global e a confirmação inline de sugestões.
 - issue-64 (em andamento): removeu o card único por família e a página dedicada da família como forma de agrupamento visual; fixou o card de resultado como um card por chunk casado, sem dedup por peça e sem nenhum indicador de versão relacionada. Confirmado que `family_id`/sugestão de fusão sobrevivem como dado ([[d4-data-dictionary]]), mas perdem sua tela de confirmação; a página de destino ao abrir um card e o destino das sugestões pendentes seguem em aberto.

@@ -82,3 +82,16 @@ def test_reindexing_with_different_text_after_idempotent_hit_is_ignored(
     report = response.json()["reports"][0]
     extracted_path = Path(report["extracted_text_locator"])
     assert extracted_path.read_text(encoding="utf-8") == "texto original"
+
+
+def test_fixture_mode_report_carries_empty_references(client: TestClient) -> None:
+    # issue #92: references[] faz parte do IndexReport nos dois modos; o
+    # adapter de fixture nao extrai referencias (as arestas demo vem da
+    # fixture de relacoes do backend).
+    document = {
+        "document_version": "docver-fixture-ref",
+        "text": "Cita o Auto de Infração nº 0017/2020-SFE.",
+    }
+    [report] = client.post("/internal/v1/index", json={"documents": [document]}).json()["reports"]
+
+    assert report["references"] == []

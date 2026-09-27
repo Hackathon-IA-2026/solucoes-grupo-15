@@ -136,6 +136,74 @@ def test_reindex_posts_to_reindex_endpoint_with_same_document_shape(monkeypatch)
     assert captured["body"]["documents"][0]["family_id"] == "fam-1"
 
 
+def test_similar_families_gets_candidates_for_the_family(monkeypatch) -> None:
+    # issue #92: similar_families(family_id, top_k) -> [{family_id, score}]
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        return httpx.Response(
+            200,
+            json={
+                "family_id": "fam-a",
+                "model_version": "amazon.titan-embed-text-v2-us-east-1-1024d-normalized",
+                "similar": [{"family_id": "fam-b", "score": 0.91}],
+            },
+        )
+
+    def fake_get(url, *, params=None, timeout=None):
+        request = httpx.Request("GET", url, params=params)
+        with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
+            return http_client.send(request)
+
+    monkeypatch.setattr("app.clients.ai_client.httpx.get", fake_get)
+
+    similar = AiClient(base_url="http://ai-test").similar_families("fam-a", top_k=3)
+
+    assert captured["url"] == "http://ai-test/internal/v1/families/fam-a/similar?top_k=3"
+    assert [(s.family_id, s.score) for s in similar] == [("fam-b", 0.91)]
+
+
+def test_index_report_parses_references(monkeypatch) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "reports": [
+                    {
+                        "document_version": "docver-1",
+                        "extracted_text_locator": "/data/documents/docver-1/extracted.txt",
+                        "chunks_indexed": 1,
+                        "model_version": "m",
+                        "references": [
+                            {
+                                "identifier_raw": "Auto de Infração nº 0017/2020-SFE",
+                                "relation_type": None,
+                                "locator": "docver-1#chunk-0000",
+                            }
+                        ],
+                    }
+                ]
+            },
+        )
+
+    def fake_post(url, *, json=None, timeout=None):
+        request = httpx.Request("POST", url, json=json)
+        with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
+            return http_client.send(request)
+
+    monkeypatch.setattr("app.clients.ai_client.httpx.post", fake_post)
+
+    [report] = AiClient(base_url="http://ai-test").index(
+        [IndexDocumentPayload(document_version="docver-1", text="t")]
+    )
+
+    [reference] = report.references
+    assert reference.identifier_raw == "Auto de Infração nº 0017/2020-SFE"
+    assert reference.relation_type is None
+    assert reference.locator == "docver-1#chunk-0000"
+
+
 def test_ingestion_client_waits_for_real_indexing_but_search_stays_short(monkeypatch) -> None:
     """Issue #106: no primeiro ``POST /v1/ingestions`` na AWS (ECS Exec),
     o ai levou mais de 10 s para indexar o corpus demo com Bedrock e o

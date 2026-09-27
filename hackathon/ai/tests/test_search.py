@@ -119,3 +119,28 @@ def test_search_respects_top_k_without_reordering() -> None:
 
     hits = response.json()["hits"]
     assert [h["family_id"] for h in hits] == ["fam-defesa-0007", "fam-decisao-0007"]
+
+
+def test_fixture_hits_carry_a_stable_chunk_id_per_document_chunk() -> None:
+    """Issue #96: tambem no modo demo, cada hit identifica o chunk pelo
+    ``chunk_id`` estavel e pelo indice real no documento, e o mesmo
+    ``chunk_id`` significa sempre o mesmo trecho, em qualquer consulta."""
+    client = _client()
+
+    excerpt_by_chunk: dict[str, str] = {}
+    queries = [
+        "auto de infração retificado",
+        "processo sei 48500.001234/2024-11",
+        "mmgd-precedentes",
+    ]
+    for query in queries:
+        hits = client.post("/internal/v1/search", json={"query": query}).json()["hits"]
+        assert hits
+        for hit in hits:
+            assert hit["chunk_id"] == f"{hit['document_version']}#chunk-{hit['chunk_index']:04d}"
+            assert excerpt_by_chunk.setdefault(hit["chunk_id"], hit["excerpt"]) == hit["excerpt"]
+
+    hit = client.post(
+        "/internal/v1/search", json={"query": "padrão de continuidade do fornecimento"}
+    ).json()["hits"][0]
+    assert (hit["chunk_id"], hit["chunk_index"]) == ("docver-auto-0007-v1#chunk-0000", 0)

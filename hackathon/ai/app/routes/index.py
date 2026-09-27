@@ -44,8 +44,9 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
+from app.cached_embeddings import get_cached_embedder
 from app.chunking import chunk_document
-from app.config import get_settings
+from app.config import REAL_PIPELINE_EMBEDDERS, get_settings
 from app.embeddings import (
     DIMENSIONS,
     BedrockEmbedder,
@@ -55,6 +56,7 @@ from app.embeddings import (
     MODEL_VERSION as REAL_MODEL_VERSION,
 )
 from app.raw_vectors import RawVectorStore
+from app.references import extract_references
 from app.vector_store import (
     ChunkDoc,
     OpenSearchVectorStore,
@@ -81,6 +83,14 @@ class IndexRequest(BaseModel):
     documents: list[IndexDocumentIn]
 
 
+class ReferenceOut(BaseModel):
+    """Candidato de aresta explicita (issue #92, ver app/references.py)."""
+
+    identifier_raw: str
+    relation_type: str | None = None
+    locator: str
+
+
 class IndexReport(BaseModel):
     document_version: str
     extracted_text_locator: str
@@ -91,6 +101,10 @@ class IndexReport(BaseModel):
     # documento - issue #73, AC "custo de embeddings" usa isso agregado
     # por corpus (ver app.embeddings.estimate_cost_usd).
     total_input_tokens: int | None = None
+    # Referencias explicitas encontradas no texto (issue #92) - so
+    # candidatos; resolucao de alvo e gravacao em document_relations sao
+    # do backend. Vazio no modo fake (sem extracao).
+    references: list[ReferenceOut] = []
 
 
 class IndexResponse(BaseModel):
@@ -117,8 +131,11 @@ def get_embedder() -> BedrockEmbedder:
 
     Testes sobrescrevem com um dublê (ver
     hackathon/ai/tests/test_index_real.py) - nunca chamam Bedrock de
-    verdade na suite automatizada.
+    verdade na suite automatizada. Com ``EMBEDDER=cached`` (issue #88)
+    devolve o embedder de vetores pre-computados, sem cliente AWS.
     """
+    if get_settings().embedder == "cached":
+        return get_cached_embedder()
     return BedrockEmbedder(get_bedrock_runtime_client())
 
 
@@ -155,7 +172,7 @@ def index_documents(
     raw_vector_store: RawVectorStore = Depends(get_raw_vector_store),
 ) -> IndexResponse:
     settings = get_settings()
-    if settings.embedder == "bedrock":
+    if settings.embedder in REAL_PIPELINE_EMBEDDERS:
         reports = [
             _index_one_real(
                 document, documents_root, store, embedder, vector_store, raw_vector_store
@@ -269,6 +286,14 @@ def _index_one_real(
         chunks_indexed=len(chunks),
         model_version=REAL_MODEL_VERSION,
         total_input_tokens=total_input_tokens,
+        references=[
+            ReferenceOut(
+                identifier_raw=ref.identifier_raw,
+                relation_type=ref.relation_type,
+                locator=ref.locator,
+            )
+            for ref in extract_references(chunks)
+        ],
     )
     store[key] = report
     return report
