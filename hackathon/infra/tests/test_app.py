@@ -4,6 +4,8 @@ O app e sintetizado uma vez por modulo, exatamente como o ``cdk synth``
 faz (``build_app``), e cada teste le o template de um stack.
 """
 
+import re
+
 import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Match, Template
@@ -267,3 +269,33 @@ def test_search_instance_type_can_be_raised_by_context_without_code_change():
         "AWS::OpenSearchService::Domain",
         {"ClusterConfig": Match.object_like({"InstanceType": "m6g.large.search"})},
     )
+
+
+# Conjunto aceito pela EC2 para descricao de regra e de security group
+# (erro real do primeiro ``cdk deploy``: "Invalid rule description").
+_EC2_DESCRIPTION = re.compile(r"^[a-zA-Z0-9. _\-:/()#,@\[\]+=&;{}!$*]{0,255}$")
+
+
+def _security_group_descriptions(template: dict):
+    for logical_id, resource in template.get("Resources", {}).items():
+        props = resource.get("Properties", {})
+        kind = resource["Type"]
+        if kind == "AWS::EC2::SecurityGroup":
+            yield logical_id, props.get("GroupDescription")
+            rules = props.get("SecurityGroupIngress", []) + props.get("SecurityGroupEgress", [])
+            for rule in rules:
+                yield logical_id, rule.get("Description")
+        elif kind in ("AWS::EC2::SecurityGroupIngress", "AWS::EC2::SecurityGroupEgress"):
+            yield logical_id, props.get("Description")
+
+
+def test_security_group_descriptions_use_only_characters_ec2_accepts(stacks):
+    invalid = [
+        (stack.stack_name, logical_id, description)
+        for stack in stacks.all
+        for logical_id, description in _security_group_descriptions(
+            Template.from_stack(stack).to_json()
+        )
+        if isinstance(description, str) and not _EC2_DESCRIPTION.match(description)
+    ]
+    assert invalid == []

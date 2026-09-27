@@ -92,10 +92,10 @@ class NetworkStack(Stack):
         )
 
         app_port = ec2.Port.tcp(APP_PORT)
-        self.alb_sg.add_egress_rule(self.backend_sg, app_port, "ALB -> backend")
-        self.backend_sg.add_ingress_rule(self.alb_sg, app_port, "ALB -> backend")
-        self.ai_sg.add_ingress_rule(self.backend_sg, app_port, "backend -> ai")
-        self.db_sg.add_ingress_rule(self.backend_sg, ec2.Port.tcp(5432), "backend -> Postgres")
-        self.search_sg.add_ingress_rule(self.ai_sg, ec2.Port.tcp(443), "ai -> OpenSearch")
+        self.alb_sg.add_egress_rule(self.backend_sg, app_port, "ALB para backend")
+        self.backend_sg.add_ingress_rule(self.alb_sg, app_port, "ALB para backend")
+        self.ai_sg.add_ingress_rule(self.backend_sg, app_port, "backend para ai")
+        self.db_sg.add_ingress_rule(self.backend_sg, ec2.Port.tcp(5432), "backend para Postgres")
+        self.search_sg.add_ingress_rule(self.ai_sg, ec2.Port.tcp(443), "ai para OpenSearch")
         for peer, label in ((self.backend_sg, "backend"), (self.ai_sg, "ai")):
-            self.efs_sg.add_ingress_rule(peer, ec2.Port.tcp(2049), f"{label} -> EFS")
+            self.efs_sg.add_ingress_rule(peer, ec2.Port.tcp(2049), f"{label} para EFS")
