@@ -7,6 +7,7 @@
  * mesma razao de api/relations.ts (o numero SEI contem "/").
  */
 
+import { apiFetch } from "./client";
 import type { RelationEvidence } from "./relations";
 
 export type ProcessoPiece = {
@@ -43,7 +44,7 @@ export type ProcessoSummary = {
 export class ProcessoNotFoundError extends Error {}
 
 export async function fetchProcessos(): Promise<ProcessoSummary[]> {
-  const response = await fetch("/v1/processos");
+  const response = await apiFetch("/v1/processos");
   if (!response.ok) {
     throw new Error(`Consulta de processos falhou com status ${response.status}`);
   }
@@ -51,7 +52,7 @@ export async function fetchProcessos(): Promise<ProcessoSummary[]> {
 }
 
 export async function fetchProcesso(processoId: string): Promise<Processo> {
-  const response = await fetch(`/v1/processos/${encodeURIComponent(processoId)}`);
+  const response = await apiFetch(`/v1/processos/${encodeURIComponent(processoId)}`);
 
   if (response.status === 404) {
     throw new ProcessoNotFoundError("Processo não encontrado");

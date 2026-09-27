@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 
 import { AppShell } from "./components/layout/AppShell";
 import { SessionProvider, useSession } from "./features/auth/SessionContext";
+import { RuntimeConfigProvider } from "./features/config/RuntimeConfigContext";
 import { DemoDataProvider } from "./features/demo/DemoDataContext";
 import { NotificationsProvider } from "./features/notifications/NotificationsContext";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
@@ -18,6 +19,14 @@ import { RelationsMapPage } from "./pages/RelationsMapPage";
 import { SearchPage } from "./pages/SearchPage";
 
 export function App() {
+  return (
+    <RuntimeConfigProvider>
+      <AppRoutes />
+    </RuntimeConfigProvider>
+  );
+}
+
+function AppRoutes() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <SessionProvider>

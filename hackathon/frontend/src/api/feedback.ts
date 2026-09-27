@@ -9,6 +9,8 @@
  * issue.
  */
 
+import { apiFetch } from "./client";
+
 export type Vote = "up" | "down";
 
 export type Feedback = {
@@ -24,7 +26,7 @@ export async function submitFeedback(
   familyId: string,
   vote: Vote,
 ): Promise<Feedback> {
-  const response = await fetch("/v1/feedback", {
+  const response = await apiFetch("/v1/feedback", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ request_id: requestId, family_id: familyId, vote }),

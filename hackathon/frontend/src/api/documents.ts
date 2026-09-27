@@ -7,6 +7,8 @@
  * resposta documentado em hackathon/backend/app/routes/documents.py.
  */
 
+import { apiFetch } from "./client";
+
 export type VersionSummary = {
   document_version: string;
   version_date: string;
@@ -39,7 +41,7 @@ export async function fetchDocument(
   version?: string,
 ): Promise<DocumentDetail> {
   const query = version ? `?version=${encodeURIComponent(version)}` : "";
-  const response = await fetch(`/v1/documents/${encodeURIComponent(familyId)}${query}`);
+  const response = await apiFetch(`/v1/documents/${encodeURIComponent(familyId)}${query}`);
 
   if (response.status === 404) {
     throw new DocumentNotFoundError("Família não encontrada");

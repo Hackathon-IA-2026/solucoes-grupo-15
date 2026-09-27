@@ -7,6 +7,8 @@
  * hackathon/backend/app/routes/search.py.
  */
 
+import { apiFetch } from "./client";
+
 export type SearchFace = {
   document_version: string;
   version_date: string;
@@ -38,7 +40,7 @@ export type SearchEnvelope = {
 };
 
 export async function searchDocuments(query: string): Promise<SearchEnvelope> {
-  const response = await fetch("/v1/search", {
+  const response = await apiFetch("/v1/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query }),
