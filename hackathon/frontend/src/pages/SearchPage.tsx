@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ArrowRight, CalendarDays, FileText, Search, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { bestMatchedChunk, searchDocuments, type SearchEnvelope, type SearchResult } from "../api/search";
+import { appendSearchPage, searchDocuments, type SearchEnvelope } from "../api/search";
 import { DemoBanner } from "../components/DemoBanner";
 import { FeedbackButtons } from "../components/FeedbackButtons";
 
@@ -19,9 +19,12 @@ import { FeedbackButtons } from "../components/FeedbackButtons";
  * matching) - existem so para o usuario nao precisar adivinhar o texto
  * exato; o dado em si continua vindo so da fixture.
  *
- * Cada card de resultado tambem tem os botoes 👍/👎 do Ticket 7 (issue
- * #23) - ver components/FeedbackButtons.tsx. O voto do card aponta para
- * o seu chunk de maior score (document_version + chunk_index, issue #94).
+ * Desde a issue #93, cada card e um chunk casado (o resultado plano de
+ * POST /v1/search, sem agrupamento por familia nem deduplicacao por
+ * peca - u4-visualization, issue-64), etiquetado pela versao em que o
+ * trecho ocorreu. Os botoes 👍/👎 do Ticket 7 (issue #23, ver
+ * components/FeedbackButtons.tsx) votam no proprio chunk do card:
+ * document_version + chunk_index do resultado (issues #82/#94).
  */
 const SUGGESTED_QUERIES = [
   "padrão de continuidade do fornecimento",
@@ -33,7 +36,7 @@ const SUGGESTED_QUERIES = [
 type SearchState =
   | { kind: "idle" }
   | { kind: "loading" }
-  | { kind: "result"; envelope: SearchEnvelope }
+  | { kind: "result"; query: string; envelope: SearchEnvelope; more: "idle" | "loading" | "error" }
   | { kind: "error" };
 
 export function SearchPage() {
@@ -48,8 +51,22 @@ export function SearchPage() {
     setQuery(trimmed);
     setState({ kind: "loading" });
     searchDocuments(trimmed)
-      .then((envelope) => setState({ kind: "result", envelope }))
+      .then((envelope) => setState({ kind: "result", query: trimmed, envelope, more: "idle" }))
       .catch(() => setState({ kind: "error" }));
+  }
+
+  function loadMore() {
+    if (state.kind !== "result" || state.envelope.next_cursor === null) {
+      return;
+    }
+    const current = state;
+    const cursor = state.envelope.next_cursor;
+    setState({ ...current, more: "loading" });
+    searchDocuments(current.query, cursor)
+      .then((next) =>
+        setState({ ...current, envelope: appendSearchPage(current.envelope, next), more: "idle" }),
+      )
+      .catch(() => setState({ ...current, more: "error" }));
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -119,56 +136,67 @@ export function SearchPage() {
         {state.kind === "result" && state.envelope.results.length > 0 && (
           <>
             <div className="results-heading">
-              <div><p className="eyebrow">Resultados</p><h2>{state.envelope.results.length} documento{state.envelope.results.length > 1 ? "s" : ""} encontrado{state.envelope.results.length > 1 ? "s" : ""}</h2></div>
+              <div><p className="eyebrow">Resultados</p><h2>{state.envelope.total} trecho{state.envelope.total > 1 ? "s" : ""} encontrado{state.envelope.total > 1 ? "s" : ""}</h2></div>
               <p className="result-meta">Corpus {state.envelope.corpus_version} · modo {state.envelope.data_mode}</p>
             </div>
+            {state.envelope.stale_corpus && (
+              <div className="empty-state stale-corpus" role="status">
+                <p>O corpus foi atualizado depois desta busca. Estes resultados continuam sendo do corpus {state.envelope.corpus_version}.</p>
+                <button className="primary-button" type="button" onClick={() => runSearch(state.query)}>
+                  Refazer a busca
+                </button>
+              </div>
+            )}
             <ol className="result-list">
               {state.envelope.results.map((result, index) => (
-                <li key={result.family_id}>
+                <li key={`${index}-${result.chunk_id}`}>
                   <article className="result-card">
                     <div className="result-rank">{String(index + 1).padStart(2, "0")}</div>
                     <div className="result-main">
                       <div className="result-label-row">
-                        <span className="document-type"><FileText size={15} /> {formatDocumentType(result.face.document_type)}</span>
-                        <span className="version-pill">Versão vigente</span>
+                        <span className="document-type"><FileText size={15} /> {formatDocumentType(result.document_type)}</span>
                       </div>
-                      <h3>{result.face.document_type} — {result.face.document_version}</h3>
-                      <p className="date-line"><CalendarDays size={15} /> Data da versão vigente: {result.face.version_date}</p>
+                      <h3>{formatDocumentType(result.document_type)} — {result.document_id}</h3>
+                      <p className="date-line"><CalendarDays size={15} /> Data da versão: {result.version_date}</p>
                       <div className="evidence-list">
-                        {result.matched_chunks.map((chunk) => (
-                          <div className="evidence-item" key={chunk.document_version}>
-                            <p>{chunk.excerpt}</p>
-                            <span>Trecho na versão {chunk.document_version} — {chunk.is_latest ? "versão mais recente" : "não é a versão mais recente"}</span>
-                          </div>
-                        ))}
+                        <div className="evidence-item">
+                          <p>{result.excerpt}</p>
+                          <span>Trecho na versão {result.document_version}</span>
+                        </div>
                       </div>
                       <div className="result-actions">
-                        <Link className="detail-link" to={`/documents/${result.family_id}`} state={{ matchedChunks: result.matched_chunks }}>
+                        <Link
+                          className="detail-link"
+                          to={`/documents/${result.family_id}`}
+                          state={{ matchedChunks: [{ document_version: result.document_version, excerpt: result.excerpt }] }}
+                        >
                           Abrir documento <ArrowRight size={16} aria-hidden="true" />
                         </Link>
-                        <CardFeedback requestId={state.envelope.request_id} result={result} />
+                        <FeedbackButtons
+                          target={{
+                            requestId: state.envelope.request_id,
+                            documentVersion: result.document_version,
+                            chunkIndex: result.chunk_index,
+                          }}
+                        />
                       </div>
                     </div>
                   </article>
                 </li>
               ))}
             </ol>
+            {state.envelope.next_cursor !== null && (
+              <div className="load-more-row">
+                <button className="primary-button" type="button" onClick={loadMore} disabled={state.more === "loading"}>
+                  {state.more === "loading" ? "Carregando..." : "Carregar mais"}
+                </button>
+                {state.more === "error" && <p className="result-meta">Não foi possível carregar mais resultados. Tente novamente.</p>}
+              </div>
+            )}
           </>
         )}
       </section>
     </div>
-  );
-}
-
-function CardFeedback({ requestId, result }: { requestId: string; result: SearchResult }) {
-  const chunk = bestMatchedChunk(result.matched_chunks);
-  if (!chunk) {
-    return null;
-  }
-  return (
-    <FeedbackButtons
-      target={{ requestId, documentVersion: chunk.document_version, chunkIndex: chunk.chunk_index }}
-    />
   );
 }
 

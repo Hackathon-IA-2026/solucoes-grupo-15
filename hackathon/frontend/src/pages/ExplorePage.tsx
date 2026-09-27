@@ -9,7 +9,11 @@ import { mockExploreData } from "../mocks/explorar";
 import { appRepository } from "../services/appRepository";
 import type { ExploreData, RankedPrecedent } from "../types/product";
 
-type ExploreState = { kind: "idle" } | { kind: "loading" } | { kind: "result"; data: ExploreData } | { kind: "error" };
+type ExploreState =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "result"; data: ExploreData; more: "idle" | "loading" | "error" }
+  | { kind: "error" };
 const tabs = ["Resultados e ranking", "Lacunas da pesquisa", "Análise por tema", "Documentos relacionados"] as const;
 
 export function ExplorePage() {
@@ -30,7 +34,16 @@ export function ExplorePage() {
       return;
     }
     setState({ kind: "loading" });
-    appRepository.searchPrecedents(normalized).then((data) => setState({ kind: "result", data })).catch(() => setState({ kind: "error" }));
+    appRepository.searchPrecedents(normalized).then((data) => setState({ kind: "result", data, more: "idle" })).catch(() => setState({ kind: "error" }));
+  }
+
+  // "Carregar mais" (issue #93): a proxima pagina do conjunto congelado e
+  // acrescentada; os processos ja exibidos nao mudam de posicao.
+  function loadMore() {
+    if (state.kind !== "result") return;
+    const current = state;
+    setState({ ...current, more: "loading" });
+    appRepository.loadMorePrecedents(current.data).then((data) => setState({ kind: "result", data, more: "idle" })).catch(() => setState({ ...current, more: "error" }));
   }
 
   useEffect(() => {
@@ -67,7 +80,8 @@ export function ExplorePage() {
         <div className="explore-layout">
           <section className="ranking-panel">
             <div className="panel-heading"><div><h2>{activeTab}</h2><p>{tabDescription(activeTab)}</p></div><button className="outline-button" type="button" onClick={() => setExplainerOpen(true)}><Info size={16} /> Como o ranking é calculado?</button></div>
-            {activeTab === "Resultados e ranking" && (data.results.length ? <div className="ranking-list">{data.results.map((result) => <RankingCard key={result.familyId ?? result.processNumber} result={result} onOpenDocuments={setDocumentProcess} />)}</div> : <div className="product-empty"><FileSearch size={28} /><h3>Nenhum resultado nesta fixture.</h3><p>Tente uma das consultas demonstrativas exibidas na página inicial.</p></div>)}
+            {data.pagination?.staleCorpus && <div className="product-empty stale-corpus" role="status"><p>O corpus foi atualizado depois desta busca. Estes resultados continuam sendo do corpus anterior.</p><button className="outline-button" type="button" onClick={() => runSearch(data.pagination?.query ?? query)}>Refazer a busca</button></div>}
+            {activeTab === "Resultados e ranking" && (data.results.length ? <><div className="ranking-list">{data.results.map((result) => <RankingCard key={result.processNumber} result={result} onOpenDocuments={setDocumentProcess} />)}</div>{data.pagination?.nextCursor != null && <div className="load-more-row"><button className="outline-button" type="button" onClick={loadMore} disabled={state.kind === "result" && state.more === "loading"}>{state.kind === "result" && state.more === "loading" ? "Carregando..." : "Carregar mais"}</button>{state.kind === "result" && state.more === "error" && <p>Não foi possível carregar mais resultados. Tente novamente.</p>}</div>}</> : <div className="product-empty"><FileSearch size={28} /><h3>Nenhum resultado nesta fixture.</h3><p>Tente uma das consultas demonstrativas exibidas na página inicial.</p></div>)}
             {activeTab === "Lacunas da pesquisa" && <div className="tab-grid">{data.gaps.map((gap) => <article className="analysis-card" key={gap.id}><FileSearch size={22} /><h3>{gap.title}</h3><p>{gap.detail}</p></article>)}</div>}
             {activeTab === "Análise por tema" && <div className="tab-grid">{data.metrics.map((metric) => <article className="analysis-card" key={metric.label}><BarChart3 size={22} /><h3>{metric.label}</h3><strong>{metric.value}%</strong><p>Cobertura de {metric.detail} na pesquisa atual.</p></article>)}</div>}
             {activeTab === "Documentos relacionados" && <div className="tab-grid">{data.results.slice(0, 3).map((result) => <article className="analysis-card" key={result.processNumber}><Network size={22} /><h3><Link className="process-title-link" to={`/processos/${encodeURIComponent(result.processNumber)}`}>{result.processNumber}<ArrowRight size={15} aria-hidden="true" /></Link></h3><p>{result.documents.map((document) => document.label).join(" · ")}</p><button type="button" onClick={() => setDocumentProcess(result)}>Abrir conjunto <ArrowRight size={16} /></button></article>)}</div>}

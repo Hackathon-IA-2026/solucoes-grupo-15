@@ -41,8 +41,9 @@ Pré-requisitos: Docker, e o arquivo de vetores brutos da #73. Ele fica fora do 
 | Replay (#77) | `matches: true` |
 | Chunk estável (#96) | cada resultado traz `chunk_id` presente nos vetores brutos da #73 e `chunk_index` = índice real do chunk no documento, igual entre consultas com `top_k` diferentes |
 | Feedback (#82) | voto com `request_id` + `document_version` + `chunk_index` de um hit real |
+| Busca do frontend (#93) | o envelope real tem exatamente as chaves que `frontend/src/api/search.ts` lê (resultado plano por chunk + `total`/`next_cursor`/`stale_corpus`), e a continuação `{query, cursor}` do "carregar mais" devolve a cauda do mesmo conjunto congelado |
 | Feedback do frontend (#94) | o payload de `frontend/src/api/feedback.ts` (chave por chunk, sem `family_id`) é aceito com 200 |
 | Stale corpus (#79) | continuação após ingerir um `corpus_version` mais novo devolve `stale_corpus: true` |
 | Reindex (#73) | `tools/case1_recall/reindex_from_raw_vectors.py` reconstrói o índice sem AWS e o ranking não muda |
 
-Testes marcados `xfail(strict=True)` documentam divergências ainda abertas entre contrato e comportamento real: relações vindas do `ai` (`similar_families`/`references`), o resultado do processo (#66) e o formato de busca que o frontend ainda consome (#93). Quando a funcionalidade chegar, o xfail estrito falha e obriga a remover a marcação.
+Testes marcados `xfail(strict=True)` documentam divergências ainda abertas entre contrato e comportamento real: relações vindas do `ai` (`similar_families`/`references`) e o resultado do processo (#66). Quando a funcionalidade chegar, o xfail estrito falha e obriga a remover a marcação.

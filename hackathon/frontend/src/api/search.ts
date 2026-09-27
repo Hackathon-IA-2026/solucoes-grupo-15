@@ -1,35 +1,28 @@
 /**
- * Cliente do frontend para a busca (TB1 Ticket 3, issue #19).
+ * Cliente do frontend para a busca (TB1 Ticket 3, issue #19; busca por
+ * chunk e paginacao, issue #93).
  *
  * Chama so POST /v1/search no backend (nunca o ai nem o indice vetorial
  * diretamente), conforme a fronteira de modulos decidida na arquitetura.
- * Os tipos abaixo espelham o envelope de resposta documentado em
- * hackathon/backend/app/routes/search.py.
+ * Os tipos abaixo espelham ``SearchResultOut``/``SearchEnvelope`` de
+ * hackathon/backend/app/routes/search.py: desde a issue #78 cada
+ * resultado e um chunk casado, plano, sem agrupamento por familia
+ * (``family_id`` segue so como dado). ``(document_version, chunk_index)``
+ * identifica o chunk (issue #96) e e a chave do voto de feedback (#82/#94).
  */
-
-export type SearchFace = {
-  document_version: string;
-  version_date: string;
-  document_type: string;
-  document_id: string;
-  processo_numero: string | null;
-};
-
-export type MatchedChunk = {
-  document_version: string;
-  excerpt: string;
-  score: number;
-  is_latest: boolean;
-  // Indice real do chunk no documento (backend, issue #96): com
-  // document_version, e a chave do voto de feedback (issues #82/#94).
-  // O agrupamento face/matched_chunks em si e divergencia aberta na #93.
-  chunk_index: number;
-};
 
 export type SearchResult = {
   family_id: string;
-  face: SearchFace;
-  matched_chunks: MatchedChunk[];
+  document_version: string;
+  chunk_id: string;
+  chunk_index: number;
+  excerpt: string;
+  score: number;
+  localizador: string | null;
+  document_type: string;
+  document_id: string;
+  processo_numero: string | null;
+  version_date: string;
 };
 
 export type SearchEnvelope = {
@@ -39,27 +32,27 @@ export type SearchEnvelope = {
   model_version: string;
   ranking_version: string;
   results: SearchResult[];
+  // Numero de chunks do conjunto congelado inteiro, nao so desta pagina (#76).
+  total: number;
+  // Cursor opaco da proxima pagina; nulo na ultima (#76).
+  next_cursor: string | null;
+  // true quando ja existe corpus_version mais novo que o desta busca (#79).
+  stale_corpus: boolean;
 };
 
 /**
- * O chunk de maior score entre os casados de um card: e o chunk que
- * poe o card na sua posicao, e e sobre ele que o voto de feedback do
- * card e registrado (issue #94). Empate: o primeiro da lista. Quando a
- * #93 trocar o card agrupado por um card por chunk, o chunk do card e o
- * proprio resultado e esta escolha deixa de existir.
+ * Sem ``cursor``: executa a busca (o backend chama o ai uma unica vez e
+ * congela o conjunto ordenado). Com ``cursor`` (o ``next_cursor`` da
+ * pagina anterior): devolve a proxima pagina do mesmo conjunto congelado,
+ * sem nova chamada ao ai (issue #76). O backend exige ``query`` tambem
+ * na continuacao; o tamanho da pagina fica no default do backend (10,
+ * u4-visualization).
  */
-export function bestMatchedChunk(chunks: MatchedChunk[]): MatchedChunk | undefined {
-  return chunks.reduce<MatchedChunk | undefined>(
-    (best, chunk) => (best === undefined || chunk.score > best.score ? chunk : best),
-    undefined,
-  );
-}
-
-export async function searchDocuments(query: string): Promise<SearchEnvelope> {
+export async function searchDocuments(query: string, cursor?: string): Promise<SearchEnvelope> {
   const response = await fetch("/v1/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify(cursor === undefined ? { query } : { query, cursor }),
   });
 
   if (!response.ok) {
@@ -67,4 +60,20 @@ export async function searchDocuments(query: string): Promise<SearchEnvelope> {
   }
 
   return (await response.json()) as SearchEnvelope;
+}
+
+/**
+ * Acrescenta a pagina seguinte ao fim do conjunto ja carregado: os
+ * resultados anteriores nunca mudam de posicao (u4-visualization,
+ * issue-28). ``next_cursor``/``total``/``stale_corpus`` passam a ser os
+ * da pagina mais recente.
+ */
+export function appendSearchPage(loaded: SearchEnvelope, next: SearchEnvelope): SearchEnvelope {
+  return {
+    ...loaded,
+    results: [...loaded.results, ...next.results],
+    total: next.total,
+    next_cursor: next.next_cursor,
+    stale_corpus: loaded.stale_corpus || next.stale_corpus,
+  };
 }

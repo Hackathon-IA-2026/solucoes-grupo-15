@@ -6,6 +6,7 @@ sources:
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i6-telemetry.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i9-integration.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/u6-acceptance.md
+  - hackathon/tests_e2e/test_case1_e2e.py
   - requirements/perspec-me/capiwatt-lens-hackathon/MAP.md
   - hackathon/docs/adr/0001-stack-scaffold-local.md
 last_synced_with_sources: 2026-09-27
@@ -32,7 +33,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
   - É o dono do armazenamento físico de arquivos: serve os textos extraídos normalizados e provê streaming dos PDFs originais (`/v1/document-pdfs/*`).
   - É o dono da camada de **grafo e relações**: persiste arestas explícitas e sugeridas (`document_relations`), resolve tipos de vizinhança (`family` vs. `processo`) e serve subgrafos egocêntricos sem necessidade de chamada externa.
   - É o dono da política de **notificações e telemetria**: armazena a preferência de escopo por usuário (`estrita` ou `ampla`), aplica deduplicação `(user_id, document_version_id)`, gera digests de e-mail e registra eventos de auditoria e abertura (`notification_opened`).
-  - Orquestra chamadas ao serviço vetorial (`ai` em `/internal/v1/*`), realizando o agrupamento, persistência de `SearchExecution` para replay e enriquecimento dos resultados de busca com os dados do catálogo antes de responder ao frontend.
+  - Orquestra chamadas ao serviço vetorial (`ai` em `/internal/v1/*`), congelando a lista ordenada de chunks (paginação por cursor), persistindo `SearchExecution` para replay e enriquecendo os resultados de busca com os dados do catálogo antes de responder ao frontend.
 
 ---
 
@@ -59,7 +60,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 | Operação | Método | Rota `/v1/*` | Payload de entrada | Resposta |
 |---|---|---|---|---|
 | **Health check** | `GET` | `/v1/health` | — | `BackendHealth` |
-| **Busca de documentos** | `POST` | `/v1/search` | `{ query: string, top_k?: number }` | `SearchEnvelope` |
+| **Busca de documentos** | `POST` | `/v1/search` | `{ query: string, top_k?: number, cursor?: string, limit?: number }` | `SearchEnvelope` |
 | **Leitura de documento** | `GET` | `/v1/documents/{family_id}` | Query: `?version=string` (opc.) | `DocumentDetail` |
 | **Download/abertura de PDF** | `GET` | `/v1/document-pdfs/{document_version}` | — | Stream `application/pdf` |
 | **Grafo egocêntrico** | `GET` | `/v1/documents/{node_id:path}/graph` | — | `Graph` |
@@ -94,48 +95,47 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 ### 2. Busca e exploração de precedentes
 
 - **`POST /v1/search`**
-  - **Finalidade:** Submissão de termos de pesquisa textual/semântica para recuperação de trechos relevantes e agrupamento por famílias documentais.
-  - **Comportamento:** O backend repassa a consulta ao cliente `ai`, recebe os chunks casados, agrupa por `family_id`, resolve a `face` (versão com a maior `version_date`) no catálogo do Postgres e gera um `request_id` único (UUIDv4). O backend grava a execução em `SearchExecution` para fins de auditoria e reprodutibilidade (`i7-reproducibility`).
+  - **Finalidade:** Submissão de termos de pesquisa textual/semântica para recuperação dos trechos (chunks) relevantes.
+  - **Comportamento (issues #76/#78/#79/#96):** Sem `cursor`, o backend repassa a consulta ao `ai` uma única vez e resolve cada hit no catálogo. Monta um resultado **plano por chunk**: sem agrupar por `family_id` e sem deduplicar por peça. Ordena por `(-score, document_version, chunk_index)`, gera um `request_id` (UUIDv4), congela o conjunto inteiro em `SearchExecution` (`i7-reproducibility`) e devolve a primeira página (`limit`, padrão 10). Com `cursor` (o `next_cursor` da página anterior), devolve a página seguinte do conjunto congelado, sem chamar o `ai`. O `request_id` é o mesmo da primeira página e `query` continua obrigatório no corpo. Cursor inválido → 400. `total` é o número de chunks do conjunto congelado inteiro. `stale_corpus: true` indica que já existe um `corpus_version` mais novo que o da busca.
+  - **Consumo no frontend (issue #93):** `searchDocuments(query, cursor?)` envia `{ query }` ou `{ query, cursor }`, sem `top_k` nem `limit`. A `SearchPage` exibe um card por chunk, e a `ExplorePage` agrupa os chunks por processo SEI na ordem do backend. As duas telas têm "Carregar mais", que acrescenta a página sem reordenar, e mostram um aviso de `stale_corpus` com "Refazer a busca" ([`u4-visualization`](../perspec-me/capiwatt-lens-hackathon/concerns/u4-visualization.md)). O e2e `test_frontend_search_shape_matches_real_envelope` confere que as chaves do resultado real são exatamente as de `SearchResult`.
   - **Esquema de Entrada:**
     ```typescript
     export type SearchRequest = {
       query: string;
-      top_k?: number;
+      top_k?: number;   // repassado ao ai; sem ele, o ai usa o seu default (10 no modo real)
+      cursor?: string;  // opaco; continuação do conjunto congelado
+      limit?: number;   // tamanho da página, padrão 10
     };
     ```
   - **Esquema de Retorno:**
     ```typescript
-    export type SearchFace = {
+    export type SearchResult = {
+      family_id: string;          // só dado/filtro; não agrupa resultados
       document_version: string;
-      version_date: string;
+      chunk_id: string;           // id estável do chunk no índice do ai (#96)
+      chunk_index: number;        // índice real do chunk no documento, 0-based (#96)
+      excerpt: string;
+      score: number;
+      localizador: string | null; // extracted_text_locator da DocumentVersion
       document_type: string;
       document_id: string;
       processo_numero: string | null;
-    };
-
-    export type MatchedChunk = {
-      document_version: string;
-      excerpt: string;
-      score: number;
-      is_latest: boolean;
-    };
-
-    export type SearchResult = {
-      family_id: string;
-      face: SearchFace;
-      matched_chunks: MatchedChunk[];
+      version_date: string;
     };
 
     export type SearchEnvelope = {
       request_id: string;
-      data_mode: string;       // ex: "demo"
+      data_mode: string;       // "demo" | "real"
       corpus_version: string;
       model_version: string;
       ranking_version: string; // ex: "demo-ranking-v1"
       results: SearchResult[];
+      total: number;
+      next_cursor: string | null;
+      stale_corpus: boolean;
     };
     ```
-  - **Nota de evolução (issue-28 e issue-64):** O envelope de resposta v1 implementado no scaffold agrupa os resultados sob `SearchResult` por `family_id`, elegendo a `face` e listando `matched_chunks`. Conforme registrado nas Concern Resolution pages `u4-visualization` e `i9-integration` (revisões das issues #28 e #64), a especificação de produto prevê a evolução para paginação estável por cursor opaco (`cursor?`, `limit`, `next_cursor?`, `total`) e a transição da apresentação na UI para cards por chunk casado (sem deduplicação por peça na tela), preservando `family_id` como metadado de rastreabilidade no backend.
+  - **Limite conhecido (issue #93, aberta):** o frontend não envia `top_k`, e o `ai` usa 10 por padrão no modo real. Com isso, o conjunto congelado tem no máximo 10 chunks e cabe numa página, e o "Carregar mais" só aparece se o `top_k` subir.
 
 ### 3. Leitura e linha do tempo de documentos
 
@@ -247,7 +247,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 - **`POST /v1/feedback`**
   - **Finalidade:** Registrar a avaliação de utilidade (polegar para cima / polegar para baixo) feita pelo usuário sobre um resultado de busca.
   - **Comportamento:** Associa o voto obrigatoriamente ao `request_id` da busca original e ao chunk avaliado, identificado por `document_version` + `chunk_index` (issue #82; `chunk_index` é o índice real do chunk no documento, o mesmo devolvido em cada resultado de `POST /v1/search` desde a issue #96). `family_id` é opcional no backend, só por compatibilidade legada, e o frontend não o envia (issue #94). Validação estrita: `vote` deve ser `"up"` ou `"down"`, e a falta de `document_version`/`chunk_index` resulta em 422. Nenhum campo de comentário textual é exigido ou aceito.
-  - **Alvo do voto no frontend (issue #94):** enquanto as telas ainda consomem a busca agrupada (`face`/`matched_chunks`, divergência aberta na #93), o voto de um card vai para o chunk de maior score do card ([`u6-acceptance`](../perspec-me/capiwatt-lens-hackathon/concerns/u6-acceptance.md)).
+  - **Alvo do voto no frontend (issues #94/#93):** o voto usa o `document_version` + `chunk_index` do próprio resultado de busca. Na `SearchPage` cada card é um chunk. Na `ExplorePage`, cujo card é um processo, o voto vai para o primeiro trecho do processo na ordem do backend ([`u6-acceptance`](../perspec-me/capiwatt-lens-hackathon/concerns/u6-acceptance.md)).
   - **Schema:**
     ```typescript
     export type Vote = "up" | "down";

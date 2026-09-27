@@ -1,3 +1,5 @@
+import type { SearchEnvelope } from "../api/search";
+
 export type PersonaId = "advocacia" | "pesquisa" | "engenharia";
 
 export type Persona = {
@@ -22,11 +24,10 @@ export type DocumentKey = {
   type: string;
   label: string;
   available: boolean;
+  // Trechos desta peca casados na busca, levados ao destaque da FamilyPage.
   matchedChunks?: Array<{
     document_version: string;
     excerpt: string;
-    score: number;
-    is_latest: boolean;
   }>;
 };
 
@@ -34,7 +35,8 @@ export type RankedPrecedent = {
   rank: number;
   requestId?: string;
   familyId?: string;
-  // Chunk de maior score do resultado: alvo do voto de feedback (issue #94).
+  // Chunk mais bem ranqueado do processo (o primeiro na ordem do backend):
+  // alvo do voto de feedback, com a chave vinda do proprio resultado (#93).
   feedbackChunk?: { documentVersion: string; chunkIndex: number };
   processNumber: string;
   adherence: number;
@@ -64,8 +66,22 @@ export type ResearchGap = {
   resolved?: boolean;
 };
 
+/**
+ * Estado da paginacao por cursor de uma busca real (issue #93). ``loaded``
+ * e o envelope acumulado de todas as paginas ja carregadas, para que a
+ * proxima pagina seja reagrupada sem reordenar o que ja esta na tela.
+ */
+export type SearchPagination = {
+  query: string;
+  total: number;
+  nextCursor: string | null;
+  staleCorpus: boolean;
+  loaded: SearchEnvelope;
+};
+
 export type ExploreData = {
   query: string;
+  pagination?: SearchPagination;
   filters: string[];
   results: RankedPrecedent[];
   coverage: number;

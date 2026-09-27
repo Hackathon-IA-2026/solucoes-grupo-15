@@ -339,25 +339,63 @@ def test_processo_resultado_envelope(backend: httpx.Client, ingested: dict) -> N
     assert backend.get("/v1/processos/00000.000000/0000-00/resultado").status_code == 404
 
 
-# Chaves que hackathon/frontend/src/api/search.ts (SearchEnvelope/SearchResult)
-# declara e le de cada resultado.
-FRONTEND_SEARCH_RESULT_KEYS = {"family_id", "face", "matched_chunks"}
+# Chaves que hackathon/frontend/src/api/search.ts declara e le desde a #93:
+# o envelope plano por chunk (SearchEnvelope) e cada resultado (SearchResult).
+FRONTEND_SEARCH_ENVELOPE_KEYS = {
+    "request_id",
+    "data_mode",
+    "corpus_version",
+    "model_version",
+    "ranking_version",
+    "results",
+    "total",
+    "next_cursor",
+    "stale_corpus",
+}
+FRONTEND_SEARCH_RESULT_KEYS = {
+    "family_id",
+    "document_version",
+    "chunk_id",
+    "chunk_index",
+    "excerpt",
+    "score",
+    "localizador",
+    "document_type",
+    "document_id",
+    "processo_numero",
+    "version_date",
+}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "frontend/src/api/search.ts ainda espera resultados agrupados por familia "
-        "(face/matched_chunks), removidos na #78"
-    ),
-)
 def test_frontend_search_shape_matches_real_envelope(
     backend: httpx.Client, ingested: dict
 ) -> None:
-    envelope = _search(backend, top_k=3)
+    """Issue #93: o envelope real tem exatamente as chaves que o frontend
+    le, e a continuacao que o "carregar mais" envia (``{query, cursor}``)
+    devolve a cauda do mesmo conjunto congelado, na mesma ordem."""
+    first = _search(backend, top_k=10, limit=4)
 
-    for result in envelope["results"]:
-        assert FRONTEND_SEARCH_RESULT_KEYS <= set(result), sorted(result)
+    assert set(first) >= FRONTEND_SEARCH_ENVELOPE_KEYS, sorted(first)
+    assert first["results"]
+    for result in first["results"]:
+        assert set(result) == FRONTEND_SEARCH_RESULT_KEYS, sorted(result)
+    assert first["total"] == 10
+    assert first["next_cursor"] is not None
+    assert first["stale_corpus"] is False
+
+    # Corpo exato de frontend/src/api/search.ts::searchDocuments(query, cursor).
+    continuation = backend.post(
+        "/v1/search", json={"query": CAROLINA_QUERY, "cursor": first["next_cursor"]}
+    )
+    assert continuation.status_code == 200, continuation.text
+    rest = continuation.json()
+
+    assert rest["request_id"] == first["request_id"]
+    assert rest["next_cursor"] is None
+    whole = _search(backend, top_k=10, limit=10)["results"]
+    assert _ranking({"results": first["results"] + rest["results"]}) == _ranking(
+        {"results": whole}
+    )
 
 
 # Chaves que hackathon/frontend/src/api/feedback.ts (submitFeedback) envia no

@@ -3,7 +3,7 @@ import { mockFamilies } from "../mocks/familias";
 import { mockNotifications } from "../mocks/notificacoes";
 import { mockOpinion } from "../mocks/parecer";
 import { mockProcessDashboard } from "../mocks/processos";
-import { bestMatchedChunk, searchDocuments, type SearchEnvelope } from "../api/search";
+import { appendSearchPage, searchDocuments, type SearchEnvelope, type SearchResult } from "../api/search";
 import type {
   AppNotification,
   ExploreData,
@@ -14,6 +14,8 @@ import type {
 
 export interface AppRepository {
   searchPrecedents(query: string): Promise<ExploreData>;
+  // Proxima pagina da mesma busca (cursor), acrescentada ao que ja foi carregado.
+  loadMorePrecedents(data: ExploreData): Promise<ExploreData>;
   findGapEvidence(query: string): Promise<ExploreData>;
   getProcessDashboard(): Promise<ProcessDashboard>;
   getFamilies(): Promise<Family[]>;
@@ -27,6 +29,10 @@ export class MockAppRepository implements AppRepository {
   async searchPrecedents(query: string) {
     await wait(650);
     return { ...mockExploreData, query };
+  }
+
+  async loadMorePrecedents(data: ExploreData) {
+    return data;
   }
 
   async findGapEvidence(query: string) {
@@ -76,52 +82,67 @@ export class ApiAppRepository extends MockAppRepository {
     return mapSearchEnvelope(query, await searchDocuments(query));
   }
 
+  override async loadMorePrecedents(data: ExploreData) {
+    const pagination = data.pagination;
+    if (!pagination || pagination.nextCursor === null) {
+      return data;
+    }
+    const next = await searchDocuments(pagination.query, pagination.nextCursor);
+    return mapSearchEnvelope(pagination.query, appendSearchPage(pagination.loaded, next));
+  }
+
   override async findGapEvidence(query: string) {
     return this.searchPrecedents(query);
   }
 }
 
+/**
+ * Traduz o envelope plano por chunk (issue #93) para o ranking por
+ * processo da ExplorePage: os trechos sao agrupados por processo SEI na
+ * ordem do backend (score decrescente), entao o primeiro trecho de cada
+ * processo e o mais bem ranqueado e a ordem dos processos ja exibidos
+ * nao muda quando a proxima pagina e acrescentada. Cada peca aparece uma
+ * vez entre os documentos-chave, com todos os seus trechos casados.
+ */
 function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData {
-  const groupedByProcess = new Map<string, SearchEnvelope["results"]>();
+  const groupedByProcess = new Map<string, SearchResult[]>();
   for (const result of envelope.results) {
-    const processKey = result.face.processo_numero ?? result.family_id;
+    const processKey = result.processo_numero ?? result.family_id;
     groupedByProcess.set(processKey, [...(groupedByProcess.get(processKey) ?? []), result]);
   }
 
   const results = [...groupedByProcess.entries()].map(([processNumber, processResults], index) => {
-    const result = processResults[0];
-    const allChunks = processResults.flatMap((processResult) => processResult.matched_chunks);
-    const bestScore = Math.max(...allChunks.map((chunk) => chunk.score), 0);
-    const bestChunk = bestMatchedChunk(allChunks);
-    const type = formatDocumentType(result.face.document_type);
+    const lead = processResults[0];
+    const type = formatDocumentType(lead.document_type);
+    const documents = new Map<string, SearchResult[]>();
+    for (const chunk of processResults) {
+      documents.set(chunk.family_id, [...(documents.get(chunk.family_id) ?? []), chunk]);
+    }
     return {
       rank: index + 1,
       requestId: envelope.request_id,
-      familyId: result.family_id,
-      feedbackChunk: bestChunk && {
-        documentVersion: bestChunk.document_version,
-        chunkIndex: bestChunk.chunk_index,
-      },
+      familyId: lead.family_id,
+      feedbackChunk: { documentVersion: lead.document_version, chunkIndex: lead.chunk_index },
       processNumber,
-      adherence: Math.round(bestScore * 100),
-      relevance: bestScore >= 0.85 ? "Muito relevante" as const : "Relevante" as const,
+      adherence: Math.round(lead.score * 100),
+      relevance: lead.score >= 0.85 ? "Muito relevante" as const : "Relevante" as const,
       stance: "Resultado documental" as const,
-      summary: result.matched_chunks[0]?.excerpt ?? "Documento localizado no corpus demonstrativo.",
+      summary: lead.excerpt,
       theme: type,
-      period: result.face.version_date,
+      period: lead.version_date,
       agency: "ANEEL",
-      distributor: result.face.document_id,
-      tags: [type, result.face.document_version],
-      reasons: allChunks.map(
+      distributor: lead.document_id,
+      tags: [type, lead.document_version],
+      reasons: processResults.map(
         (chunk) => `Trecho na versão ${chunk.document_version}: ${chunk.excerpt}`,
       ),
-      documents: processResults.map((documentResult) => ({
-        id: documentResult.family_id,
-        familyId: documentResult.family_id,
-        type: documentResult.face.document_type,
-        label: documentResult.face.document_id,
+      documents: [...documents.values()].map((chunks) => ({
+        id: chunks[0].family_id,
+        familyId: chunks[0].family_id,
+        type: chunks[0].document_type,
+        label: chunks[0].document_id,
         available: true,
-        matchedChunks: documentResult.matched_chunks,
+        matchedChunks: chunks.map((chunk) => ({ document_version: chunk.document_version, excerpt: chunk.excerpt })),
       })),
     };
   });
@@ -132,11 +153,18 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
 
   return {
     query,
+    pagination: {
+      query,
+      total: envelope.total,
+      nextCursor: envelope.next_cursor,
+      staleCorpus: envelope.stale_corpus,
+      loaded: envelope,
+    },
     filters: ["Todos", "Autos de Infração", "Decisões", "Normas", "Petições"],
     results,
     coverage: average,
     coverageSummary: results.length
-      ? `${results.length} documento(s) retornado(s) pela fixture ${envelope.corpus_version}.`
+      ? `${envelope.total} trecho(s) em ${results.length} processo(s) no corpus ${envelope.corpus_version}.`
       : "Nenhum documento foi mapeado para esta consulta na fixture atual.",
     metrics: [
       { label: "Correspondência média", detail: "scores declarados na fixture", value: average, tone: "green" },
