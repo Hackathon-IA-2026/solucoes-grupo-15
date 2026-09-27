@@ -9,7 +9,10 @@ import type {
   Family,
   OpinionData,
   ProcessDashboard,
+  RecentActivity,
+  TrackedProcess,
 } from "../types/product";
+
 
 export interface AppRepository {
   searchPrecedents(query: string): Promise<ExploreData>;
@@ -41,7 +44,25 @@ export class ApiAppRepository implements AppRepository {
   }
 
   async getProcessDashboard(): Promise<ProcessDashboard> {
-    return { processes: await fetchProcessos() };
+    const summaries = await fetchProcessos();
+    const processes: TrackedProcess[] = summaries.map((p) => ({
+      id: p.processo_id,
+      subject: p.latest_document_id,
+      agency: "ANEEL",
+      origin: "Corpus demonstrativo",
+      updatedAt: formatIsoDate(p.latest_movement_at),
+      unread: 0,
+      status: "Em análise" as const,
+      tags: p.document_types,
+      documents: p.document_types,
+    }));
+    const activity: RecentActivity[] = summaries.slice(0, 5).map((p, i) => ({
+      id: `activity-${i + 1}`,
+      label: `Andamento — ${p.latest_document_type}`,
+      processNumber: p.processo_id,
+      time: p.latest_movement_at,
+    }));
+    return { processes, activity };
   }
 
   async getFamilies(): Promise<Family[]> {
@@ -156,6 +177,12 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
       detail: "A ausência de resultados não significa ausência de precedentes fora desta fixture.",
     }],
   };
+}
+
+function formatIsoDate(iso: string): string {
+  const [date] = iso.split("T");
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 function formatDocumentType(value: string) {
