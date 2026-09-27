@@ -82,42 +82,33 @@ export class ApiAppRepository extends MockAppRepository {
 }
 
 function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData {
-  const groupedByProcess = new Map<string, SearchEnvelope["results"]>();
-  for (const result of envelope.results) {
-    const processKey = result.face.processo_numero ?? result.family_id;
-    groupedByProcess.set(processKey, [...(groupedByProcess.get(processKey) ?? []), result]);
-  }
-
-  const results = [...groupedByProcess.entries()].map(([processNumber, processResults], index) => {
-    const result = processResults[0];
-    const allChunks = processResults.flatMap((processResult) => processResult.matched_chunks);
-    const bestScore = Math.max(...allChunks.map((chunk) => chunk.score), 0);
-    const type = formatDocumentType(result.face.document_type);
+  const results = envelope.results.map((result, index) => {
+    const type = formatDocumentType(result.document_type);
     return {
       rank: index + 1,
       requestId: envelope.request_id,
       familyId: result.family_id,
-      processNumber,
-      adherence: Math.round(bestScore * 100),
-      relevance: bestScore >= 0.85 ? "Muito relevante" as const : "Relevante" as const,
+      documentVersion: result.document_version,
+      chunkIndex: result.chunk_index,
+      processNumber: result.processo_numero ?? result.family_id,
+      adherence: Math.round(result.score * 100),
+      relevance: result.score >= 0.85 ? "Muito relevante" as const : "Relevante" as const,
       stance: "Resultado documental" as const,
-      summary: result.matched_chunks[0]?.excerpt ?? "Documento localizado no corpus demonstrativo.",
+      summary: result.excerpt,
       theme: type,
-      period: result.face.version_date,
+      period: result.version_date,
       agency: "ANEEL",
-      distributor: result.face.document_id,
-      tags: [type, result.face.document_version],
-      reasons: allChunks.map(
-        (chunk) => `Trecho na versão ${chunk.document_version}: ${chunk.excerpt}`,
-      ),
-      documents: processResults.map((documentResult) => ({
-        id: documentResult.family_id,
-        familyId: documentResult.family_id,
-        type: documentResult.face.document_type,
-        label: documentResult.face.document_id,
+      distributor: result.document_id,
+      tags: [type, result.document_version],
+      reasons: [`Trecho na versão ${result.document_version}: ${result.excerpt}`],
+      documents: [{
+        id: result.family_id,
+        familyId: result.family_id,
+        type: result.document_type,
+        label: result.document_id,
         available: true,
-        matchedChunks: documentResult.matched_chunks,
-      })),
+        matchedChunks: [{ document_version: result.document_version, excerpt: result.excerpt, score: result.score }],
+      }],
     };
   });
   const scores = results.map((result) => result.adherence);
@@ -131,7 +122,7 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
     results,
     coverage: average,
     coverageSummary: results.length
-      ? `${results.length} documento(s) retornado(s) pela fixture ${envelope.corpus_version}.`
+      ? `${results.length} trecho(s) retornado(s) pelo corpus ${envelope.corpus_version}.`
       : "Nenhum documento foi mapeado para esta consulta na fixture atual.",
     metrics: [
       { label: "Correspondência média", detail: "scores declarados na fixture", value: average, tone: "green" },

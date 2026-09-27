@@ -26,7 +26,6 @@ export type DocumentKey = {
     document_version: string;
     excerpt: string;
     score: number;
-    is_latest: boolean;
   }>;
 };
 
@@ -34,6 +33,8 @@ export type RankedPrecedent = {
   rank: number;
   requestId?: string;
   familyId?: string;
+  documentVersion?: string;
+  chunkIndex?: number;
   processNumber: string;
   adherence: number;
   relevance: "Muito relevante" | "Relevante";

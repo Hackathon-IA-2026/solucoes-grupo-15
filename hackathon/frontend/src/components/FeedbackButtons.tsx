@@ -7,7 +7,7 @@ import { submitFeedback, type Vote } from "../api/feedback";
  * Botões 👍/👎 de um card de resultado de busca (TB1 Ticket 7, issue #23).
  *
  * Chama POST /v1/feedback com ``requestId`` (do envelope de busca,
- * ticket 3) e ``familyId`` do card. Depois de um voto bem-sucedido,
+ * ticket 3) e a identidade do chunk no card. Depois de um voto bem-sucedido,
  * mostra uma mensagem simples e desabilita os dois botões - so para
  * não votar duas vezes por engano nesse card; não é exigido pela
  * issue, mas é razoável para uma UI operacional. Sem edição de voto,
@@ -25,15 +25,19 @@ type ButtonsState =
 export function FeedbackButtons({
   requestId,
   familyId,
+  documentVersion,
+  chunkIndex,
 }: {
   requestId: string;
   familyId: string;
+  documentVersion: string;
+  chunkIndex: number;
 }) {
   const [state, setState] = useState<ButtonsState>({ kind: "idle" });
 
   function vote(vote: Vote) {
     setState({ kind: "submitting", vote });
-    submitFeedback(requestId, familyId, vote)
+    submitFeedback(requestId, familyId, documentVersion, chunkIndex, vote)
       .then(() => setState({ kind: "done", vote }))
       .catch(() => setState({ kind: "error" }));
   }

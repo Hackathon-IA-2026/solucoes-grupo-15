@@ -9,7 +9,7 @@ sources:
   - requirements/perspec-me/capiwatt-aws-deploy/concerns/i9-integration.md
   - requirements/perspec-me/capiwatt-aws-deploy/concerns/u6-acceptance.md
   - hackathon/docs/adr/0001-stack-scaffold-local.md
-last_synced_with_sources: 2026-09-26
+last_synced_with_sources: 2026-09-27
 ---
 
 # Contrato de fronteira: frontend ↔ backend
@@ -33,7 +33,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
   - É o dono do armazenamento físico de arquivos: serve os textos extraídos normalizados e provê streaming dos PDFs originais (`/v1/document-pdfs/*`).
   - É o dono da camada de **grafo e relações**: persiste arestas explícitas e sugeridas (`document_relations`), resolve tipos de vizinhança (`family` vs. `processo`) e serve subgrafos egocêntricos sem necessidade de chamada externa.
   - É o dono da política de **notificações e telemetria**: armazena a preferência de escopo por usuário (`estrita` ou `ampla`), aplica deduplicação `(user_id, document_version_id)`, gera digests de e-mail e registra eventos de auditoria e abertura (`notification_opened`).
-  - Orquestra chamadas ao serviço vetorial (`ai` em `/internal/v1/*`), realizando o agrupamento, persistência de `SearchExecution` para replay e enriquecimento dos resultados de busca com os dados do catálogo antes de responder ao frontend.
+  - Orquestra chamadas ao serviço vetorial (`ai` em `/internal/v1/*`), persistência de `SearchExecution` para replay e enriquecimento de cada chunk de busca com os dados do catálogo antes de responder ao frontend.
 
 ---
 
@@ -63,14 +63,14 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 | Operação | Método | Rota `/v1/*` | Payload de entrada | Resposta |
 |---|---|---|---|---|
 | **Health check** | `GET` | `/v1/health` | — | `BackendHealth` |
-| **Busca de documentos** | `POST` | `/v1/search` | `{ query: string, top_k?: number }` | `SearchEnvelope` |
+| **Busca de documentos** | `POST` | `/v1/search` | `{ query: string, top_k?: number, cursor?: string, limit?: number }` | `SearchEnvelope` |
 | **Leitura de documento** | `GET` | `/v1/documents/{family_id}` | Query: `?version=string` (opc.) | `DocumentDetail` |
 | **Download/abertura de PDF** | `GET` | `/v1/document-pdfs/{document_version}` | — | Stream `application/pdf` |
 | **Grafo egocêntrico** | `GET` | `/v1/documents/{node_id:path}/graph` | — | `Graph` |
 | **Listagem de processos** | `GET` | `/v1/processos` | — | `ProcessoSummary[]` |
 | **Detalhes do processo** | `GET` | `/v1/processos/{processo_id:path}` | — | `Processo` |
-| **Envio de feedback** | `POST` | `/v1/feedback` | `{ request_id, family_id, vote }` | `Feedback` |
-| **Consulta de feedback** | `GET` | `/v1/feedback` | Query: `request_id?`, `family_id?`, `limit?` | `Feedback[]` |
+| **Envio de feedback** | `POST` | `/v1/feedback` | `{ request_id, document_version, chunk_index, family_id?, vote }` | `Feedback` |
+| **Consulta de feedback** | `GET` | `/v1/feedback` | Query: `request_id?`, `document_version?`, `chunk_index?`, `family_id?`, `limit?` | `Feedback[]` |
 | **Consulta de escopo** | `GET` | `/v1/users/{user_id}/notification-scope` | — | `{ scope: NotificationScope \| null }` |
 | **Definição de escopo** | `PUT` | `/v1/users/{user_id}/notification-scope` | `{ scope: "estrita" \| "ampla" }` | `{ scope: NotificationScope }` |
 | **Notificações do usuário** | `GET` | `/v1/users/{user_id}/notifications` | — | `NotificationItem[]` |
@@ -98,36 +98,30 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 ### 2. Busca e exploração de precedentes
 
 - **`POST /v1/search`**
-  - **Finalidade:** Submissão de termos de pesquisa textual/semântica para recuperação de trechos relevantes e agrupamento por famílias documentais.
-  - **Comportamento:** O backend repassa a consulta ao cliente `ai`, recebe os chunks casados, agrupa por `family_id`, resolve a `face` (versão com a maior `version_date`) no catálogo do Postgres e gera um `request_id` único (UUIDv4). O backend grava a execução em `SearchExecution` para fins de auditoria e reprodutibilidade (`i7-reproducibility`).
+  - **Finalidade:** Submissão de termos de pesquisa textual/semântica para recuperação de trechos relevantes.
+  - **Comportamento:** O backend repassa a consulta ao cliente `ai`, enriquece cada chunk com os metadados da versão no catálogo, ordena por `(-score, document_version, chunk_index)` e devolve um resultado por chunk, sem agrupar por `family_id`. Gera um `request_id` único (UUIDv4) e grava a execução em `SearchExecution` para fins de auditoria e reprodutibilidade (`i7-reproducibility`). A paginação usa cursor opaco.
   - **Esquema de Entrada:**
     ```typescript
     export type SearchRequest = {
       query: string;
       top_k?: number;
+      cursor?: string;
+      limit?: number;
     };
     ```
   - **Esquema de Retorno:**
     ```typescript
-    export type SearchFace = {
+    export type SearchResult = {
+      family_id: string;
       document_version: string;
+      excerpt: string;
+      score: number;
+      localizador: string | null;
+      chunk_index: number;
       version_date: string;
       document_type: string;
       document_id: string;
       processo_numero: string | null;
-    };
-
-    export type MatchedChunk = {
-      document_version: string;
-      excerpt: string;
-      score: number;
-      is_latest: boolean;
-    };
-
-    export type SearchResult = {
-      family_id: string;
-      face: SearchFace;
-      matched_chunks: MatchedChunk[];
     };
 
     export type SearchEnvelope = {
@@ -137,9 +131,12 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
       model_version: string;
       ranking_version: string; // ex: "demo-ranking-v1"
       results: SearchResult[];
+      total: number;
+      next_cursor: string | null;
+      stale_corpus: boolean;
     };
     ```
-  - **Nota de evolução (issue-28 e issue-64):** O envelope de resposta v1 implementado no scaffold agrupa os resultados sob `SearchResult` por `family_id`, elegendo a `face` e listando `matched_chunks`. Conforme registrado nas Concern Resolution pages `u4-visualization` e `i9-integration` (revisões das issues #28 e #64), a especificação de produto prevê a evolução para paginação estável por cursor opaco (`cursor?`, `limit`, `next_cursor?`, `total`) e a transição da apresentação na UI para cards por chunk casado (sem deduplicação por peça na tela), preservando `family_id` como metadado de rastreabilidade no backend.
+  - **Evolução (issues #78 e #107):** O backend já devolve chunks planos e paginação por cursor. O frontend apresenta um card por chunk e preserva `family_id` para abrir a família documental.
 
 ### 3. Leitura e linha do tempo de documentos
 
@@ -250,21 +247,25 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 
 - **`POST /v1/feedback`**
   - **Finalidade:** Registrar a avaliação de utilidade (polegar para cima / polegar para baixo) feita pelo usuário sobre um card de resultado de busca.
-  - **Comportamento:** Associa o voto obrigatoriamente ao `request_id` da busca original e ao `family_id` do card. Validação estrita: `vote` deve ser `"up"` ou `"down"` (qualquer outro valor resulta em 422). Nenhum campo de comentário textual é exigido ou aceito.
+  - **Comportamento:** Associa o voto ao `request_id` da busca original e ao chunk exato (`document_version` + `chunk_index`). `family_id` é opcional. Validação estrita: `vote` deve ser `"up"` ou `"down"` (qualquer outro valor resulta em 422). Nenhum campo de comentário textual é exigido ou aceito.
   - **Schema:**
     ```typescript
     export type Vote = "up" | "down";
 
     export type FeedbackPayload = {
       request_id: string;
-      family_id: string;
+      document_version: string;
+      chunk_index: number;
+      family_id?: string;
       vote: Vote;
     };
 
     export type Feedback = {
       id: number;
       request_id: string;
-      family_id: string;
+      document_version: string | null;
+      chunk_index: number | null;
+      family_id: string | null;
       vote: Vote;
       created_at: string;
     };
@@ -272,7 +273,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 
 - **`GET /v1/feedback`**
   - **Finalidade:** Consulta administrativa de feedbacks coletados (para validação manual da equipe e refinamento dos modelos de ranqueamento).
-  - **Parâmetros de Query:** `request_id?` (string), `family_id?` (string), `limit?` (int). Retorna lista ordenada pelo id decrescente (`Feedback[]`).
+  - **Parâmetros de Query:** `request_id?` (string), `document_version?` (string), `chunk_index?` (int), `family_id?` (string), `limit?` (int). Retorna lista ordenada pelo id decrescente (`Feedback[]`).
 
 ### 6. Notificações, preferências e digest de e-mail
 

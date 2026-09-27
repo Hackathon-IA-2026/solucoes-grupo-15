@@ -4,7 +4,7 @@
  *
  * Chama so POST /v1/feedback no backend. Liga o voto ao ``request_id``
  * do envelope de POST /v1/search (ticket 3, issue #19) que produziu o
- * card e ao ``family_id`` avaliado - nenhum campo de
+ * card e ao chunk ``document_version`` + ``chunk_index`` - nenhum campo de
  * justificativa/comentario existe aqui, por decisao explicita da
  * issue.
  */
@@ -16,7 +16,9 @@ export type Vote = "up" | "down";
 export type Feedback = {
   id: number;
   request_id: string;
-  family_id: string;
+  document_version: string | null;
+  chunk_index: number | null;
+  family_id: string | null;
   vote: Vote;
   created_at: string;
 };
@@ -24,12 +26,14 @@ export type Feedback = {
 export async function submitFeedback(
   requestId: string,
   familyId: string,
+  documentVersion: string,
+  chunkIndex: number,
   vote: Vote,
 ): Promise<Feedback> {
   const response = await apiFetch("/v1/feedback", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ request_id: requestId, family_id: familyId, vote }),
+    body: JSON.stringify({ request_id: requestId, family_id: familyId, document_version: documentVersion, chunk_index: chunkIndex, vote }),
   });
 
   if (!response.ok) {

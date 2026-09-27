@@ -14,21 +14,15 @@ const searchEnvelope = {
   results: [
     {
       family_id: "fam-auto-0007",
-      face: {
-        document_version: "docver-auto-0007-v2",
-        version_date: "2024-04-18",
-        document_type: "auto_de_infracao",
-        document_id: "auto-0007",
-        processo_numero: "48500.001234/2024-11",
-      },
-      matched_chunks: [
-        {
-          document_version: "docver-auto-0007-v2",
-          excerpt: "versao retificada com periodo corrigido",
-          score: 0.91,
-          is_latest: true,
-        },
-      ],
+      document_version: "docver-auto-0007-v2",
+      version_date: "2024-04-18",
+      document_type: "auto_de_infracao",
+      document_id: "auto-0007",
+      processo_numero: "48500.001234/2024-11",
+      excerpt: "versao retificada com periodo corrigido",
+      score: 0.91,
+      localizador: "texto:1",
+      chunk_index: 3,
     },
   ],
 };
@@ -72,17 +66,14 @@ describe("ExplorePage integrada", () => {
     expect(screen.getAllByText("91%").length).toBeGreaterThan(0);
   });
 
-  it("agrupa as peças retornadas em um único conjunto por processo", async () => {
+  it("mostra um card por trecho mesmo quando pertencem ao mesmo processo", async () => {
     const enelAuto = {
       ...searchEnvelope.results[0],
       family_id: "case1-enel-auto",
-      face: {
-        ...searchEnvelope.results[0].face,
-        document_version: "case1-enel-auto-2018",
-        document_type: "auto_de_infracao",
-        document_id: "AI 0032/2018-SFE",
-        processo_numero: "48500.004024/2017-80",
-      },
+      document_version: "case1-enel-auto-2018",
+      document_type: "auto_de_infracao",
+      document_id: "AI 0032/2018-SFE",
+      processo_numero: "48500.004024/2017-80",
     };
     const mmgdEnvelope = {
       ...searchEnvelope,
@@ -91,24 +82,20 @@ describe("ExplorePage integrada", () => {
         {
           ...enelAuto,
           family_id: "case1-enel-voto",
-          face: {
-            ...enelAuto.face,
-            document_version: "case1-enel-voto-2020",
-            document_type: "voto",
-            document_id: "Voto DIR 48500.004024/2017-80",
-            processo_numero: "48500.004024/2017-80",
-          },
+          document_version: "case1-enel-voto-2020",
+          document_type: "voto",
+          document_id: "Voto DIR 48500.004024/2017-80",
+          processo_numero: "48500.004024/2017-80",
+          chunk_index: 4,
         },
         {
           ...enelAuto,
           family_id: "case1-cemig-voto",
-          face: {
-            ...enelAuto.face,
-            document_version: "case1-cemig-voto-2023",
-            document_type: "voto",
-            document_id: "Voto DIR 48500.000639/2019-07",
-            processo_numero: "48500.000639/2019-07",
-          },
+          document_version: "case1-cemig-voto-2023",
+          document_type: "voto",
+          document_id: "Voto DIR 48500.000639/2019-07",
+          processo_numero: "48500.000639/2019-07",
+          chunk_index: 5,
         },
       ],
     };
@@ -116,9 +103,9 @@ describe("ExplorePage integrada", () => {
 
     renderPage("/explorar?q=precedentes%20sobre%20conex%C3%A3o%20de%20MMGD");
 
-    expect(await screen.findByText("48500.004024/2017-80")).toBeInTheDocument();
+    expect((await screen.findAllByText("48500.004024/2017-80")).length).toBe(2);
     expect(screen.getByText("48500.000639/2019-07")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /2 documentos-chave/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /1 documento-chave/i })).toHaveLength(3);
   });
 
   it("abre a família documental com o trecho da busca", async () => {
@@ -172,7 +159,7 @@ describe("ExplorePage integrada", () => {
     expect(await screen.findByText(/obrigado pelo feedback/i)).toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenLastCalledWith("/v1/feedback", expect.objectContaining({
       method: "POST",
-      body: JSON.stringify({ request_id: "request-35", family_id: "fam-auto-0007", vote: "up" }),
+      body: JSON.stringify({ request_id: "request-35", family_id: "fam-auto-0007", document_version: "docver-auto-0007-v2", chunk_index: 3, vote: "up" }),
     })));
   });
 });

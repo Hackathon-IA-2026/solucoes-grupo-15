@@ -21,9 +21,8 @@ import { RelationsPanel } from "../components/RelationsPanel";
  * recente por padrao - AC1) e refaz a busca com "?version=" quando o
  * usuario clica numa entrada da linha do tempo.
  *
- * Os ``matched_chunks`` do card de busca que levou ate aqui chegam via
- * state do react-router (nunca a URL - ver SearchPage.tsx, o Link usa
- * `state={{ matchedChunks: result.matched_chunks }}`). Acessar esta
+ * O trecho casado do card de busca que levou ate aqui chega via
+ * state do react-router (nunca a URL). Acessar esta
  * pagina direto (refresh, link colado) e um caminho valido: o state
  * fica vazio e a pagina funciona igual, so sem nenhum destaque no
  * texto - nao e erro.
@@ -212,7 +211,7 @@ function FamilyContent({
               segment.highlighted ? (
                 <span key={index}>
                   <mark>{segment.text}</mark>
-                  <em> Trecho da busca — {segment.chunk.is_latest ? "versão mais recente" : "não é a versão mais recente"}</em>
+                  <em> Trecho da busca</em>
                 </span>
               ) : (
                 <span key={index}>{segment.text}</span>

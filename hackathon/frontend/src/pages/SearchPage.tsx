@@ -118,34 +118,32 @@ export function SearchPage() {
         {state.kind === "result" && state.envelope.results.length > 0 && (
           <>
             <div className="results-heading">
-              <div><p className="eyebrow">Resultados</p><h2>{state.envelope.results.length} documento{state.envelope.results.length > 1 ? "s" : ""} encontrado{state.envelope.results.length > 1 ? "s" : ""}</h2></div>
+              <div><p className="eyebrow">Resultados</p><h2>{state.envelope.results.length} trecho{state.envelope.results.length > 1 ? "s" : ""} encontrado{state.envelope.results.length > 1 ? "s" : ""}</h2></div>
               <p className="result-meta">Corpus {state.envelope.corpus_version} · modo {state.envelope.data_mode}</p>
             </div>
             <ol className="result-list">
               {state.envelope.results.map((result, index) => (
-                <li key={result.family_id}>
+                <li key={`${result.document_version}-${result.chunk_index}`}>
                   <article className="result-card">
                     <div className="result-rank">{String(index + 1).padStart(2, "0")}</div>
                     <div className="result-main">
                       <div className="result-label-row">
-                        <span className="document-type"><FileText size={15} /> {formatDocumentType(result.face.document_type)}</span>
-                        <span className="version-pill">Versão vigente</span>
+                        <span className="document-type"><FileText size={15} /> {formatDocumentType(result.document_type)}</span>
+                        <span className="version-pill">Trecho encontrado</span>
                       </div>
-                      <h3>{result.face.document_type} — {result.face.document_version}</h3>
-                      <p className="date-line"><CalendarDays size={15} /> Data da versão vigente: {result.face.version_date}</p>
+                      <h3>{result.document_type} — {result.document_version}</h3>
+                      <p className="date-line"><CalendarDays size={15} /> Data da versão: {result.version_date}</p>
                       <div className="evidence-list">
-                        {result.matched_chunks.map((chunk) => (
-                          <div className="evidence-item" key={chunk.document_version}>
-                            <p>{chunk.excerpt}</p>
-                            <span>Trecho na versão {chunk.document_version} — {chunk.is_latest ? "versão mais recente" : "não é a versão mais recente"}</span>
-                          </div>
-                        ))}
+                        <div className="evidence-item">
+                          <p>{result.excerpt}</p>
+                          <span>Trecho na versão {result.document_version}</span>
+                        </div>
                       </div>
                       <div className="result-actions">
-                        <Link className="detail-link" to={`/documents/${result.family_id}`} state={{ matchedChunks: result.matched_chunks }}>
+                        <Link className="detail-link" to={`/documents/${result.family_id}`} state={{ matchedChunks: [{ document_version: result.document_version, excerpt: result.excerpt, score: result.score }] }}>
                           Abrir documento <ArrowRight size={16} aria-hidden="true" />
                         </Link>
-                        <FeedbackButtons requestId={state.envelope.request_id} familyId={result.family_id} />
+                        <FeedbackButtons requestId={state.envelope.request_id} familyId={result.family_id} documentVersion={result.document_version} chunkIndex={result.chunk_index} />
                       </div>
                     </div>
                   </article>

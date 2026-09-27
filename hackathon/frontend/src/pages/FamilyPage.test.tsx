@@ -163,7 +163,7 @@ describe("FamilyPage", () => {
 
     await waitFor(() => expect(screen.getByText("versao retificada")).toBeInTheDocument());
     expect(screen.getByText("versao retificada").tagName).toBe("MARK");
-    expect(screen.getByText(/trecho da busca — versão mais recente/i)).toBeInTheDocument();
+    expect(screen.getByText(/trecho da busca/i)).toBeInTheDocument();
   });
 
   it("troca de versão pela linha do tempo atualiza o texto exibido", async () => {

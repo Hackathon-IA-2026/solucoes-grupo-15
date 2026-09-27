@@ -9,25 +9,20 @@
 
 import { apiFetch } from "./client";
 
-export type SearchFace = {
-  document_version: string;
-  version_date: string;
-  document_type: string;
-  document_id: string;
-  processo_numero: string | null;
-};
-
 export type MatchedChunk = {
   document_version: string;
   excerpt: string;
   score: number;
-  is_latest: boolean;
 };
 
-export type SearchResult = {
+export type SearchResult = MatchedChunk & {
   family_id: string;
-  face: SearchFace;
-  matched_chunks: MatchedChunk[];
+  localizador: string | null;
+  document_type: string;
+  document_id: string;
+  processo_numero: string | null;
+  version_date: string;
+  chunk_index: number;
 };
 
 export type SearchEnvelope = {
@@ -37,6 +32,9 @@ export type SearchEnvelope = {
   model_version: string;
   ranking_version: string;
   results: SearchResult[];
+  total: number;
+  next_cursor: string | null;
+  stale_corpus: boolean;
 };
 
 export async function searchDocuments(query: string): Promise<SearchEnvelope> {

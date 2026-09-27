@@ -25,19 +25,15 @@ const SEARCH_ENVELOPE_WITH_ONE_RESULT = {
   results: [
     {
       family_id: "fam-auto-0007",
-      face: {
-        document_version: "docver-auto-0007-v2",
-        version_date: "2024-04-18",
-        document_type: "auto_de_infracao",
-      },
-      matched_chunks: [
-        {
-          document_version: "docver-auto-0007-v2",
-          excerpt: "trecho novo",
-          score: 0.9,
-          is_latest: true,
-        },
-      ],
+      document_version: "docver-auto-0007-v2",
+      version_date: "2024-04-18",
+      document_type: "auto_de_infracao",
+      document_id: "auto-0007",
+      processo_numero: "48500.001234/2024-11",
+      excerpt: "trecho novo",
+      score: 0.9,
+      localizador: null,
+      chunk_index: 2,
     },
   ],
 };
@@ -82,7 +78,7 @@ describe("SearchPage", () => {
     );
   });
 
-  it("mostra os cards de resultado, com a face e as etiquetas de versão dos trechos", async () => {
+  it("mostra um card por trecho retornado no envelope plano", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -94,28 +90,8 @@ describe("SearchPage", () => {
           model_version: "fixture-demo",
           ranking_version: "demo-ranking-v1",
           results: [
-            {
-              family_id: "fam-auto-0007",
-              face: {
-                document_version: "docver-auto-0007-v2",
-                version_date: "2024-04-18",
-                document_type: "auto_de_infracao",
-              },
-              matched_chunks: [
-                {
-                  document_version: "docver-auto-0007-v1",
-                  excerpt: "trecho antigo",
-                  score: 0.7,
-                  is_latest: false,
-                },
-                {
-                  document_version: "docver-auto-0007-v2",
-                  excerpt: "trecho novo",
-                  score: 0.9,
-                  is_latest: true,
-                },
-              ],
-            },
+            { ...SEARCH_ENVELOPE_WITH_ONE_RESULT.results[0], document_version: "docver-auto-0007-v1", excerpt: "trecho antigo", chunk_index: 1 },
+            SEARCH_ENVELOPE_WITH_ONE_RESULT.results[0],
           ],
         }),
       }),
@@ -127,8 +103,9 @@ describe("SearchPage", () => {
     await waitFor(() =>
       expect(screen.getByText(/auto_de_infracao — docver-auto-0007-v2/i)).toBeInTheDocument(),
     );
-    expect(screen.getByText(/não é a versão mais recente/i)).toBeInTheDocument();
-    expect(screen.getByText(/trecho na versão docver-auto-0007-v2 — versão mais recente/i)).toBeInTheDocument();
+    expect(screen.getByText(/trecho antigo/i)).toBeInTheDocument();
+    expect(screen.getByText(/trecho novo/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /2 trechos encontrados/i })).toBeInTheDocument();
   });
 
   it("mostra mensagem de nenhum resultado quando results é uma lista vazia", async () => {
@@ -166,7 +143,7 @@ describe("SearchPage", () => {
     );
   });
 
-  it("envia POST /v1/feedback com request_id, family_id e o voto ao clicar 👍", async () => {
+  it("envia POST /v1/feedback com a identidade exata do trecho ao clicar 👍", async () => {
     const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
       if (url === "/v1/search") {
@@ -202,7 +179,7 @@ describe("SearchPage", () => {
       "/v1/feedback",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ request_id: "r1", family_id: "fam-auto-0007", vote: "up" }),
+        body: JSON.stringify({ request_id: "r1", family_id: "fam-auto-0007", document_version: "docver-auto-0007-v2", chunk_index: 2, vote: "up" }),
       }),
     );
     expect(screen.getByRole("button", { name: /votar positivamente/i })).toBeDisabled();
