@@ -15,7 +15,9 @@ Ordem total obrigatoria: score desc, desempate por
 
 import json
 import uuid
+from dataclasses import replace
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -27,6 +29,7 @@ from app.clients.ai_client import (
     get_ai_client,
 )
 from app.db import Base, get_db_session, make_engine, make_session_factory
+from app.fixtures.case1_loader import load_case1_real_corpus
 from app.fixtures.loader import load_demo_corpus
 from app.main import create_app
 from app.models import SearchExecution
@@ -37,6 +40,10 @@ class _SeedAiClient:
     """Fake deterministico usado so para popular o catalogo via
     run_ingestion antes de cada teste (mesmo padrao de test_ingestions.py).
     """
+
+    def similar_families(self, family_id: str, top_k: int) -> list:
+        # issue #92: sem vetores neste dublê, sem candidatos de similar_a.
+        return []
 
     def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
         return [
@@ -104,6 +111,8 @@ def test_search_chunk_result_has_all_required_fields(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho na versao antiga",
             score=0.7,
         ),
@@ -129,18 +138,59 @@ def test_search_chunk_result_has_all_required_fields(database_url: str) -> None:
     assert result["chunk_index"] == 0
 
 
+def test_search_chunk_index_is_the_chunk_position_in_the_document_not_in_the_list(
+    database_url: str,
+) -> None:
+    """Issue #96: ``chunk_index``/``chunk_id`` vem do ai (indice real do
+    chunk no documento) e sao estaveis entre consultas - nunca a posicao
+    do hit na lista devolvida pelo ai."""
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0007",
+            chunk_index=7,
+            excerpt="oitavo chunk do auto",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0002",
+            chunk_index=2,
+            excerpt="terceiro chunk do auto",
+            score=0.9,
+        ),
+    ]
+    client = _client(database_url, hits)
+
+    response = client.post("/v1/search", json={"query": "qualquer consulta"})
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    # Empate de score e document_version: desempata pelo indice real do chunk.
+    assert [(r["chunk_id"], r["chunk_index"], r["excerpt"]) for r in results] == [
+        ("docver-auto-0007-v1#chunk-0002", 2, "terceiro chunk do auto"),
+        ("docver-auto-0007-v1#chunk-0007", 7, "oitavo chunk do auto"),
+    ]
+
+
 def test_search_same_hit_twice_appears_twice(database_url: str) -> None:
     """O mesmo chunk devolvido duas vezes pelo ai aparece duas vezes — sem dedup."""
     hits = [
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho repetido",
             score=0.8,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho repetido",
             score=0.8,
         ),
@@ -163,12 +213,16 @@ def test_search_results_ordered_by_score_desc(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="score baixo",
             score=0.3,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="score alto",
             score=0.9,
         ),
@@ -192,18 +246,24 @@ def test_search_deterministic_order_on_tie(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-norma-1000",
             document_version="docver-norma-1000-v1",
+            chunk_id="docver-norma-1000-v1#chunk-0000",
+            chunk_index=0,
             excerpt="norma",
             score=0.5,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="auto v1",
             score=0.5,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="defesa",
             score=0.5,
         ),
@@ -228,18 +288,24 @@ def test_search_family_id_present_but_not_deduped(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk 1 da mesma familia",
             score=0.8,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk outra familia",
             score=0.6,
         ),
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v2",
+            chunk_id="docver-auto-0007-v2#chunk-0000",
+            chunk_index=0,
             excerpt="chunk 2 da mesma familia",
             score=0.4,
         ),
@@ -270,6 +336,8 @@ def test_search_envelope_has_all_required_fields(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-norma-1000",
             document_version="docver-norma-1000-v1",
+            chunk_id="docver-norma-1000-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho norma",
             score=0.8,
         ),
@@ -324,6 +392,8 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho na versao antiga",
             score=0.7,
         ),
@@ -352,6 +422,8 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
         {
             "family_id": "fam-auto-0007",
             "document_version": "docver-auto-0007-v1",
+            "chunk_id": "docver-auto-0007-v1#chunk-0000",
+            "chunk_index": 0,
             "excerpt": "trecho na versao antiga",
             "score": 0.7,
         }
@@ -381,6 +453,25 @@ def test_search_data_mode_is_real_when_embedder_is_bedrock(database_url: str, mo
     assert response.json()["data_mode"] == "real"
 
 
+def test_search_data_mode_is_real_when_embedder_is_cached(database_url: str, monkeypatch) -> None:
+    """Issue #88: ``EMBEDDER=cached`` serve vetores Titan V2 reais ja
+    computados (sem chamada AWS) pelo mesmo pipeline real do ai - a busca
+    e vetorial de verdade, logo ``data_mode`` e ``"real"``.
+    """
+    from app.config import get_settings
+
+    monkeypatch.setenv("EMBEDDER", "cached")
+    get_settings.cache_clear()
+    try:
+        client = _client(database_url, hits=[])
+        response = client.post("/v1/search", json={"query": "qualquer consulta"})
+    finally:
+        get_settings.cache_clear()
+
+    assert response.status_code == 200
+    assert response.json()["data_mode"] == "real"
+
+
 def test_search_data_mode_real_is_preserved_across_cursor_continuation(
     database_url: str, monkeypatch
 ) -> None:
@@ -395,12 +486,16 @@ def test_search_data_mode_real_is_preserved_across_cursor_continuation(
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho auto",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho defesa",
             score=0.7,
         ),
@@ -442,12 +537,16 @@ def test_search_pagination_first_page_returns_next_cursor(database_url: str) -> 
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho auto",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho defesa",
             score=0.7,
         ),
@@ -477,12 +576,16 @@ def test_search_pagination_continuation_does_not_call_ai(database_url: str) -> N
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho auto",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho defesa",
             score=0.7,
         ),
@@ -561,9 +664,30 @@ def test_search_pagination_custom_limit(database_url: str) -> None:
     """Limit customizado e respeitado: limit=2 sobre 3 chunks devolve 2 resultados
     na primeira pagina e next_cursor nao nulo."""
     hits = [
-        AiSearchHit(family_id="fam-auto-0007", document_version="docver-auto-0007-v1", excerpt="t1", score=0.9),
-        AiSearchHit(family_id="fam-defesa-0007", document_version="docver-defesa-0007-v1", excerpt="t2", score=0.8),
-        AiSearchHit(family_id="fam-decisao-0007", document_version="docver-decisao-0007-v1", excerpt="t3", score=0.7),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t1",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t2",
+            score=0.8,
+        ),
+        AiSearchHit(
+            family_id="fam-decisao-0007",
+            document_version="docver-decisao-0007-v1",
+            chunk_id="docver-decisao-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t3",
+            score=0.7,
+        ),
     ]
     client = _client(database_url, hits)
 
@@ -579,8 +703,22 @@ def test_search_pagination_custom_limit(database_url: str) -> None:
 def test_search_pagination_last_page_has_no_next_cursor(database_url: str) -> None:
     """Ultima pagina tem next_cursor nulo."""
     hits = [
-        AiSearchHit(family_id="fam-auto-0007", document_version="docver-auto-0007-v1", excerpt="t1", score=0.9),
-        AiSearchHit(family_id="fam-defesa-0007", document_version="docver-defesa-0007-v1", excerpt="t2", score=0.8),
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t1",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
+            excerpt="t2",
+            score=0.8,
+        ),
     ]
     client = _client(database_url, hits)
 
@@ -609,6 +747,8 @@ def test_replay_returns_recomputed_and_original_response(database_url: str) -> N
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho para replay",
             score=0.8,
         ),
@@ -666,6 +806,8 @@ def test_search_stale_corpus_false_on_first_call(database_url: str) -> None:
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="trecho qualquer",
             score=0.8,
         ),
@@ -687,12 +829,16 @@ def test_search_stale_corpus_false_on_continuation_with_same_corpus(
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="primeiro chunk",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="segundo chunk",
             score=0.7,
         ),
@@ -727,12 +873,16 @@ def test_search_stale_corpus_true_on_continuation_after_corpus_update(
         AiSearchHit(
             family_id="fam-auto-0007",
             document_version="docver-auto-0007-v1",
+            chunk_id="docver-auto-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk stale",
             score=0.9,
         ),
         AiSearchHit(
             family_id="fam-defesa-0007",
             document_version="docver-defesa-0007-v1",
+            chunk_id="docver-defesa-0007-v1#chunk-0000",
+            chunk_index=0,
             excerpt="chunk stale 2",
             score=0.7,
         ),
@@ -764,3 +914,157 @@ def test_search_stale_corpus_true_on_continuation_after_corpus_update(
     assert second_resp.status_code == 200
     second_body = second_resp.json()
     assert second_body["stale_corpus"] is True
+
+
+# ---------------------------------------------------------------------------
+# Catalogo misto: "mais recente" = ordem de ingestao (issue #97)
+# ---------------------------------------------------------------------------
+
+# Hash do manifesto do caso 1 (#68), conferido pela e2e da #88
+# (tests_e2e/conftest.py::case1_manifest_corpus_version).
+_CASE1_MANIFEST_HASH = "ff92f49718aa65cfe34c7d87ae8f8af85e43a06b24d0a8b281da2c86eb599816"
+
+_DEMO_HIT = AiSearchHit(
+    family_id="fam-auto-0007",
+    document_version="docver-auto-0007-v1",
+    chunk_id="docver-auto-0007-v1#chunk-0000",
+    chunk_index=0,
+    excerpt="trecho demo",
+    score=0.9,
+)
+_DEMO_HIT_2 = AiSearchHit(
+    family_id="fam-defesa-0007",
+    document_version="docver-defesa-0007-v1",
+    chunk_id="docver-defesa-0007-v1#chunk-0000",
+    chunk_index=0,
+    excerpt="trecho demo 2",
+    score=0.8,
+)
+_CASE1_HIT = AiSearchHit(
+    family_id="case1-cemig-auto",
+    document_version="case1-cemig-auto-2020",
+    chunk_id="case1-cemig-auto-2020#chunk-0000",
+    chunk_index=0,
+    excerpt="trecho caso 1",
+    score=0.9,
+)
+_CASE1_HIT_2 = AiSearchHit(
+    family_id="case1-enel-auto",
+    document_version="case1-enel-auto-2018",
+    chunk_id="case1-enel-auto-2018#chunk-0000",
+    chunk_index=0,
+    excerpt="trecho caso 1 2",
+    score=0.8,
+)
+
+
+def _demo_only_corpus():
+    """Corpus demo sem os 10 documentos ``case1-*`` - assim demo e caso 1
+    ocupam linhas disjuntas e o catalogo fica misto em qualquer ordem."""
+    demo = load_demo_corpus()
+    return replace(
+        demo,
+        documents=[d for d in demo.documents if not d.family_id.startswith("case1-")],
+    )
+
+
+def _case1_hash_corpus():
+    return load_case1_real_corpus(corpus_version=_CASE1_MANIFEST_HASH)
+
+
+def _empty_catalog_app(database_url: str):
+    """App com catalogo vazio; o ai de busca e trocado por teste via
+    ``state["hits"]``. Devolve (client, session_factory, state)."""
+    engine = make_engine(database_url)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    session_factory = make_session_factory(engine)
+    state: dict = {"hits": []}
+
+    def _override_session():
+        session = session_factory()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    app = create_app()
+    app.dependency_overrides[get_ai_client] = lambda: _FakeSearchAiClient(state["hits"])
+    app.dependency_overrides[get_db_session] = _override_session
+    return TestClient(app), session_factory, state
+
+
+def _ingest(session_factory: sessionmaker[Session], corpus) -> None:
+    with session_factory() as session:
+        run_ingestion(corpus, ai_client=_SeedAiClient(), session=session)
+        session.commit()
+
+
+def _first_page(client: TestClient) -> dict:
+    response = client.post("/v1/search", json={"query": "catalogo misto", "limit": 1})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["next_cursor"] is not None
+    return body
+
+
+def _continuation(client: TestClient, first: dict) -> dict:
+    response = client.post(
+        "/v1/search",
+        json={"query": "catalogo misto", "cursor": first["next_cursor"], "limit": 1},
+    )
+    assert response.status_code == 200
+    return response.json()
+
+
+
+@pytest.mark.parametrize(
+    ("first_corpus", "first_hits", "second_corpus", "second_hits", "latest_version"),
+    [
+        pytest.param(
+            _demo_only_corpus, [_DEMO_HIT, _DEMO_HIT_2],
+            _case1_hash_corpus, [_CASE1_HIT, _CASE1_HIT_2],
+            _CASE1_MANIFEST_HASH,
+            id="demo-depois-hash-caso1",
+        ),
+        pytest.param(
+            _case1_hash_corpus, [_CASE1_HIT, _CASE1_HIT_2],
+            _demo_only_corpus, [_DEMO_HIT, _DEMO_HIT_2],
+            "demo-v2-case1",
+            id="hash-caso1-depois-demo",
+        ),
+    ],
+)
+def test_stale_corpus_follows_ingestion_order_in_mixed_catalog(
+    database_url: str,
+    first_corpus,
+    first_hits,
+    second_corpus,
+    second_hits,
+    latest_version,
+) -> None:
+    """Com demo (``demo-v2-case1``) e hash do manifesto do caso 1 no mesmo
+    catalogo, o corpus "mais recente" e o da ultima ingestao, nao o maior
+    ``corpus_version`` em ordem lexicografica (issue #97)."""
+    client, session_factory, state = _empty_catalog_app(database_url)
+
+    # Busca feita sobre o primeiro corpus ingerido.
+    _ingest(session_factory, first_corpus())
+    state["hits"] = first_hits
+    old = _first_page(client)
+
+    # Um corpus mais novo chega depois da busca: a busca antiga fica stale.
+    _ingest(session_factory, second_corpus())
+    old_continuation = _continuation(client, old)
+    assert old_continuation["stale_corpus"] is True
+    assert old_continuation["corpus_version"] != latest_version
+
+    # Busca nova sobre o corpus mais recente: nao e stale.
+    state["hits"] = second_hits
+    fresh = _first_page(client)
+    assert fresh["corpus_version"] == latest_version
+    assert _continuation(client, fresh)["stale_corpus"] is False

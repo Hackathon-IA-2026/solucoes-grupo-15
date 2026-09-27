@@ -20,7 +20,7 @@ export function RankingCard({ result, onOpenDocuments }: { result: RankedPrecede
         <div className="ranking-actions">
           <button type="button" onClick={() => setExpanded((open) => !open)}>{expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />} {result.rank === 1 ? "Por que está no topo?" : "Por que está ranqueado?"}</button>
           <button type="button" onClick={() => onOpenDocuments(result)}><FileText size={16} /> {result.documents.length} documento{result.documents.length === 1 ? "-chave" : "s-chave"} <FolderOpen size={16} /></button>
-          {result.requestId && result.familyId && <FeedbackButtons requestId={result.requestId} familyId={result.familyId} />}
+          {result.requestId && result.feedbackChunk && <FeedbackButtons target={{ requestId: result.requestId, ...result.feedbackChunk }} />}
         </div>
         {expanded && <div className="ranking-explanation"><strong>Motivos do ranking</strong><ul>{result.reasons.map((reason, index) => <li key={`${index}-${reason}`}>{reason}</li>)}</ul><p><b>Agente:</b> {result.distributor} · <b>Tema:</b> {result.theme}</p></div>}
       </div>

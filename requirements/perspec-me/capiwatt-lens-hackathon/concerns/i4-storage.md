@@ -10,7 +10,8 @@ topics:
   - issue-8 — O que roda local e o que roda na AWS no primeiro ciclo, e como o ambiente local fala com Bedrock e SES (credenciais, custo)?
   - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
   - issue-13 — Que estratégia de chunking e que modelo de embeddings do Bedrock se ajustam aos documentos do caso 1?
-updated_at: 2026-09-26
+  - issue-95 — `index` recebe o localizador do original (e o `ai` extrai o texto) ou o Markdown já extraído inline?
+updated_at: 2026-09-27
 ---
 
 ## Current resolution
@@ -20,8 +21,8 @@ updated_at: 2026-09-26
 **Revisão (issue-15, Eduardo, 2026-09-18) — supersede a parte "serviço vetorial é dono de todo o armazenamento documental" abaixo.** Divisão vigente:
 
 - O **backend (F3) é dono do catálogo documental**: famílias, versões, metadados (checksum, data de coleta, origem, `version_date`), localizador do original e do texto extraído (volume local / S3), nó `processo`, sugestões de fusão (#3), `document_relations` (#4) e feedback. Nós e arestas do grafo vivem no **mesmo store**; `GET /v1/documents/{id}` e `/v1/documents/{id}/graph` são servidos em processo, sem atravessar `/internal/v1/*`.
-- O **serviço vetorial (`ai`, F2) é dono só do derivado**: extração de texto, chunking, embeddings, índice vetorial, `references` e `similar_families`. O índice **nunca é fonte de verdade** — é reconstruível a partir do catálogo via `reindex` (#2). `family_id` e `document_version` aparecem no índice apenas como atributos de filtro.
-- Texto extraído: o `ai` extrai durante `index` e **escreve num localizador** (volume/S3) que o backend só registra no catálogo — não devolve o texto no `IndexReport`. Racional: OCR/Textract (Fog) produz artefatos grandes e fica do lado de F2. **Precisão de 2026-09-26 (issue-13)**: esse "texto extraído" é o Markdown produzido pela etapa de extração por IA (cópia verbatim, sem anexos inteiros, contrato social ou assinaturas — [[d14-data-operations-modeling]]), não o texto bruto do PDF; os embeddings preservados por [[i7-reproducibility]] são computados sobre esse Markdown.
+- O **serviço vetorial (`ai`, F2) é dono só do derivado**: ~~extração de texto,~~ chunking, embeddings, índice vetorial, `references` e `similar_families`. O índice **nunca é fonte de verdade** — é reconstruível a partir do catálogo via `reindex` (#2). `family_id` e `document_version` aparecem no índice apenas como atributos de filtro.
+- Texto extraído: ~~o `ai` extrai durante `index` e~~ **escreve num localizador** (volume/S3) que o backend só registra no catálogo — não devolve o texto no `IndexReport`. ~~Racional: OCR/Textract (Fog) produz artefatos grandes e fica do lado de F2.~~ **Revisão (issue-95, 2026-09-27):** a extração **não** acontece no `ai`. Ela é do pipeline de extração (#59 no caso 1, #68 em lote, com OCR/visão na rota da #72), antes da fronteira. O `backend` envia a `index` o Markdown já extraído, inline em `documents[].text`. O `ai` grava esse texto sem alterar em `<DOCUMENTS_DIR>/<document_version>/extracted.txt` e devolve o caminho em `extracted_text_locator`, que continua sendo o que o catálogo registra. Forma completa em [[i9-integration]]. **Precisão de 2026-09-26 (issue-13)**: esse "texto extraído" é o Markdown produzido pela etapa de extração por IA (cópia verbatim, sem anexos inteiros, contrato social ou assinaturas — [[d14-data-operations-modeling]]), não o texto bruto do PDF; os embeddings preservados por [[i7-reproducibility]] são computados sobre esse Markdown.
 - **Escala não decide**: um corpus da ordem de 100 documentos (poucos milhares de chunks) é pequeno para qualquer componente — Bedrock, OpenSearch ou um SQLite no backend. O número `~100` foi **superado pela issue-11** ([[d16-golden-dataset]], 2026-09-22): o corpus de avaliação do primeiro ciclo são 10 PDFs. A conclusão não muda, porque o corpus ficou menor. O que decidiu foi coerência (nós e arestas juntos; uma só máquina de curadoria no backend) e custo de desenvolvimento no hackathon.
 
 O que segue foi a resolução de issue-2/issue-4 e permanece válido onde não contradiz o acima (forma de `document_relations`, nó `processo`, interface própria do repositório de relações, S3/OpenSearch como destinos físicos).
@@ -47,6 +48,7 @@ Onde fisicamente: originais em volume local / S3 na AWS (plano linha 77); vetore
 - 2026-09-18 (issue-8): store do catálogo = Postgres em container no Compose, atrás dos repositórios com interface própria; DynamoDB descartado; grafo por profundidade via CTE recursiva.
 - 2026-09-18 (issue-15): o backend é dono do catálogo documental (famílias, versões, metadados, localizadores de original e texto extraído) junto das arestas e do nó `processo`; o `ai` é dono só do índice derivado. **Supersede** a decisão de issue-2 "o serviço vetorial é dono do armazenamento de documentos" e o trade-off de issue-4 "resolver ids pela fronteira HTTP ao montar o grafo".
 - 2026-09-18 (issue-15): texto extraído é escrito pelo `ai` num localizador (volume/S3) registrado no catálogo do backend, não devolvido inline.
+- 2026-09-27 (issue-95, decisão do dono do repo): o texto que o `ai` grava no localizador é o Markdown que o `backend` envia inline em `index`, já extraído pelo pipeline #59/#68. O `ai` não extrai e não lê originais. **Supersede** o racional da issue-15 "OCR/Textract fica do lado de F2".
 - 2026-09-18 (issue-15): a escala do corpus (~100 documentos) não é critério para esta divisão; nenhum componente precisa ser dimensionado por ela no primeiro ciclo.
 
 - 2026-09-18 (issue-2): o serviço vetorial é dono do armazenamento de documentos (originais + extraídos), não apenas dos vetores.
@@ -82,6 +84,8 @@ Onde fisicamente: originais em volume local / S3 na AWS (plano linha 77); vetore
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md` linhas 77, 102, 118, 129, 162.
 
 ## Topic history
+
+- issue-95 (2026-09-27): tirou a extração de texto do `ai`, que passou para o pipeline #59/#68 antes da fronteira. O `ai` continua escrevendo o localizador do texto extraído, mas a partir do Markdown recebido inline em `index`.
 
 - issue-13 (2026-09-26): precisou que o "texto extraído" registrado no catálogo é o Markdown produzido pela nova etapa de extração por IA (D14), não o texto bruto do PDF.
 - issue-8: fixou Postgres em container como store do catálogo e volume compartilhado como localizador físico no primeiro ciclo.

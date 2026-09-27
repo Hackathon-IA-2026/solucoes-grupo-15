@@ -14,6 +14,12 @@ pipeline real (chunking.py + embeddings.py + vector_store.py), unico
 valor documentado em i7-reproducibility.md para o modo com credenciais
 Bedrock reais.
 
+``"cached"`` (issue #88) roda o mesmo pipeline real de ``"bedrock"``,
+mas resolve cada vetor em arquivos de vetores Titan V2 ja computados
+(``EMBEDDING_CACHE_PATHS``, caminhos separados por ``os.pathsep`` - ver
+app/cached_embeddings.py), sem credenciais AWS - usado pela suite e2e
+local.
+
 ``opensearch_url`` ja esta wired no docker-compose.yml
 (``OPENSEARCH_URL=http://opensearch:9200``) desde o scaffold TB1 - so
 sem uso real ate esta issue.
@@ -22,13 +28,18 @@ sem uso real ate esta issue.
 import os
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
+
+# Valores de EMBEDDER que rodam o pipeline real (chunking + indice vetorial).
+REAL_PIPELINE_EMBEDDERS = ("bedrock", "cached")
 
 
 @dataclass(frozen=True)
 class Settings:
     documents_dir: str
     embedder: str
+    embedding_cache_paths: list[Path]
     opensearch_url: str
     dynamodb_table_process_themes: str
     dynamodb_endpoint_url: Optional[str]
@@ -40,6 +51,9 @@ def get_settings() -> Settings:
     return Settings(
         documents_dir=os.environ.get("DOCUMENTS_DIR", "/data/documents"),
         embedder=os.environ.get("EMBEDDER", "fake"),
+        embedding_cache_paths=[
+            Path(p) for p in os.environ.get("EMBEDDING_CACHE_PATHS", "").split(os.pathsep) if p
+        ],
         opensearch_url=os.environ.get("OPENSEARCH_URL", "http://opensearch:9200"),
         dynamodb_table_process_themes=os.environ.get("DYNAMODB_TABLE_PROCESS_THEMES", "capiwatt-process-classification"),
         dynamodb_endpoint_url=os.environ.get("DYNAMODB_ENDPOINT_URL"),

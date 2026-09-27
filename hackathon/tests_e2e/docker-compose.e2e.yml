@@ -1,0 +1,92 @@
+# Stack isolada da suite e2e (issue #88): backend + ai + Postgres +
+# OpenSearch reais, sem credenciais AWS. Projeto e portas proprios
+# (18000/18001/19200) para nao colidir com o `docker compose up` de
+# desenvolvimento (hackathon/docker-compose.yml); volumes sao
+# descartados pelo conftest ao final (`down -v`).
+#
+# EMBEDDER=cached (default): o ai roda o pipeline vetorial real
+# (chunking + OpenSearch) resolvendo cada vetor nos arquivos de vetores
+# Titan V2 ja computados - vetores brutos da #73 (chunks) e vetor da
+# consulta do protototipo da #60 - montados em /data/embedding-cache.
+# E2E_EMBEDDER=bedrock liga o Bedrock real para quem tiver credenciais
+# (repassadas do shell, nunca gravadas aqui).
+
+name: capiwatt-e2e
+
+services:
+  backend:
+    build: ../backend
+    ports:
+      - "18000:8000"
+    environment:
+      AI_BASE_URL: http://ai:8000
+      EMBEDDER: ${E2E_EMBEDDER:-cached}
+      MAILER: preview
+      DATABASE_URL: postgresql+psycopg://capiwatt:capiwatt@postgres:5432/capiwatt
+      CASE_DOCUMENTS_DIR: /data/case-documents
+    depends_on:
+      ai:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - documents-data:/data/documents
+      - ../data/case-1-carolina-mmgd:/data/case-documents:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  ai:
+    build: ../ai
+    ports:
+      - "18001:8000"
+    environment:
+      EMBEDDER: ${E2E_EMBEDDER:-cached}
+      EMBEDDING_CACHE_PATHS: /data/embedding-cache/raw_vectors.jsonl:/data/embedding-cache/query.json
+      OPENSEARCH_URL: http://opensearch:9200
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+      AWS_SESSION_TOKEN:
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    volumes:
+      - documents-data:/data/documents
+      - ${E2E_RAW_VECTORS_PATH:?defina E2E_RAW_VECTORS_PATH}:/data/embedding-cache/raw_vectors.jsonl:ro
+      - ${E2E_QUERY_VECTOR_PATH:?defina E2E_QUERY_VECTOR_PATH}:/data/embedding-cache/query.json:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/internal/v1/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: capiwatt
+      POSTGRES_PASSWORD: capiwatt
+      POSTGRES_DB: capiwatt
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U capiwatt -d capiwatt"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  opensearch:
+    image: opensearchproject/opensearch:2.17.0
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "19200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+
+volumes:
+  documents-data:

@@ -8,12 +8,19 @@ Ate a issue #69, os dois eram adapters demo (fixture), sem busca
 vetorial real. A issue #69 torna os dois reais por tras do mesmo toggle
 ``EMBEDDER`` (ver app/config.py) e adiciona ``reindex``
 (/internal/v1/reindex, ver app/routes/reindex.py). As demais operacoes
-do port (similar_families, reassign_family) continuam fora de escopo,
-para tickets futuros.
+do port: ``similar_families`` (/internal/v1/families/{id}/similar, ver
+app/routes/families.py) chegou na issue #92 e ``delete(document_version)``
+(DELETE /internal/v1/documents/{document_version}, ver
+app/routes/delete.py) na issue #98; ``reassign_family`` continua fora de
+escopo, para tickets futuros.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
+from app.cached_embeddings import EmbeddingNotCached
+from app.routes.delete import router as delete_router
+from app.routes.families import router as families_router
 from app.routes.health import router as health_router
 from app.routes.index import router as index_router
 from app.routes.reindex import router as reindex_router
@@ -28,8 +35,17 @@ def create_app() -> FastAPI:
     app.include_router(index_router)
     app.include_router(search_router)
     app.include_router(reindex_router)
+    app.include_router(families_router)
+    app.include_router(delete_router)
     app.include_router(process_classification_router)
+    app.add_exception_handler(EmbeddingNotCached, _embedding_not_cached_handler)
     return app
+
+
+async def _embedding_not_cached_handler(_: Request, exc: EmbeddingNotCached) -> JSONResponse:
+    # EMBEDDER=cached (issue #88): texto sem vetor pre-computado e entrada
+    # que este modo nao sabe processar, nao falha interna do servico.
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
 app = create_app()

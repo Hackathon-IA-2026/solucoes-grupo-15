@@ -155,8 +155,6 @@ describe("FamilyPage", () => {
         {
           document_version: "docver-auto-0007-v2",
           excerpt: "versao retificada",
-          score: 0.9,
-          is_latest: true,
         },
       ],
     });
@@ -196,8 +194,6 @@ describe("FamilyPage", () => {
         {
           document_version: "docver-auto-0007-v1",
           excerpt: "descumprimento",
-          score: 0.5,
-          is_latest: false,
         },
       ],
     });
@@ -206,6 +202,23 @@ describe("FamilyPage", () => {
 
     const olderVersionItem = screen.getByRole("button", { name: /2024-03-04/ }).closest("li");
     expect(olderVersionItem).toHaveTextContent(/trecho relevante aqui/i);
+  });
+
+  it("etiqueta o trecho destacado numa versão antiga como não sendo a mais recente", async () => {
+    const fetchMock = mockDocumentAndGraphFetch((url) =>
+      url.includes("version=docver-auto-0007-v1") ? OLD_VERSION_DETAIL_BODY : DETAIL_BODY,
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderFamilyPage({
+      matchedChunks: [{ document_version: "docver-auto-0007-v1", excerpt: "descumprimento" }],
+    });
+
+    await waitFor(() => expect(screen.getByText("auto_de_infracao")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /2024-03-04/ }));
+
+    await waitFor(() => expect(screen.getByText("descumprimento").tagName).toBe("MARK"));
+    expect(screen.getByText(/trecho da busca — não é a versão mais recente/i)).toBeInTheDocument();
   });
 
   it("funciona sem matchedChunks no state (acesso direto), sem nenhum destaque", async () => {

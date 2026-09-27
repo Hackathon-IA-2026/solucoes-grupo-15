@@ -8,7 +8,6 @@ import {
   type DocumentDetail,
   type VersionSummary,
 } from "../api/documents";
-import type { MatchedChunk } from "../api/search";
 import { DemoBanner } from "../components/DemoBanner";
 import { RelationsPanel } from "../components/RelationsPanel";
 
@@ -21,9 +20,13 @@ import { RelationsPanel } from "../components/RelationsPanel";
  * recente por padrao - AC1) e refaz a busca com "?version=" quando o
  * usuario clica numa entrada da linha do tempo.
  *
- * Os ``matched_chunks`` do card de busca que levou ate aqui chegam via
+ * Os trechos casados do card de busca que levou ate aqui chegam via
  * state do react-router (nunca a URL - ver SearchPage.tsx, o Link usa
- * `state={{ matchedChunks: result.matched_chunks }}`). Acessar esta
+ * `state={{ matchedChunks: [{ document_version, excerpt }] }}`, e o
+ * modal de documentos da ExplorePage). Desde a issue #93 o resultado de
+ * busca e plano e nao diz mais se a versao do trecho e a mais recente:
+ * isso e derivado aqui da linha do tempo (``versions`` vem da mais
+ * recente para a mais antiga, routes/documents.py). Acessar esta
  * pagina direto (refresh, link colado) e um caminho valido: o state
  * fica vazio e a pagina funciona igual, so sem nenhum destaque no
  * texto - nao e erro.
@@ -32,6 +35,12 @@ import { RelationsPanel } from "../components/RelationsPanel";
  * ../components/RelationsPanel.tsx) ao final da pagina, centrado em
  * `detail.family_id` - sem remover nada do que ja existia.
  */
+
+/** Trecho casado na busca: a versao em que ocorreu e o texto do trecho. */
+export type MatchedChunk = {
+  document_version: string;
+  excerpt: string;
+};
 
 type LocationState = {
   matchedChunks?: MatchedChunk[];
@@ -150,6 +159,7 @@ function FamilyContent({
     selected.version_date_source === "publication" ? "publicação" : "coleta";
 
   const segments = buildHighlightedSegments(selected.text, chunksInSelectedVersion);
+  const latestVersion = detail.versions[0]?.document_version;
 
   return (
     <div className="detail-layout">
@@ -212,7 +222,7 @@ function FamilyContent({
               segment.highlighted ? (
                 <span key={index}>
                   <mark>{segment.text}</mark>
-                  <em> Trecho da busca — {segment.chunk.is_latest ? "versão mais recente" : "não é a versão mais recente"}</em>
+                  <em> Trecho da busca — {segment.chunk.document_version === latestVersion ? "versão mais recente" : "não é a versão mais recente"}</em>
                 </span>
               ) : (
                 <span key={index}>{segment.text}</span>

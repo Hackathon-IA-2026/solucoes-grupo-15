@@ -35,6 +35,7 @@ mudar a forma consumida por ``run_ingestion``.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from app.fixtures.loader import FixtureCorpus, FixtureDocumentVersion, load_demo_corpus
@@ -43,16 +44,34 @@ CASE1_REAL_CORPUS_VERSION = "case1-real-v1"
 CASE1_FAMILY_PREFIX = "case1-"
 CASE1_EXPECTED_DOCUMENT_COUNT = 10
 
-# app/fixtures/case1_loader.py -> fixtures -> app -> backend -> hackathon -> raiz do repo.
-_REPO_ROOT = Path(__file__).resolve().parents[4]
-_DEFAULT_CASE1_DATA_DIR = _REPO_ROOT / "hackathon" / "data" / "case-1-carolina-mmgd"
 
 
-def load_case1_real_corpus(data_dir: Path = _DEFAULT_CASE1_DATA_DIR) -> FixtureCorpus:
+def default_case1_data_dir() -> Path:
+    """Diretorio do Markdown do caso 1.
+
+    ``CASE_DOCUMENTS_DIR`` (mesma variavel de app/routes/documents.py) tem
+    precedencia: no container do backend o repositorio nao existe e o
+    diretorio do caso 1 chega montado por volume (docker-compose.yml,
+    issue #88). Fora do container, cai para o caminho no repositorio.
+    """
+    configured = os.environ.get("CASE_DOCUMENTS_DIR")
+    if configured:
+        return Path(configured)
+    # app/fixtures/case1_loader.py -> fixtures -> app -> backend -> hackathon.
+    return Path(__file__).resolve().parents[3] / "data" / "case-1-carolina-mmgd"
+
+
+def load_case1_real_corpus(
+    data_dir: Path | None = None, corpus_version: str = CASE1_REAL_CORPUS_VERSION
+) -> FixtureCorpus:
     """Devolve o corpus real do caso 1: os mesmos 10 documentos
     ``"case1-*"`` da fixture demo, com o texto Markdown completo (nao o
     resumo curado de demonstracao).
+
+    ``corpus_version`` permite registrar o hash do manifesto da issue #68
+    em vez do rotulo fixo ``CASE1_REAL_CORPUS_VERSION`` (issue #88).
     """
+    data_dir = data_dir if data_dir is not None else default_case1_data_dir()
     demo = load_demo_corpus()
     case1_docs = [doc for doc in demo.documents if doc.family_id.startswith(CASE1_FAMILY_PREFIX)]
     if len(case1_docs) != CASE1_EXPECTED_DOCUMENT_COUNT:
@@ -63,7 +82,7 @@ def load_case1_real_corpus(data_dir: Path = _DEFAULT_CASE1_DATA_DIR) -> FixtureC
 
     documents = [_with_real_text(doc, data_dir) for doc in case1_docs]
     return FixtureCorpus(
-        corpus_version=CASE1_REAL_CORPUS_VERSION,
+        corpus_version=corpus_version,
         provisional=False,
         documents=documents,
     )

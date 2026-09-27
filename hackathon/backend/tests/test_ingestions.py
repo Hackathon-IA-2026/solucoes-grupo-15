@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.clients.ai_client import IndexDocumentPayload, IndexReport, get_ai_client
 from app.db import Base, get_db_session, make_engine, make_session_factory
+from app.fixtures.case1_loader import CASE1_REAL_CORPUS_VERSION, load_case1_real_corpus
 from app.fixtures.loader import load_demo_corpus
 from app.main import create_app
 from app.models import DocumentFamily, DocumentVersion
@@ -23,6 +24,10 @@ class _FakeAiClient:
     """Fake deterministico do AiClient - sem HTTP real, seguindo o
     mesmo padrao de dependency override do teste de health (Ticket 1).
     """
+
+    def similar_families(self, family_id: str, top_k: int) -> list:
+        # issue #92: sem vetores neste dublê, sem candidatos de similar_a.
+        return []
 
     def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
         return [
@@ -144,6 +149,10 @@ class _RealModeAiClient:
     """Fake que devolve total_input_tokens (issue #73, AC "custo de
     embeddings"), como o ai real faz em EMBEDDER=bedrock."""
 
+    def similar_families(self, family_id: str, top_k: int) -> list:
+        # issue #92: sem vetores neste dublê, sem candidatos de similar_a.
+        return []
+
     def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
         return [
             IndexReport(
@@ -183,3 +192,80 @@ def test_run_ingestion_total_input_tokens_is_none_in_fake_mode(database_url: str
         session.commit()
 
     assert result.total_input_tokens is None
+
+
+# ---------------------------------------------------------------------------
+# Corpus real do caso 1 via HTTP (issue #88)
+# ---------------------------------------------------------------------------
+
+
+class _RecordingAiClient(_FakeAiClient):
+    def __init__(self) -> None:
+        self.indexed: list[IndexDocumentPayload] = []
+
+    def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
+        self.indexed.extend(documents)
+        return super().index(documents)
+
+
+def _client_with(database_url: str, ai_client) -> tuple[TestClient, sessionmaker[Session]]:
+    client, session_factory = _client(database_url)
+    client.app.dependency_overrides[get_ai_client] = lambda: ai_client
+    return client, session_factory
+
+
+def test_ingestion_of_case1_real_corpus_sends_full_markdown_to_ai(database_url: str) -> None:
+    ai_client = _RecordingAiClient()
+    client, session_factory = _client_with(database_url, ai_client)
+    corpus = load_case1_real_corpus()
+
+    response = client.post("/v1/ingestions", json={"corpus": "case1-real"})
+
+    assert response.status_code == 200
+    assert response.json()["versions_count"] == len(corpus.documents) == 10
+    sent = {doc.document_version: doc for doc in ai_client.indexed}
+    for doc in corpus.documents:
+        assert sent[doc.document_version].text == doc.text
+        assert sent[doc.document_version].corpus_version == CASE1_REAL_CORPUS_VERSION
+
+    with session_factory() as session:
+        versions = list(session.scalars(select(DocumentVersion)))
+    assert {v.corpus_version for v in versions} == {CASE1_REAL_CORPUS_VERSION}
+    assert {v.document_version for v in versions} == set(sent)
+
+
+def test_ingestion_of_case1_real_corpus_records_given_corpus_version(database_url: str) -> None:
+    ai_client = _RecordingAiClient()
+    client, session_factory = _client_with(database_url, ai_client)
+
+    response = client.post(
+        "/v1/ingestions", json={"corpus": "case1-real", "corpus_version": "manifest-hash-abc"}
+    )
+
+    assert response.status_code == 200
+    assert {doc.corpus_version for doc in ai_client.indexed} == {"manifest-hash-abc"}
+    with session_factory() as session:
+        corpus_versions = set(session.scalars(select(DocumentVersion.corpus_version)))
+    assert corpus_versions == {"manifest-hash-abc"}
+
+
+def test_ingestion_rejects_unknown_corpus(database_url: str) -> None:
+    client, _ = _client(database_url)
+
+    response = client.post("/v1/ingestions", json={"corpus": "nao-existe"})
+
+    assert response.status_code == 422
+
+
+def test_case1_loader_honors_case_documents_dir(tmp_path, monkeypatch) -> None:
+    """No container do backend o repositorio nao existe: o Markdown do caso 1
+    chega montado em ``CASE_DOCUMENTS_DIR`` (docker-compose.yml)."""
+    import shutil
+
+    from app.fixtures import case1_loader
+
+    shutil.copytree(case1_loader.default_case1_data_dir(), tmp_path / "case1")
+    monkeypatch.setenv("CASE_DOCUMENTS_DIR", str(tmp_path / "case1"))
+
+    assert case1_loader.default_case1_data_dir() == tmp_path / "case1"
+    assert len(load_case1_real_corpus().documents) == 10
