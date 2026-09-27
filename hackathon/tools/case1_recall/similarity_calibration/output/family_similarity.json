@@ -1,0 +1,417 @@
+{
+  "model_version": "amazon.titan-embed-text-v2-us-east-1-1024d-normalized",
+  "source": "hackathon/.pipeline-output/documents/_raw_vectors/amazon.titan-embed-text-v2-us-east-1-1024d-normalized.jsonl (issue #73, embeddings reais)",
+  "n_families": 10,
+  "n_pairs": 45,
+  "families": {
+    "case1-cemig-auto": {
+      "n_chunks": 64,
+      "n_motivacao_chunks": 4
+    },
+    "case1-cemig-recurso": {
+      "n_chunks": 40,
+      "n_motivacao_chunks": 0
+    },
+    "case1-cemig-voto": {
+      "n_chunks": 19,
+      "n_motivacao_chunks": 0
+    },
+    "case1-coelba-auto": {
+      "n_chunks": 22,
+      "n_motivacao_chunks": 8
+    },
+    "case1-coelba-complemento": {
+      "n_chunks": 7,
+      "n_motivacao_chunks": 0
+    },
+    "case1-coelba-recurso": {
+      "n_chunks": 30,
+      "n_motivacao_chunks": 0
+    },
+    "case1-coelba-voto": {
+      "n_chunks": 22,
+      "n_motivacao_chunks": 0
+    },
+    "case1-enel-auto": {
+      "n_chunks": 81,
+      "n_motivacao_chunks": 64
+    },
+    "case1-enel-recurso": {
+      "n_chunks": 25,
+      "n_motivacao_chunks": 0
+    },
+    "case1-enel-voto": {
+      "n_chunks": 32,
+      "n_motivacao_chunks": 0
+    }
+  },
+  "pairs": [
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-cemig-voto",
+      "score": 0.9278382742195567
+    },
+    {
+      "family_a": "case1-enel-auto",
+      "family_b": "case1-enel-voto",
+      "score": 0.9091278986534346
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-cemig-voto",
+      "score": 0.9068125066994929
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-cemig-recurso",
+      "score": 0.9009029334987336
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-coelba-voto",
+      "score": 0.8751614778669082
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.8725882490592578
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-coelba-voto",
+      "score": 0.8666346485728446
+    },
+    {
+      "family_a": "case1-enel-auto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.8540197498392529
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-enel-auto",
+      "score": 0.8367895714585887
+    },
+    {
+      "family_a": "case1-enel-recurso",
+      "family_b": "case1-enel-voto",
+      "score": 0.823469654908863
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.806151697583256
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7880950083197631
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.7805864505359307
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-enel-voto",
+      "score": 0.7703881408087355
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-coelba-voto",
+      "score": 0.76809661053467
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-enel-auto",
+      "score": 0.7668439465016621
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-enel-auto",
+      "score": 0.7647275860824992
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-auto",
+      "score": 0.7629558886036967
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7610447033532152
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-enel-auto",
+      "score": 0.7421816328378676
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-voto",
+      "score": 0.7385439031113903
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7337492934369163
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-auto",
+      "score": 0.7304769881297309
+    },
+    {
+      "family_a": "case1-coelba-voto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7272026713919088
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-voto",
+      "score": 0.7185708045491254
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-voto",
+      "score": 0.7051277612053357
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-auto",
+      "score": 0.690745944644189
+    },
+    {
+      "family_a": "case1-coelba-voto",
+      "family_b": "case1-enel-auto",
+      "score": 0.6870239747578777
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-enel-auto",
+      "score": 0.6869370528242944
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.6867044510939329
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-enel-voto",
+      "score": 0.6794020541189179
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.6789366183270569
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6759100357936785
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6473455158899579
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.6453795568628978
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6388487229692388
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-enel-auto",
+      "score": 0.6182674056003508
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6023303786453368
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-enel-voto",
+      "score": 0.6018936518469953
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6016426594234665
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.5960843390437657
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.5891964182899324
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-enel-recurso",
+      "score": 0.5557207918843583
+    },
+    {
+      "family_a": "case1-coelba-voto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.5519949906647271
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.5319004119828493
+    }
+  ],
+  "top_k_neighbors": {
+    "case1-enel-auto": [
+      {
+        "family_id": "case1-enel-voto",
+        "score": 0.9091278986534346
+      },
+      {
+        "family_id": "case1-enel-recurso",
+        "score": 0.8540197498392529
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.8367895714585887
+      }
+    ],
+    "case1-enel-recurso": [
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.8540197498392529
+      },
+      {
+        "family_id": "case1-enel-voto",
+        "score": 0.823469654908863
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.6759100357936785
+      }
+    ],
+    "case1-enel-voto": [
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.9091278986534346
+      },
+      {
+        "family_id": "case1-enel-recurso",
+        "score": 0.823469654908863
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.7880950083197631
+      }
+    ],
+    "case1-cemig-auto": [
+      {
+        "family_id": "case1-cemig-voto",
+        "score": 0.9068125066994929
+      },
+      {
+        "family_id": "case1-cemig-recurso",
+        "score": 0.9009029334987336
+      },
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.8367895714585887
+      }
+    ],
+    "case1-cemig-recurso": [
+      {
+        "family_id": "case1-cemig-voto",
+        "score": 0.9278382742195567
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.9009029334987336
+      },
+      {
+        "family_id": "case1-enel-voto",
+        "score": 0.7703881408087355
+      }
+    ],
+    "case1-cemig-voto": [
+      {
+        "family_id": "case1-cemig-recurso",
+        "score": 0.9278382742195567
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.9068125066994929
+      },
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.7668439465016621
+      }
+    ],
+    "case1-coelba-auto": [
+      {
+        "family_id": "case1-coelba-voto",
+        "score": 0.8751614778669082
+      },
+      {
+        "family_id": "case1-coelba-recurso",
+        "score": 0.8725882490592578
+      },
+      {
+        "family_id": "case1-coelba-complemento",
+        "score": 0.7805864505359307
+      }
+    ],
+    "case1-coelba-voto": [
+      {
+        "family_id": "case1-coelba-auto",
+        "score": 0.8751614778669082
+      },
+      {
+        "family_id": "case1-coelba-recurso",
+        "score": 0.8666346485728446
+      },
+      {
+        "family_id": "case1-coelba-complemento",
+        "score": 0.76809661053467
+      }
+    ],
+    "case1-coelba-recurso": [
+      {
+        "family_id": "case1-coelba-auto",
+        "score": 0.8725882490592578
+      },
+      {
+        "family_id": "case1-coelba-voto",
+        "score": 0.8666346485728446
+      },
+      {
+        "family_id": "case1-coelba-complemento",
+        "score": 0.806151697583256
+      }
+    ],
+    "case1-coelba-complemento": [
+      {
+        "family_id": "case1-coelba-recurso",
+        "score": 0.806151697583256
+      },
+      {
+        "family_id": "case1-coelba-auto",
+        "score": 0.7805864505359307
+      },
+      {
+        "family_id": "case1-coelba-voto",
+        "score": 0.76809661053467
+      }
+    ]
+  }
+}
