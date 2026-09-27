@@ -81,11 +81,13 @@ def _data_mode_for(embedder: str) -> str:
     """Deriva ``data_mode`` do toggle ``EMBEDDER`` (issue #69).
 
     ``"fake"`` (default) -> ``"demo"`` (nunca houve busca vetorial
-    real). ``"bedrock"`` -> ``"real"``. Qualquer outro valor cai em
+    real). ``"bedrock"`` -> ``"real"``. ``"cached"`` (issue #88) ->
+    ``"real"``: o ai roda o mesmo pipeline vetorial, com vetores Titan V2
+    reais ja computados, so sem chamar a AWS. Qualquer outro valor cai em
     ``"demo"`` por seguranca (nunca afirma "real" sem confirmar o modo
     exato esperado).
     """
-    return "real" if embedder == "bedrock" else "demo"
+    return "real" if embedder in ("bedrock", "cached") else "demo"
 
 
 # ---------------------------------------------------------------------------

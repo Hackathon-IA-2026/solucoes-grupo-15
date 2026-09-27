@@ -35,7 +35,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.config import get_settings
+from app.config import REAL_PIPELINE_EMBEDDERS, get_settings
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
 from app.embeddings import BedrockEmbedder
 from app.routes.index import MODEL_VERSION, get_embedder, get_vector_store
@@ -86,7 +86,7 @@ def search(
     embedder: BedrockEmbedder = Depends(get_embedder),
     vector_store: VectorStore = Depends(get_vector_store),
 ) -> SearchResponse:
-    if get_settings().embedder == "bedrock":
+    if get_settings().embedder in REAL_PIPELINE_EMBEDDERS:
         return _search_real(payload, embedder, vector_store)
     return _search_fake(payload, fixture_path)
 

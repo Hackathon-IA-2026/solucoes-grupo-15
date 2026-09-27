@@ -381,6 +381,25 @@ def test_search_data_mode_is_real_when_embedder_is_bedrock(database_url: str, mo
     assert response.json()["data_mode"] == "real"
 
 
+def test_search_data_mode_is_real_when_embedder_is_cached(database_url: str, monkeypatch) -> None:
+    """Issue #88: ``EMBEDDER=cached`` serve vetores Titan V2 reais ja
+    computados (sem chamada AWS) pelo mesmo pipeline real do ai - a busca
+    e vetorial de verdade, logo ``data_mode`` e ``"real"``.
+    """
+    from app.config import get_settings
+
+    monkeypatch.setenv("EMBEDDER", "cached")
+    get_settings.cache_clear()
+    try:
+        client = _client(database_url, hits=[])
+        response = client.post("/v1/search", json={"query": "qualquer consulta"})
+    finally:
+        get_settings.cache_clear()
+
+    assert response.status_code == 200
+    assert response.json()["data_mode"] == "real"
+
+
 def test_search_data_mode_real_is_preserved_across_cursor_continuation(
     database_url: str, monkeypatch
 ) -> None:

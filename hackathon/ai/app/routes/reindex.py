@@ -29,7 +29,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends
 
-from app.config import get_settings
+from app.config import REAL_PIPELINE_EMBEDDERS, get_settings
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
 from app.embeddings import BedrockEmbedder
 from app.raw_vectors import RawVectorStore
@@ -62,7 +62,7 @@ def reindex_documents(
 ) -> IndexResponse:
     settings = get_settings()
 
-    if settings.embedder == "bedrock":
+    if settings.embedder in REAL_PIPELINE_EMBEDDERS:
         index_name = index_name_for_model_version(REAL_MODEL_VERSION)
         vector_store.delete_index(index_name)
         raw_vector_store.delete_all()

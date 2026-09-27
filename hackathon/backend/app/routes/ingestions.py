@@ -30,13 +30,16 @@ dos Tickets 2-5/7/9) e um no-op seguro.
 
 import uuid
 from dataclasses import dataclass
+from typing import Literal
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.ai_client import AiClient, IndexDocumentPayload, IndexReport, get_ai_client
 from app.db import get_db_session
+from app.fixtures.case1_loader import CASE1_REAL_CORPUS_VERSION, load_case1_real_corpus
 from app.fixtures.loader import FixtureCorpus, FixtureDocumentVersion, load_demo_corpus
 from app.fixtures.relations_loader import (
     FixtureRelation,
@@ -61,13 +64,37 @@ class IngestionResult:
     total_input_tokens: int | None = None
 
 
+class IngestionRequestIn(BaseModel):
+    """Corpo opcional de POST /v1/ingestions (issue #88).
+
+    Sem corpo (ou ``corpus="demo"``), mantem o comportamento original:
+    fixture demo + relacoes da fixture. ``corpus="case1-real"`` ingere os
+    10 documentos reais do caso 1 (Markdown completo da issue #59, ver
+    app/fixtures/case1_loader.py) sem relacoes de fixture - arestas de um
+    corpus real devem vir do ai (``similar_families``/``references``),
+    nunca de dado demo. ``corpus_version`` (so para ``case1-real``)
+    registra o hash do manifesto da issue #68 no catalogo.
+    """
+
+    corpus: Literal["demo", "case1-real"] = "demo"
+    corpus_version: str | None = None
+
+
 @router.post("/ingestions")
 def create_ingestion(
+    payload: IngestionRequestIn | None = None,
     ai_client: AiClient = Depends(get_ai_client),
     session: Session = Depends(get_db_session),
 ) -> dict[str, str | int]:
-    corpus = load_demo_corpus()
-    relations = load_demo_relations()
+    payload = payload or IngestionRequestIn()
+    if payload.corpus == "case1-real":
+        corpus = load_case1_real_corpus(
+            corpus_version=payload.corpus_version or CASE1_REAL_CORPUS_VERSION
+        )
+        relations = None
+    else:
+        corpus = load_demo_corpus()
+        relations = load_demo_relations()
     result = run_ingestion(
         corpus, ai_client=ai_client, session=session, relations=relations
     )

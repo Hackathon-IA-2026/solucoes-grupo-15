@@ -44,8 +44,9 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
+from app.cached_embeddings import get_cached_embedder
 from app.chunking import chunk_document
-from app.config import get_settings
+from app.config import REAL_PIPELINE_EMBEDDERS, get_settings
 from app.embeddings import (
     DIMENSIONS,
     BedrockEmbedder,
@@ -117,8 +118,11 @@ def get_embedder() -> BedrockEmbedder:
 
     Testes sobrescrevem com um dublê (ver
     hackathon/ai/tests/test_index_real.py) - nunca chamam Bedrock de
-    verdade na suite automatizada.
+    verdade na suite automatizada. Com ``EMBEDDER=cached`` (issue #88)
+    devolve o embedder de vetores pre-computados, sem cliente AWS.
     """
+    if get_settings().embedder == "cached":
+        return get_cached_embedder()
     return BedrockEmbedder(get_bedrock_runtime_client())
 
 
@@ -155,7 +159,7 @@ def index_documents(
     raw_vector_store: RawVectorStore = Depends(get_raw_vector_store),
 ) -> IndexResponse:
     settings = get_settings()
-    if settings.embedder == "bedrock":
+    if settings.embedder in REAL_PIPELINE_EMBEDDERS:
         reports = [
             _index_one_real(
                 document, documents_root, store, embedder, vector_store, raw_vector_store

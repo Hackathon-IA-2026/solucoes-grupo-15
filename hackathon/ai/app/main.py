@@ -12,8 +12,10 @@ do port (similar_families, reassign_family) continuam fora de escopo,
 para tickets futuros.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
+from app.cached_embeddings import EmbeddingNotCached
 from app.routes.health import router as health_router
 from app.routes.index import router as index_router
 from app.routes.reindex import router as reindex_router
@@ -29,7 +31,14 @@ def create_app() -> FastAPI:
     app.include_router(search_router)
     app.include_router(reindex_router)
     app.include_router(process_classification_router)
+    app.add_exception_handler(EmbeddingNotCached, _embedding_not_cached_handler)
     return app
+
+
+async def _embedding_not_cached_handler(_: Request, exc: EmbeddingNotCached) -> JSONResponse:
+    # EMBEDDER=cached (issue #88): texto sem vetor pre-computado e entrada
+    # que este modo nao sabe processar, nao falha interna do servico.
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
 app = create_app()
