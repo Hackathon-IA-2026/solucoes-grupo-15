@@ -33,7 +33,15 @@ Liste aqui o que precisa estar instalado antes de rodar o projeto (ex: Node 18+,
 
 ## Metodologia de especificação
 
-Para especificar e executar este projeto, nos inspiramos no trabalho de Hugo Villamizar, o **PerspecML**, usando agentes de software engineering e os princípios de **Spec-Driven Development (SDD)**. A especificação — do levantamento de requisitos por múltiplas perspectivas até a execução do código — é conduzida por agentes.
+Para especificar e executar este projeto, nos inspiramos no trabalho de Hugo Villamizar, o **PerspecML**, usando agentes de software engineering e os princípios de **Spec-Driven Development (SDD)**. A especificação — do levantamento de requisitos por múltiplas perspectivas até a execução do código — é conduzida por agentes. Como isso é aplicado neste projeto, concretamente: [Especificação orientada por concerns com PerspecMe](docs/specification-with-perspecme.md).
+
+## Práticas de engenharia
+
+Além da implementação da solução, o projeto adota práticas contínuas de engenharia, documentadas separadamente:
+
+- [Acessibilidade](docs/accessibility.md) — revisão contínua contra critérios da WCAG 2.2, não uma auditoria única no final.
+- [Segurança e gestão de vulnerabilidades](docs/security.md) — detecção de dependências vulneráveis via Dependabot e o que ainda falta formalizar nesse fluxo.
+- [Evidence packs](docs/evidence-packs.md) — todo agente publica prova auditável ao terminar uma issue ou ao abortar um trabalho longo, em vez de um resumo não verificável.
 
 ## Licença
 
