@@ -41,7 +41,7 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 ## Confirmed facts
 
 - Plano (linha 44): F2 implementa "relações documentais"; (linha 81): "relações mínimas começam como metadados com evidência", Neptune é evolução.
-- Protótipos de UI (`juridico_wallace/`) contêm padrões textuais "(Revogado pela Lei nº …)" e "passa a vigorar com as alterações…" — referências explícitas extraíveis por identificador.
+- Protótipos de UI (`juridico_referencia/`) contêm padrões textuais "(Revogado pela Lei nº …)" e "passa a vigorar com as alterações…" — referências explícitas extraíveis por identificador.
 - Issue #3: processo SEI não é família; peças distintas ligadas por aresta; chave explícita `tipo + identificador oficial` já existe e serve para resolver alvos de referência.
 - O corpus real da Carolina contém 10 PDFs com 5 a 71 páginas e texto extraível por página; a estrutura inclui seções numeradas, tabelas e cabeçalhos/rodapés repetidos.
 - O adapter atual de `hackathon/ai/app/routes/index.py` apenas conta blocos separados por linhas em branco em fixtures e declara que isso não é uma estratégia real de chunking.
@@ -89,7 +89,7 @@ Referências cujo alvo **não está no corpus** ficam como aresta **pendente de 
 ## Evidence
 
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md` linhas 44, 81, 162.
-- `ideathon/materiais/inspirations/juridico_wallace/Busca_Legislativa_Inteligente_prototipo.html` — padrões "(Revogado pela Lei nº 11.941, de 2009)", "Art. 22. A Lei nº 14.182 … passa a vigorar com as alterações"; bloco "Normas Relacionadas" (lista plana, sem tipo).
+- `ideathon/materiais/inspirations/juridico_referencia/Busca_Legislativa_Inteligente_prototipo.html` — padrões "(Revogado pela Lei nº 11.941, de 2009)", "Art. 22. A Lei nº 14.182 … passa a vigorar com as alterações"; bloco "Normas Relacionadas" (lista plana, sem tipo).
 - `concerns/d4-data-dictionary.md`, `concerns/d11-consistency.md` (issue #3).
 - `hackathon/data/case-1-carolina-mmgd/` — corpus real de 10 PDFs usado para caracterizar páginas e estrutura documental.
 - `hackathon/ai/app/routes/index.py` — comportamento provisório de fixtures que será substituído pelo chunking estrutural.

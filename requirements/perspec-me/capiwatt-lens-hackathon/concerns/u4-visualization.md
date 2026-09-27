@@ -5,7 +5,7 @@ perspective: user-experience
 status: partial
 topics:
   - issue-3 — Como uma família de versões de um documento é identificada e agrupada num único objeto, na ingestão e no resultado da busca?
-  - issue-5 — Como a interface expõe a exploração do grafo de relações e o objeto-documento com versões, a partir dos protótipos juridico_wallace?
+  - issue-5 — Como a interface expõe a exploração do grafo de relações e o objeto-documento com versões, a partir dos protótipos juridico_referencia?
   - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
   - issue-64 — Ao remover o conceito de família de documentos, como versões e documentos passam a ser identificados, agrupados e exibidos na ingestão, busca e interface?
 updated_at: 2026-09-26
@@ -40,7 +40,7 @@ Confirmar uma aresta `similar_a` sugerida, ou uma sugestão de fusão de famíli
 ## Confirmed facts
 
 - Reunião de 2026-09-17: versões de um mesmo documento são um único objeto na interface; versões similares retornadas pela busca são agrupadas, nunca exibidas como resultados independentes.
-- Protótipos `ideathon/materiais/inspirations/juridico_wallace/` marcam trechos revogados inline ("(Revogado pela Lei nº 11.941, de 2009)") e usam "Vigência e atualidade" como critério de ranking, mas não modelam família/versão.
+- Protótipos `ideathon/materiais/inspirations/juridico_referencia/` marcam trechos revogados inline ("(Revogado pela Lei nº 11.941, de 2009)") e usam "Vigência e atualidade" como critério de ranking, mas não modelam família/versão.
 - Plano, linha 129: `GET /v1/documents/{id}` exige `version`.
 - Protótipo `Busca_Regulatoria_Setor_Eletrico_prototipo.html`: o JS contém uma tela `network` (`buildNetworkSVG`, `networkRows`, `goNetwork`) com grafo em estrela e tabela normA / relação / normB / dispositivos, mas nenhuma marcação a renderiza e ela não está no menu. A tela de detalhe traz "Normas Relacionadas" e o card traz "Relacionado a:" como strings soltas, sem navegação.
 - Protótipo: marcador "📌 Trecho relevante" no texto integral; histórico por artigo inline com redações antigas empilhadas.
@@ -86,7 +86,7 @@ Confirmar uma aresta `similar_a` sugerida, ou uma sugestão de fusão de famíli
 ## Evidence
 
 - Map issue #1, Notes (decisões de 2026-09-17).
-- `ideathon/materiais/inspirations/juridico_wallace/Busca_Regulatoria_Setor_Eletrico_prototipo.html` (marcação de revogação; critério de vigência).
+- `ideathon/materiais/inspirations/juridico_referencia/Busca_Regulatoria_Setor_Eletrico_prototipo.html` (marcação de revogação; critério de vigência).
 - Mesmo protótipo, template descompactado (bundle gzip+base64): tela `network` não ligada, "Normas Relacionadas" sem navegação, marcador "Trecho relevante", histórico por artigo inline.
 - Issue #4 / [[d14-data-operations-modeling]] e [[i10-hybrid-decision-intelligence]]: nós, tipos e estados de aresta que o painel "Relações" expõe.
 

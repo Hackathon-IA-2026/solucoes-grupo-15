@@ -4,7 +4,7 @@ concern: ~/.claude/skills/perspec-me/catalog/concerns/u6-acceptance/README.md
 perspective: user-experience
 status: partial
 topics:
-  - issue-5 — Como a interface expõe a exploração do grafo de relações e o objeto-documento com versões, a partir dos protótipos juridico_wallace?
+  - issue-5 — Como a interface expõe a exploração do grafo de relações e o objeto-documento com versões, a partir dos protótipos juridico_referencia?
 updated_at: 2026-09-18
 ---
 
@@ -52,7 +52,7 @@ Este Concern fica `partial`: o que está resolvido é a credibilidade das relaç
 
 - Map issue #1, Decisions so far (#3 e #4).
 - [[d14-data-operations-modeling]], [[i10-hybrid-decision-intelligence]]: estados e evidência das arestas.
-- `ideathon/materiais/inspirations/juridico_wallace/Busca_Regulatoria_Setor_Eletrico_prototipo.html`, template descompactado: 👍/👎, "Contestar resultado", "Fonte oficial", painel de transparência.
+- `ideathon/materiais/inspirations/juridico_referencia/Busca_Regulatoria_Setor_Eletrico_prototipo.html`, template descompactado: 👍/👎, "Contestar resultado", "Fonte oficial", painel de transparência.
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md`, linha 130.
 
 ## Topic history
