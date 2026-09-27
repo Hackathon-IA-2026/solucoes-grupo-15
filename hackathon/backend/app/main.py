@@ -17,7 +17,8 @@ GET /v1/feedback (lista para conferencia manual). Ticket 8 adiciona
 notificacoes + previa de e-mail (ver app/routes/notifications.py):
 escolha de escopo por usuario, geracao de notificacao a partir da
 ingestao (app/notifications.py::run_notifications) e o port ``Mailer``
-(app/mailer.py).
+(app/mailer.py). Issue #103 adiciona a linha de log JSON por requisicao
+a /v1/* no stdout (ver app/request_log.py).
 
 O engine/session factory do catalogo sao criados aqui a partir de
 Settings.database_url e guardados em app.state; testes substituem a
@@ -32,6 +33,7 @@ from fastapi import FastAPI
 
 from app.config import get_settings
 from app.db import Base, make_engine, make_session_factory
+from app.request_log import RequestLogMiddleware
 from app.routes.demo import router as demo_router
 from app.routes.documents import router as documents_router
 from app.routes.feedback import router as feedback_router
@@ -55,6 +57,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="CapiWatt Lens - backend", lifespan=_lifespan)
     app.state.db_engine = engine
     app.state.db_session_factory = make_session_factory(engine)
+    app.add_middleware(RequestLogMiddleware)
     app.include_router(health_router)
     app.include_router(demo_router)
     app.include_router(ingestions_router)

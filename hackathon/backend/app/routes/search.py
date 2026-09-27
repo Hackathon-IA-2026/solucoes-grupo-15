@@ -54,13 +54,18 @@ CRUS devolvidos por ``ai_client.search`` (antes do agrupamento) - e o
 "vetor da consulta preservado" desta fase demo, que
 ``app/replay.py::replay_search`` usa para reexecutar a busca offline,
 sem chamar o ai de novo.
+
+Issue #103 (observabilidade): a rota grava o ``request_id`` do envelope
+(novo ou o da execucao continuada pelo cursor) no estado da requisicao via
+``app/request_log.py::mark_search_request``, para a linha de log JSON
+desta requisicao sair com ``search_request_id`` preenchido.
 """
 
 import base64
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -69,6 +74,7 @@ from app.clients.ai_client import AiClient, AiSearchHit, get_ai_client
 from app.config import get_settings
 from app.db import get_db_session
 from app.models import DocumentVersion, SearchExecution
+from app.request_log import mark_search_request
 
 router = APIRouter(prefix="/v1", tags=["search"])
 
@@ -171,6 +177,7 @@ def _latest_corpus_version(session: Session) -> str:
 @router.post("/search", response_model=SearchEnvelope)
 def search(
     payload: SearchRequestIn,
+    request: Request,
     ai_client: AiClient = Depends(get_ai_client),
     session: Session = Depends(get_db_session),
 ) -> SearchEnvelope:
@@ -199,6 +206,7 @@ def search(
         next_cursor = _encode_cursor(request_id, next_offset) if next_offset < total else None
 
         stale_corpus = execution.corpus_version != _latest_corpus_version(session)
+        mark_search_request(request, execution.request_id)
 
         return SearchEnvelope(
             request_id=execution.request_id,
@@ -219,6 +227,7 @@ def search(
     page_results = all_results[:limit]
 
     request_id = str(uuid.uuid4())
+    mark_search_request(request, request_id)
     next_offset = limit
     next_cursor = _encode_cursor(request_id, next_offset) if next_offset < total else None
 
