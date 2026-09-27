@@ -23,6 +23,11 @@ presente; caso contrario tenta ler o commit atual de
 empacotada/detached de forma inesperada, etc.) cai para a string
 ``"unknown"`` - isto e so uma referencia auditavel, nao precisa ser
 sofisticado.
+
+``auth_mode`` (issue #104) escolhe a autenticacao de ``/v1/*``:
+``none`` (padrao, Compose local - nada muda) ou ``cognito`` (AWS - access
+token do User Pool, ver app/auth.py). Em ``cognito`` os tres campos
+``cognito_*`` sao obrigatorios; ``create_app`` recusa subir sem eles.
 """
 
 import os
@@ -39,6 +44,10 @@ class Settings:
     database_url: str
     default_corpus_version: str
     code_reference: str
+    auth_mode: str = "none"
+    cognito_region: str = ""
+    cognito_user_pool_id: str = ""
+    cognito_client_id: str = ""
 
 
 def _read_git_code_reference() -> str:
@@ -67,4 +76,8 @@ def get_settings() -> Settings:
         ),
         default_corpus_version=os.environ.get("DEFAULT_CORPUS_VERSION", "demo-v2-case1"),
         code_reference=os.environ.get("CODE_REFERENCE") or _read_git_code_reference(),
+        auth_mode=os.environ.get("AUTH_MODE", "none"),
+        cognito_region=os.environ.get("COGNITO_REGION", ""),
+        cognito_user_pool_id=os.environ.get("COGNITO_USER_POOL_ID", ""),
+        cognito_client_id=os.environ.get("COGNITO_CLIENT_ID", ""),
     )
