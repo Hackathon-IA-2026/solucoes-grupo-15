@@ -12,6 +12,8 @@
  * existe aqui, por decisao explicita da issue #23.
  */
 
+import { apiFetch } from "./client";
+
 export type Vote = "up" | "down";
 
 /** O chunk avaliado, na busca que o produziu. */
@@ -32,7 +34,7 @@ export type Feedback = {
 };
 
 export async function submitFeedback(target: FeedbackTarget, vote: Vote): Promise<Feedback> {
-  const response = await fetch("/v1/feedback", {
+  const response = await apiFetch("/v1/feedback", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

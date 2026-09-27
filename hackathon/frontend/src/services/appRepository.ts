@@ -1,8 +1,7 @@
-import { mockExploreData, mockGapEvidence } from "../mocks/explorar";
-import { mockFamilies } from "../mocks/familias";
-import { mockNotifications } from "../mocks/notificacoes";
-import { mockOpinion } from "../mocks/parecer";
-import { mockProcessDashboard } from "../mocks/processos";
+import { fetchFamilies } from "../api/documents";
+import { fetchNotifications, loadDemoUser } from "../api/notifications";
+import { fetchOpinion } from "../api/opinion";
+import { fetchProcessos } from "../api/processos";
 import { appendSearchPage, searchDocuments, type SearchEnvelope, type SearchResult } from "../api/search";
 import type {
   AppNotification,
@@ -23,66 +22,12 @@ export interface AppRepository {
   getNotifications(): Promise<AppNotification[]>;
 }
 
-const wait = (delay = 420) => new Promise<void>((resolve) => window.setTimeout(resolve, delay));
-
-export class MockAppRepository implements AppRepository {
+export class ApiAppRepository implements AppRepository {
   async searchPrecedents(query: string) {
-    await wait(650);
-    return { ...mockExploreData, query };
-  }
-
-  async loadMorePrecedents(data: ExploreData) {
-    return data;
-  }
-
-  async findGapEvidence(query: string) {
-    await wait(900);
-    const evidenceResult = {
-      ...mockExploreData.results[3],
-      rank: 4,
-      processNumber: mockGapEvidence.processNumber,
-      adherence: 78,
-      summary: mockGapEvidence.summary,
-      stance: "Precedente favorável" as const,
-    };
-    return {
-      ...mockExploreData,
-      query,
-      coverage: 88,
-      results: [...mockExploreData.results.slice(0, 3), evidenceResult],
-      gaps: mockExploreData.gaps.map((gap, index) =>
-        index === 0 ? { ...gap, resolved: true } : gap,
-      ),
-    };
-  }
-
-  async getProcessDashboard() {
-    await wait();
-    return mockProcessDashboard;
-  }
-
-  async getFamilies() {
-    await wait();
-    return mockFamilies;
-  }
-
-  async getOpinion() {
-    await wait();
-    return mockOpinion;
-  }
-
-  async getNotifications() {
-    await wait();
-    return mockNotifications;
-  }
-}
-
-export class ApiAppRepository extends MockAppRepository {
-  override async searchPrecedents(query: string) {
     return mapSearchEnvelope(query, await searchDocuments(query));
   }
 
-  override async loadMorePrecedents(data: ExploreData) {
+  async loadMorePrecedents(data: ExploreData) {
     const pagination = data.pagination;
     if (!pagination || pagination.nextCursor === null) {
       return data;
@@ -91,8 +36,44 @@ export class ApiAppRepository extends MockAppRepository {
     return mapSearchEnvelope(pagination.query, appendSearchPage(pagination.loaded, next));
   }
 
-  override async findGapEvidence(query: string) {
+  async findGapEvidence(query: string) {
     return this.searchPrecedents(query);
+  }
+
+  async getProcessDashboard(): Promise<ProcessDashboard> {
+    return { processes: await fetchProcessos() };
+  }
+
+  async getFamilies(): Promise<Family[]> {
+    const families = await fetchFamilies();
+    return families.map((family) => ({
+      id: family.family_id,
+      name: family.document_id,
+      description: `${formatDocumentType(family.document_type)}${family.processo_numero ? ` · Processo ${family.processo_numero}` : ""}`,
+      documents: family.versions_count,
+      status: `Atualizado em ${family.latest_version_date}`,
+      tone: "blue" as const,
+      icon: "landmark",
+    }));
+  }
+
+  getOpinion(): Promise<OpinionData> {
+    return fetchOpinion();
+  }
+
+  async getNotifications(): Promise<AppNotification[]> {
+    const notifications = await fetchNotifications(loadDemoUser());
+    return notifications.map((notification) => ({
+      id: String(notification.id),
+      title: notification.document_id ?? notification.document_version_id,
+      reference: notification.family_id,
+      description: notification.reasons.map((reason) => reason.type === "novo_documento"
+        ? "Novo documento"
+        : `Correlato: ${reason.relation_type}`).join(" · "),
+      category: notification.document_type === "norma" ? "Norma" as const : "Processo SEI" as const,
+      createdAt: notification.created_at,
+      read: notification.opened,
+    }));
   }
 }
 
@@ -160,7 +141,6 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
       staleCorpus: envelope.stale_corpus,
       loaded: envelope,
     },
-    filters: ["Todos", "Autos de Infração", "Decisões", "Normas", "Petições"],
     results,
     coverage: average,
     coverageSummary: results.length

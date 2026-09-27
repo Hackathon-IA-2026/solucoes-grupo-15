@@ -202,3 +202,39 @@ def test_index_report_parses_references(monkeypatch) -> None:
     assert reference.identifier_raw == "Auto de Infração nº 0017/2020-SFE"
     assert reference.relation_type is None
     assert reference.locator == "docver-1#chunk-0000"
+
+
+def test_ingestion_client_waits_for_real_indexing_but_search_stays_short(monkeypatch) -> None:
+    """Issue #106: no primeiro ``POST /v1/ingestions`` na AWS (ECS Exec),
+    o ai levou mais de 10 s para indexar o corpus demo com Bedrock e o
+    backend devolveu 500 (``httpx.ReadTimeout``), embora o ai tenha
+    terminado a indexacao. ``index``/``reindex`` fazem uma chamada
+    Bedrock por chunk dentro de uma unica requisicao - o mesmo motivo do
+    timeout de 900 s em ``tools/case1_recall/seed_and_measure.py``. A
+    busca e o health continuam curtos para nao prender a requisicao do
+    usuario com o ai fora do ar."""
+    timeouts: dict[str, float] = {}
+
+    def fake_post(url, *, json=None, timeout=None):
+        timeouts[url.rsplit("/", 1)[-1]] = timeout
+        if url.endswith("/search"):
+            return httpx.Response(
+                200,
+                json={"hits": [], "model_version": "m"},
+                request=httpx.Request("POST", url),
+            )
+        return httpx.Response(200, json={"reports": []}, request=httpx.Request("POST", url))
+
+    monkeypatch.setattr("app.clients.ai_client.httpx.post", fake_post)
+
+    from app.clients.ai_client import get_ai_client
+
+    client = get_ai_client()
+    doc = IndexDocumentPayload(document_version="d", text="t", family_id="f", corpus_version="c")
+    client.index([doc])
+    client.reindex([doc])
+    client.search("pergunta")
+
+    assert timeouts["index"] >= 900
+    assert timeouts["reindex"] >= 900
+    assert timeouts["search"] == 10.0

@@ -104,13 +104,60 @@ def test_processos_lists_catalog_summary_from_representative_faces(database_url:
     assert response.status_code == 200
     processos = response.json()
     item = next(p for p in processos if p["processo_id"] == PROCESSO_ID)
-    # The document type of 'defesa-0007' is 'peticao_defesa' based on demo_corpus.json, but the test might expect 'peticao' or 'peticao_defesa'. Let's check demo_corpus.json again.
     assert item["latest_movement_at"] == "2024-05-02"
     assert item["latest_document_type"] == "decisao"
     assert item["latest_document_id"] == "decisao-0007"
     assert item["pieces_count"] == 3
     assert "auto_de_infracao" in item["document_types"]
     assert "decisao" in item["document_types"]
+
+
+def test_families_lists_catalog_faces_and_version_counts(database_url: str) -> None:
+    client = _client(database_url)
+
+    response = client.get("/v1/families")
+
+    assert response.status_code == 200
+    families = {item["family_id"]: item for item in response.json()}
+    assert families["fam-auto-0007"] == {
+        "family_id": "fam-auto-0007",
+        "document_id": "auto-0007",
+        "document_type": "auto_de_infracao",
+        "processo_numero": PROCESSO_ID,
+        "versions_count": 2,
+        "latest_version_date": "2024-04-18",
+    }
+    assert "case1-coelba-voto" in families
+
+
+def test_demo_opinion_uses_catalog_and_fixture_text(database_url: str) -> None:
+    client = _client(database_url)
+
+    response = client.get("/v1/opinion")
+
+    assert response.status_code == 200
+    opinion = response.json()
+    corpus = load_demo_corpus()
+    text_by_family = {doc.family_id: doc.text for doc in corpus.documents}
+    assert opinion["processNumber"] == "48500.901433/2024-53"
+    assert opinion["status"] == "Demonstração documental"
+    assert opinion["verdictSummary"] in text_by_family["case1-coelba-voto"]
+    assert opinion["suggestedUnderstanding"] in text_by_family["case1-enel-voto"]
+
+
+def test_demo_opinion_requires_catalog_ingestion(database_url: str) -> None:
+    engine = make_engine(database_url)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    session_factory = make_session_factory(engine)
+
+    def _session():
+        with session_factory() as session:
+            yield session
+
+    app = create_app()
+    app.dependency_overrides[get_db_session] = _session
+    assert TestClient(app).get("/v1/opinion").status_code == 404
 
 
 def test_processos_does_not_list_family_without_process_number(database_url: str) -> None:

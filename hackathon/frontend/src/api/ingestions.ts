@@ -1,3 +1,4 @@
+import { apiFetch } from "./client";
 import { fetchBackendHealth } from "./health";
 
 export type DemoIngestion = {
@@ -17,7 +18,7 @@ export async function prepareDemoData(): Promise<DemoIngestion> {
 }
 
 export async function runDemoIngestion(): Promise<DemoIngestion> {
-  const response = await fetch("/v1/ingestions", { method: "POST" });
+  const response = await apiFetch("/v1/ingestions", { method: "POST" });
   if (!response.ok) {
     throw new Error(`Preparação demo falhou com status ${response.status}`);
   }

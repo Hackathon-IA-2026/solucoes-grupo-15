@@ -62,6 +62,34 @@ class DocumentDetailOut(BaseModel):
     source_pdf_url: str | None
 
 
+class FamilySummaryOut(BaseModel):
+    family_id: str
+    document_id: str
+    document_type: str
+    processo_numero: str | None
+    versions_count: int
+    latest_version_date: str
+
+
+@router.get("/families", response_model=list[FamilySummaryOut])
+def list_families(session: Session = Depends(get_db_session)) -> list[FamilySummaryOut]:
+    by_family: dict[str, list[DocumentVersion]] = {}
+    for version in session.scalars(select(DocumentVersion)).all():
+        by_family.setdefault(version.family_id, []).append(version)
+    return [
+        FamilySummaryOut(
+            family_id=family_id,
+            document_id=face.document_id,
+            document_type=face.document_type,
+            processo_numero=face.processo_numero,
+            versions_count=len(versions),
+            latest_version_date=face.version_date,
+        )
+        for family_id, versions in sorted(by_family.items())
+        for face in [select_face_version(versions)]
+    ]
+
+
 @router.get("/documents/{family_id}", response_model=DocumentDetailOut)
 def get_document(
     family_id: str,

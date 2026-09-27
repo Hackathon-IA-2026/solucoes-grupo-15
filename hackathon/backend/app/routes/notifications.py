@@ -25,7 +25,9 @@ legivel.
 ``POST /v1/notifications/{notification_id}/opened`` registra
 ``notification_opened`` quando o usuario clica no link de uma
 notificacao na home (``origin: "home"`` - abertura de e-mail com pixel
-esta fora de escopo, i6-telemetry.md).
+esta fora de escopo, i6-telemetry.md). Com ``AUTH_MODE=cognito`` (issue
+#104) o evento grava o ``user_id`` do token (quem abriu); com
+``AUTH_MODE=none`` grava o dono da notificacao, como antes.
 
 ``GET /v1/notification-events`` e ``GET /v1/users/{user_id}/email-digests``
 existem para conferencia/auditoria manual: confirmar "sem duplicacao"
@@ -42,6 +44,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import Identity, get_identity
 from app.db import get_db_session
 from app.models import (
     DocumentVersion,
@@ -166,7 +169,9 @@ def list_notifications(
 
 @router.post("/notifications/{notification_id}/opened", response_model=NotificationOpenedOut)
 def mark_notification_opened(
-    notification_id: int, session: Session = Depends(get_db_session)
+    notification_id: int,
+    session: Session = Depends(get_db_session),
+    identity: Identity | None = Depends(get_identity),
 ) -> NotificationOpenedOut:
     notification = session.get(Notification, notification_id)
     if notification is None:
@@ -182,7 +187,7 @@ def mark_notification_opened(
         session.add(
             NotificationEvent(
                 event_type="notification_opened",
-                user_id=notification.user_id,
+                user_id=identity.user_id if identity is not None else notification.user_id,
                 document_version_id=notification.document_version_id,
                 notification_id=notification.id,
                 payload_json=json.dumps({"origin": "home"}),
