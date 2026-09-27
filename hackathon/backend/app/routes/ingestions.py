@@ -32,6 +32,7 @@ e relacoes - com zero usuarios de escopo escolhido (cenario dos testes
 dos Tickets 2-5/7/9) e um no-op seguro.
 """
 
+import datetime
 import uuid
 from dataclasses import dataclass
 from typing import Literal
@@ -126,6 +127,9 @@ def run_ingestion(
     de relacoes carregada (ver ``create_ingestion`` acima).
     """
     ingestion_job_id = str(uuid.uuid4())
+    # Um instante por job (issue #97): todas as linhas desta ingestao
+    # compartilham o mesmo ``ingested_at``, que ordena os corpora.
+    ingested_at = datetime.datetime.now(datetime.UTC)
 
     reports_by_version = _index_corpus(corpus, ai_client)
 
@@ -135,7 +139,7 @@ def run_ingestion(
     for doc in corpus.documents:
         report = reports_by_version[doc.document_version]
         _upsert_family(session, doc.family_id)
-        _upsert_version(session, doc, report, corpus.corpus_version)
+        _upsert_version(session, doc, report, corpus.corpus_version, ingested_at)
         family_ids.add(doc.family_id)
         version_ids.add(doc.document_version)
 
@@ -236,6 +240,7 @@ def _upsert_version(
     doc: FixtureDocumentVersion,
     report: IndexReport,
     corpus_version: str,
+    ingested_at: datetime.datetime,
 ) -> None:
     version = session.get(DocumentVersion, doc.document_version)
     if version is None:
@@ -251,3 +256,4 @@ def _upsert_version(
     version.extracted_text_locator = report.extracted_text_locator
     version.corpus_version = corpus_version
     version.model_version = report.model_version
+    version.ingested_at = ingested_at

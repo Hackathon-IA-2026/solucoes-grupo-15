@@ -66,7 +66,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.ai_client import AiClient, AiSearchHit, get_ai_client
@@ -163,11 +163,18 @@ class SearchEnvelope(BaseModel):
 def _latest_corpus_version(session: Session) -> str:
     """Retorna o corpus_version mais recente presente no catalogo.
 
-    Usa ``max(corpus_version)`` sobre todas as linhas de
-    ``DocumentVersion``. Se a tabela estiver vazia (catalogo sem
-    documentos), retorna o fallback de ``Settings.default_corpus_version``.
+    "Mais recente" e o da ultima ingestao: o ``corpus_version`` da linha
+    de ``DocumentVersion`` com o maior ``ingested_at`` (issue #97). Nao
+    usa ``max(corpus_version)``: com ``corpus_version`` = hash do
+    manifesto (#68), a ordem lexicografica nao tem relacao com a ordem
+    temporal. Se a tabela estiver vazia (catalogo sem documentos),
+    retorna o fallback de ``Settings.default_corpus_version``.
     """
-    result = session.scalar(select(func.max(DocumentVersion.corpus_version)))
+    result = session.scalar(
+        select(DocumentVersion.corpus_version)
+        .order_by(DocumentVersion.ingested_at.desc())
+        .limit(1)
+    )
     return result or get_settings().default_corpus_version
 
 

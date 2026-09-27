@@ -70,6 +70,13 @@ class DocumentVersion(Base):
     extracted_text_locator: Mapped[str] = mapped_column(String, nullable=False)
     corpus_version: Mapped[str] = mapped_column(String, nullable=False)
     model_version: Mapped[str] = mapped_column(String, nullable=False)
+    # Instante da ingestao que gravou esta linha por ultimo (issue #97) -
+    # um unico valor por job de ingestao. Da a ordem real entre
+    # ``corpus_version`` (hash do manifesto, #68, nao tem ordem propria):
+    # o corpus "mais recente" e o da linha com o maior ``ingested_at``.
+    ingested_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     family: Mapped["DocumentFamily"] = relationship(back_populates="versions")
 
