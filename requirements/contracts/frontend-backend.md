@@ -6,6 +6,8 @@ sources:
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i6-telemetry.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i9-integration.md
   - requirements/perspec-me/capiwatt-lens-hackathon/MAP.md
+  - requirements/perspec-me/capiwatt-aws-deploy/concerns/i9-integration.md
+  - requirements/perspec-me/capiwatt-aws-deploy/concerns/u6-acceptance.md
   - hackathon/docs/adr/0001-stack-scaffold-local.md
 last_synced_with_sources: 2026-09-26
 ---
@@ -22,7 +24,7 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 
 - **Frontend (F1)**:
   - É responsável pela apresentação, densidade operacional e renderização de telas (exploração de precedentes, busca textual/semântica, visualização da família documental e versões, grafo egocêntrico de relações, visualização de processo SEI, painéis de cobertura, alertas e digest de e-mail demonstrativo).
-  - É responsável pela seleção de usuário da demonstração (`carolina` ou `equipe`), persistindo o usuário ativo em `localStorage` apenas como conveniência de navegação.
+  - É responsável pela seleção de usuário da demonstração (`carolina` ou `equipe`), persistindo o usuário ativo em `localStorage` apenas como conveniência de navegação. Com Cognito ativo no `/config.json` (implantação AWS), o seletor some e o usuário vem do login SRP (Amplify Auth); o frontend envia o access token em `Authorization: Bearer`.
   - É responsável pela camada adaptadora de visualização (`appRepository.ts`), que traduz os envelopes brutos retornados pelo backend para as estruturas ricas de exibição da UI.
   - **Nunca acessa diretamente o serviço vetorial (`ai`)**, nem Bedrock, nem instâncias de armazenamento/banco de dados: toda comunicação transita exclusivamente via backend por rotas HTTP `/v1/*`.
 
@@ -42,11 +44,14 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 3. **Identificadores com caracteres especiais:** Números de processos SEI (ex.: `48500.001234/2024-11`) contêm barras (`/`).
    - O cliente frontend **sempre** aplica `encodeURIComponent(id)` antes de interpolar o identificador na URL.
    - O servidor FastAPI declara esses parâmetros utilizando a diretiva de conversão `{node_id:path}` do Starlette, permitindo a correta captura do segmento completo decodificado.
-4. **Ausência de autenticação rígida na fase demo:**
-   - Não há tokens JWT, cookies de sessão ou cabeçalhos `Authorization`.
-   - Identificadores de usuário (`user_id`) trafegam explicitamente como parâmetros de rota (`/v1/users/{user_id}/*`).
+4. **Autenticação por modo (`AUTH_MODE`, decidido em [`capiwatt-aws-deploy/i9-integration`](../perspec-me/capiwatt-aws-deploy/concerns/i9-integration.md)):**
+   - `AUTH_MODE=none` (padrão; Compose local): não há tokens JWT, cookies de sessão ou cabeçalhos `Authorization`. Identificadores de usuário (`user_id`) trafegam explicitamente como parâmetros de rota (`/v1/users/{user_id}/*`).
+   - `AUTH_MODE=cognito` (AWS): todo `/v1/*` exceto `/v1/health` exige `Authorization: Bearer <access token>` do User Pool (validado por JWKS, `client_id`, `token_use`, `exp`). O `user_id` é o claim `username`; o formato das rotas e dos corpos não muda. `/v1/users/{user_id}/*` responde `403` se o caminho divergir do token; `/v1/ingestions` e `/v1/demo/reset` exigem o grupo `admin`.
+   - Contas na AWS: `carolina`, `equipe` e `admin` (extras via `.env`), provisionadas por script, sem auto-cadastro; login por usuário ou e-mail `<user_id>@capiwatt.demo`.
 5. **Erros e códigos de status:**
    - `200 OK`: Operações de leitura e consultas bem-sucedidas.
+   - `401 Unauthorized` (só com `AUTH_MODE=cognito`): token ausente, expirado ou inválido.
+   - `403 Forbidden` (só com `AUTH_MODE=cognito`): `user_id` do caminho diferente do token, ou rota administrativa sem o grupo `admin`.
    - `404 Not Found`: Família, nó de grafo, processo ou documento inexistente. O backend retorna `{"detail": "..."}`. O frontend captura e instancia exceções específicas de domínio (`DocumentNotFoundError`, `GraphNodeNotFoundError`, `ProcessoNotFoundError`).
    - `422 Unprocessable Entity`: Validação de esquema do Pydantic falhou (ex.: valor inválido para o voto de feedback ou para o escopo de notificação).
    - `500 Internal Server Error`: Falha interna inesperada. O frontend encapsula em erros genéricos informando o status HTTP retornado.
