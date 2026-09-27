@@ -11,6 +11,8 @@
  * o "/" decodificado.
  */
 
+import { apiFetch } from "./client";
+
 export type NodeKind = "family" | "processo";
 
 export type RelationEvidence = {
@@ -40,7 +42,7 @@ export type Graph = {
 export class GraphNodeNotFoundError extends Error {}
 
 export async function fetchGraph(nodeId: string): Promise<Graph> {
-  const response = await fetch(`/v1/documents/${encodeURIComponent(nodeId)}/graph`);
+  const response = await apiFetch(`/v1/documents/${encodeURIComponent(nodeId)}/graph`);
 
   if (response.status === 404) {
     throw new GraphNodeNotFoundError("Nó não encontrado");

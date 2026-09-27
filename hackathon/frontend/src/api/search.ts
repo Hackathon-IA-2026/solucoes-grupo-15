@@ -11,6 +11,8 @@
  * identifica o chunk (issue #96) e e a chave do voto de feedback (#82/#94).
  */
 
+import { apiFetch } from "./client";
+
 export type SearchResult = {
   family_id: string;
   document_version: string;
@@ -49,7 +51,7 @@ export type SearchEnvelope = {
  * u4-visualization).
  */
 export async function searchDocuments(query: string, cursor?: string): Promise<SearchEnvelope> {
-  const response = await fetch("/v1/search", {
+  const response = await apiFetch("/v1/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(cursor === undefined ? { query } : { query, cursor }),

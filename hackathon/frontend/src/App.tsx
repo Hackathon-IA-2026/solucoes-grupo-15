@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 
 import { AppShell } from "./components/layout/AppShell";
 import { SessionProvider, useSession } from "./features/auth/SessionContext";
+import { RuntimeConfigProvider } from "./features/config/RuntimeConfigContext";
 import { DemoDataProvider } from "./features/demo/DemoDataContext";
 import { NotificationsProvider } from "./features/notifications/NotificationsContext";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
@@ -11,6 +12,7 @@ import { FamilyPage } from "./pages/FamilyPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MyProcessesPage } from "./pages/MyProcessesPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { OpinionPage } from "./pages/OpinionPage";
 import { PersonaPage } from "./pages/PersonaPage";
 import { ProductNotificationsPage } from "./pages/ProductNotificationsPage";
 import { ProcessoPage } from "./pages/ProcessoPage";
@@ -18,6 +20,14 @@ import { RelationsMapPage } from "./pages/RelationsMapPage";
 import { SearchPage } from "./pages/SearchPage";
 
 export function App() {
+  return (
+    <RuntimeConfigProvider>
+      <AppRoutes />
+    </RuntimeConfigProvider>
+  );
+}
+
+function AppRoutes() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <SessionProvider>
@@ -33,6 +43,7 @@ export function App() {
                   <Route path="/explorar" element={<ExplorePage />} />
                   <Route path="/meus-processos" element={<MyProcessesPage />} />
                   <Route path="/familias" element={<FamiliesPage />} />
+                  <Route path="/parecer" element={<OpinionPage />} />
                   <Route path="/mapas-relacoes" element={<RelationsMapPage />} />
                   <Route path="/notificacoes" element={<ProductNotificationsPage />} />
                   <Route path="/documents/:familyId" element={<FamilyPage />} />

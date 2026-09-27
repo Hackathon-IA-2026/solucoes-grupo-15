@@ -15,6 +15,8 @@
  * (nunca em cookie de sessão, nunca com credencial).
  */
 
+import { apiFetch } from "./client";
+
 export const DEMO_USERS = ["carolina", "equipe"] as const;
 export type DemoUser = (typeof DEMO_USERS)[number];
 
@@ -80,7 +82,7 @@ export function saveDemoUser(user: DemoUser): void {
 }
 
 export async function fetchNotificationScope(userId: string): Promise<NotificationScope | null> {
-  const response = await fetch(`/v1/users/${encodeURIComponent(userId)}/notification-scope`);
+  const response = await apiFetch(`/v1/users/${encodeURIComponent(userId)}/notification-scope`);
   if (!response.ok) {
     throw new Error(`Consulta de escopo falhou com status ${response.status}`);
   }
@@ -92,7 +94,7 @@ export async function chooseNotificationScope(
   userId: string,
   scope: NotificationScope,
 ): Promise<void> {
-  const response = await fetch(`/v1/users/${encodeURIComponent(userId)}/notification-scope`, {
+  const response = await apiFetch(`/v1/users/${encodeURIComponent(userId)}/notification-scope`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ scope }),
@@ -103,7 +105,7 @@ export async function chooseNotificationScope(
 }
 
 export async function fetchNotifications(userId: string): Promise<NotificationItem[]> {
-  const response = await fetch(`/v1/users/${encodeURIComponent(userId)}/notifications`);
+  const response = await apiFetch(`/v1/users/${encodeURIComponent(userId)}/notifications`);
   if (!response.ok) {
     throw new Error(`Consulta de notificações falhou com status ${response.status}`);
   }
@@ -111,7 +113,7 @@ export async function fetchNotifications(userId: string): Promise<NotificationIt
 }
 
 export async function fetchEmailDigests(userId: string): Promise<EmailDigestPreview[]> {
-  const response = await fetch(`/v1/users/${encodeURIComponent(userId)}/email-digests`);
+  const response = await apiFetch(`/v1/users/${encodeURIComponent(userId)}/email-digests`);
   if (!response.ok) {
     throw new Error(`Consulta de prévias de e-mail falhou com status ${response.status}`);
   }
@@ -119,7 +121,7 @@ export async function fetchEmailDigests(userId: string): Promise<EmailDigestPrev
 }
 
 export async function markNotificationOpened(notificationId: number): Promise<void> {
-  const response = await fetch(`/v1/notifications/${notificationId}/opened`, {
+  const response = await apiFetch(`/v1/notifications/${notificationId}/opened`, {
     method: "POST",
   });
   if (!response.ok) {

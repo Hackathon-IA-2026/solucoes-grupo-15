@@ -66,11 +66,13 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 |---|---|---|---|---|
 | **Health check** | `GET` | `/v1/health` | — | `BackendHealth` |
 | **Busca de documentos** | `POST` | `/v1/search` | `{ query: string, top_k?: number, cursor?: string, limit?: number }` | `SearchEnvelope` |
+| **Listagem de famílias documentais** | `GET` | `/v1/families` | — | `FamilySummary[]` |
 | **Leitura de documento** | `GET` | `/v1/documents/{family_id}` | Query: `?version=string` (opc.) | `DocumentDetail` |
 | **Download/abertura de PDF** | `GET` | `/v1/document-pdfs/{document_version}` | — | Stream `application/pdf` |
 | **Grafo egocêntrico** | `GET` | `/v1/documents/{node_id:path}/graph` | — | `Graph` |
 | **Listagem de processos** | `GET` | `/v1/processos` | — | `ProcessoSummary[]` |
 | **Detalhes do processo** | `GET` | `/v1/processos/{processo_id:path}` | — | `Processo` |
+| **Parecer demonstrativo** | `GET` | `/v1/opinion` | — | `OpinionData` |
 | **Envio de feedback** | `POST` | `/v1/feedback` | `{ request_id, document_version, chunk_index, vote }` | `Feedback` |
 | **Consulta de feedback** | `GET` | `/v1/feedback` | Query: `request_id?`, `document_version?`, `chunk_index?`, `family_id?`, `limit?` | `Feedback[]` |
 | **Consulta de escopo** | `GET` | `/v1/users/{user_id}/notification-scope` | — | `{ scope: NotificationScope \| null }` |
@@ -83,6 +85,13 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 ---
 
 ## Detalhamento das operações
+
+### Catálogo de famílias e parecer demonstrativo (issue #110)
+
+- **`GET /v1/families`** lista as famílias realmente presentes no catálogo após ingestão. Cada item contém `family_id`, `document_id`, `document_type`, `processo_numero: string | null`, `versions_count` e `latest_version_date`; os metadados descritivos vêm da versão face. Lista vazia antes da ingestão. O frontend apresenta cada família como uma peça documental e usa `family_id` para abrir `/documents/{family_id}`.
+- **`GET /v1/opinion`** retorna uma ficha demonstrativa para o caso Carolina/MMGD. Exige que os votos Coelba, Cemig e Enel estejam no catálogo; antes disso responde 404. `OpinionData` mantém os campos de apresentação `title`, `processNumber`, `family`, `theme`, `code`, `issuedAt`, `status`, `verdict`, `verdictSummary`, `situation`, `suggestedUnderstanding`, `attentionPoints`, `figures`, `confidence` e `coverage`. Os três textos exibidos são extratos da fixture F3 alinhados com os PDFs do caso; `confidence` e `coverage` são `null`, porque não há medição ou geração de conclusão jurídica. O frontend oculta os indicadores ausentes. O endpoint não representa parecer jurídico automatizado.
+- `ApiAppRepository` usa também `GET /v1/processos` e `GET /v1/users/{user_id}/notifications` para os dados de dashboard e notificações. As telas próprias de processos e notificações já consumiam essas rotas diretamente. A vitrine de famílias da exploração usa a listagem HTTP, e o mapa de relações usa `/v1/processos`, `/v1/families` e `/v1/documents/{node_id:path}/graph`.
+- No modo Compose (`cognito: null`), o shell espera `POST /v1/ingestions` concluir antes de renderizar as telas do catálogo. Isso evita que a primeira navegação solicite `/v1/opinion` ou detalhes de documentos enquanto o banco ainda está vazio. No modo Cognito, não há espera por essa ingestão, pois a operação exige administrador.
 
 ### 1. Diagnóstico e saúde cruzada
 
@@ -396,7 +405,7 @@ A fronteira é protegida em dois níveis complementares:
 
 1. **Costura no Frontend (`hackathon/frontend/src/api/` e `services/appRepository.ts`):**
    - O frontend centraliza todas as requisições HTTP nos módulos `src/api/*`.
-   - A camada de visualização utiliza a interface abstrata `AppRepository`: em modo de desenvolvimento isolado ou testes unitários de componentes, `MockAppRepository` provê dados fixos; em modo integrado, `ApiAppRepository` conecta-se às rotas reais e valida o mapeamento dos envelopes.
+   - A camada de visualização utiliza `AppRepository` e `ApiAppRepository` para adaptar os envelopes HTTP aos componentes. Os testes unitários interceptam `fetch`; a execução do produto não usa `MockAppRepository` nem fixtures de produto no navegador.
    - Testes de componentes (Vitest + React Testing Library) interceptam as chamadas no nível de rede/fetch, garantindo que cabeçalhos, rotas e códigos de erro sejam tratados de forma idêntica ao comportamento do backend.
 
 2. **Costura no Backend (`hackathon/backend/tests/`):**

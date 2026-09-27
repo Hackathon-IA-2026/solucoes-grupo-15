@@ -39,7 +39,7 @@ O catálogo (Postgres, decidido no Map irmão, com CTE recursiva para o grafo) r
 
 ## Open questions
 
-- Confirmar no deploy que `t3.small.search` suporta o plugin k-NN com `nmslib` (se não suportar, subir para `m6g.large.search` ou similar, sem mudar código).
+- ~~Confirmar no deploy que `t3.small.search` suporta o plugin k-NN com `nmslib`~~ — confirmado em 2026-09-27 (issue #106): no deploy real, o domínio OpenSearch 2.19 com um nó `t3.small.search` e 10 GB gp3 aceitou o índice `knn_vector` HNSW/`nmslib` do `ai`. A ingestão do caso 1 indexou, e `POST /v1/search` pelo CloudFront devolveu os hits do caso 1. Não foi preciso subir a instância (`-c search_instance_type=...` continua disponível).
 
 
 ## Evidence

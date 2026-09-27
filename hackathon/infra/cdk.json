@@ -1,0 +1,6 @@
+{
+  "app": "python3 app.py",
+  "context": {
+    "search_instance_type": "t3.small.search"
+  }
+}

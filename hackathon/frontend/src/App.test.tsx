@@ -37,7 +37,25 @@ describe("App", () => {
     expect(screen.getByRole("navigation", { name: /navegação principal do produto/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /meus processos/i })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /notificações, 1 não lidas/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /explore por tema/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /explore por família/i })).toBeInTheDocument();
+  });
+
+  it("aguarda a ingestão demo antes de pedir dados das telas", async () => {
+    window.localStorage.setItem("capiwatt-lens:mock-session", JSON.stringify({
+      user: { id: "carolina", name: "Carolina", firstName: "Carol", initials: "CA", email: "carolina@capiwatt.demo" },
+      activePersona: "advocacia",
+    }));
+    let finishIngestion: (response: Response) => void = () => {};
+    const fetchMock = buildFetchMock({
+      ingestion: new Promise<Response>((resolve) => { finishIngestion = resolve; }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    expect(await screen.findByLabelText("Preparando dados demonstrativos")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/v1/families");
+    finishIngestion(jsonResponse({ ingestion_job_id: "job-1", families_count: 4, versions_count: 5, relations_count: 5 }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/v1/families"));
   });
 
   it("mantém sair dentro do menu da conta e encerra a sessão", async () => {
@@ -85,13 +103,77 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/v1/demo/reset", { method: "POST" });
     expect(window.location.pathname).toBe("/explorar");
   });
+
+  describe("config.json em runtime", () => {
+    it("só renderiza as rotas depois de resolver /config.json", async () => {
+      let resolveConfig: (response: Response) => void = () => {};
+      const fetchMock = buildFetchMock({
+        config: new Promise<Response>((resolve) => { resolveConfig = resolve; }),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      render(<App />);
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/config.json"));
+      expect(screen.queryByRole("heading", { name: "Entrar" })).not.toBeInTheDocument();
+      expect(window.location.pathname).toBe("/");
+
+      resolveConfig(jsonResponse({}, 404));
+      expect(await screen.findByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    });
+
+    it("entra no modo demo sem erro visível quando /config.json falha na rede", async () => {
+      vi.stubGlobal("fetch", buildFetchMock({ config: Promise.reject(new TypeError("Failed to fetch")) }));
+      render(<App />);
+
+      expect(await screen.findByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("entra no modo demo quando o fallback de SPA devolve index.html no lugar de /config.json", async () => {
+      vi.stubGlobal("fetch", buildFetchMock({
+        config: new Response("<!doctype html><html></html>", { status: 200, headers: { "Content-Type": "text/html" } }),
+      }));
+      render(<App />);
+
+      expect(await screen.findByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("mantém o modo demo atual com config.json sem os campos de Cognito", async () => {
+      vi.stubGlobal("fetch", buildFetchMock({ config: jsonResponse({ region: "us-west-2" }) }));
+      render(<App />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Entrar" }));
+      fireEvent.click(await screen.findByRole("button", { name: /advogados/i }));
+      fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+      await waitFor(() => expect(window.location.pathname).toBe("/explorar"));
+      expect(await screen.findByRole("button", { name: /notificações, 1 não lidas/i })).toBeInTheDocument();
+      expect(fetch).toHaveBeenCalledWith("/v1/users/carolina/notifications");
+    });
+
+    it("mantém o seletor de usuário demo carolina/equipe com config.json sem Cognito", async () => {
+      window.history.pushState({}, "", "/integracoes/notificacoes");
+      vi.stubGlobal("fetch", buildFetchMock({ config: jsonResponse({ region: "us-west-2", userPoolId: "" }) }));
+      render(<App />);
+
+      const picker = await screen.findByLabelText(/usuário demo/i);
+      expect(Array.from((picker as HTMLSelectElement).options, (option) => option.value)).toEqual(["carolina", "equipe"]);
+    });
+  });
 });
 
-function buildFetchMock() {
+type FetchMockOptions = {
+  /** Resposta de /config.json; o padrão é 404, como no Compose/Vite. */
+  config?: Response | Promise<Response>;
+  ingestion?: Response | Promise<Response>;
+};
+
+function buildFetchMock({ config, ingestion }: FetchMockOptions = {}) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
+    if (url === "/config.json") return config ?? jsonResponse({}, 404);
     if (url === "/v1/health") return jsonResponse({ backend: "ok", ai: "ok" });
-    if (url === "/v1/ingestions" && init?.method === "POST") return jsonResponse({ ingestion_job_id: "job-1", families_count: 4, versions_count: 5, relations_count: 5 });
+    if (url === "/v1/ingestions" && init?.method === "POST") return ingestion ?? jsonResponse({ ingestion_job_id: "job-1", families_count: 4, versions_count: 5, relations_count: 5 });
     if (url.endsWith("/notification-scope")) return jsonResponse({ scope: "estrita" });
     if (url.endsWith("/email-digests")) return jsonResponse([{ email_id: "carolina:job-1", user_id: "carolina", ingestion_job_id: "job-1", notification_ids: [5], rendered_body: "Você tem 1 novo documento", created_at: "2024-05-02T12:00:00Z" }]);
     if (url.endsWith("/notifications")) return jsonResponse([{ id: 5, user_id: "carolina", document_version_id: "docver-auto-0007-v2", family_id: "fam-auto-0007", document_type: "auto_de_infracao", document_id: "auto-0007", scope_effective: "estrita", reasons: [{ type: "novo_documento" }], ingestion_job_id: "job-1", created_at: "2024-05-02T12:00:00Z", opened: false }]);

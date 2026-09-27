@@ -7,6 +7,8 @@
  * resposta documentado em hackathon/backend/app/routes/documents.py.
  */
 
+import { apiFetch } from "./client";
+
 export type VersionSummary = {
   document_version: string;
   version_date: string;
@@ -27,6 +29,21 @@ export type DocumentDetail = {
   source_pdf_url: string | null;
 };
 
+export type FamilySummary = {
+  family_id: string;
+  document_id: string;
+  document_type: string;
+  processo_numero: string | null;
+  versions_count: number;
+  latest_version_date: string;
+};
+
+export async function fetchFamilies(): Promise<FamilySummary[]> {
+  const response = await apiFetch("/v1/families");
+  if (!response.ok) throw new Error(`Consulta de famílias falhou com status ${response.status}`);
+  return (await response.json()) as FamilySummary[];
+}
+
 /**
  * Sinaliza especificamente o 404 de "familia nao encontrada", para a
  * pagina distinguir esse caso (mensagem clara) de uma falha de rede
@@ -39,7 +56,7 @@ export async function fetchDocument(
   version?: string,
 ): Promise<DocumentDetail> {
   const query = version ? `?version=${encodeURIComponent(version)}` : "";
-  const response = await fetch(`/v1/documents/${encodeURIComponent(familyId)}${query}`);
+  const response = await apiFetch(`/v1/documents/${encodeURIComponent(familyId)}${query}`);
 
   if (response.status === 404) {
     throw new DocumentNotFoundError("Família não encontrada");

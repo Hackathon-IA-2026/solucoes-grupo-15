@@ -5,13 +5,15 @@
  * diretamente), conforme a fronteira de modulos decidida na arquitetura.
  */
 
+import { apiFetch } from "./client";
+
 export type BackendHealth = {
   backend: string;
   ai: string;
 };
 
 export async function fetchBackendHealth(): Promise<BackendHealth> {
-  const response = await fetch("/v1/health");
+  const response = await apiFetch("/v1/health");
 
   if (!response.ok) {
     throw new Error(`Health check falhou com status ${response.status}`);

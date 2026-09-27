@@ -5,7 +5,6 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ExploreLanding } from "../components/explore/ExploreLanding";
 import { CoveragePanel } from "../components/explore/CoveragePanel";
 import { RankingCard } from "../components/explore/RankingCard";
-import { mockExploreData } from "../mocks/explorar";
 import { appRepository } from "../services/appRepository";
 import type { ExploreData, RankedPrecedent } from "../types/product";
 
@@ -21,7 +20,6 @@ export function ExplorePage() {
   const navigate = useNavigate();
   const requestedQuery = params.get("q")?.trim() ?? "";
   const [query, setQuery] = useState(requestedQuery);
-  const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>(tabs[0]);
   const [state, setState] = useState<ExploreState>(requestedQuery ? { kind: "loading" } : { kind: "idle" });
   const [explainerOpen, setExplainerOpen] = useState(false);
@@ -69,7 +67,6 @@ export function ExplorePage() {
           <input type="search" enterKeyHint="search" aria-label="Consulta de precedentes" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ex.: precedentes sobre conexão de MMGD" />
           <button className="yellow-button" type="submit" disabled={!query.trim()}>Buscar</button>
         </form>
-        <div className="filter-row" role="group" aria-label="Filtrar por tipo de documento">{mockExploreData.filters.map((filter) => <button type="button" key={filter} aria-pressed={activeFilter === filter} className={activeFilter === filter ? "active" : ""} onClick={() => setActiveFilter(filter)}>{filter}</button>)}</div>
       </header>
 
       {state.kind === "idle" && <ExploreLanding />}
