@@ -54,6 +54,7 @@ from app.embeddings import (
 from app.embeddings import (
     MODEL_VERSION as REAL_MODEL_VERSION,
 )
+from app.raw_vectors import RawVectorStore
 from app.vector_store import (
     ChunkDoc,
     OpenSearchVectorStore,
@@ -85,6 +86,11 @@ class IndexReport(BaseModel):
     extracted_text_locator: str
     chunks_indexed: int
     model_version: str
+    # None no modo fake (nenhum embedding real e computado). No modo
+    # bedrock, soma do input_token_count do Titan V2 por chunk deste
+    # documento - issue #73, AC "custo de embeddings" usa isso agregado
+    # por corpus (ver app.embeddings.estimate_cost_usd).
+    total_input_tokens: int | None = None
 
 
 class IndexResponse(BaseModel):
@@ -125,6 +131,20 @@ def get_vector_store() -> VectorStore:
     return OpenSearchVectorStore(get_settings().opensearch_url)
 
 
+def get_raw_vector_store() -> RawVectorStore:
+    """Dependencia FastAPI para a persistencia de vetores brutos fora do
+    indice (issue #73, I7 - ver app/raw_vectors.py). Vive no mesmo volume
+    compartilhado que DOCUMENTS_DIR, um arquivo por model_version, para
+    que ``tools/reindex_from_raw_vectors.py`` consiga reconstruir o
+    indice OpenSearch sem chamar o Bedrock de novo.
+
+    Testes sobrescrevem com um ``RawVectorStore`` apontando para
+    ``tmp_path`` - nunca escrevem no volume real.
+    """
+    path = Path(get_settings().documents_dir) / "_raw_vectors" / f"{REAL_MODEL_VERSION}.jsonl"
+    return RawVectorStore(path)
+
+
 @router.post("/index", response_model=IndexResponse)
 def index_documents(
     payload: IndexRequest,
@@ -132,11 +152,14 @@ def index_documents(
     store: dict[tuple[str, str], IndexReport] = Depends(get_index_store),
     embedder: BedrockEmbedder = Depends(get_embedder),
     vector_store: VectorStore = Depends(get_vector_store),
+    raw_vector_store: RawVectorStore = Depends(get_raw_vector_store),
 ) -> IndexResponse:
     settings = get_settings()
     if settings.embedder == "bedrock":
         reports = [
-            _index_one_real(document, documents_root, store, embedder, vector_store)
+            _index_one_real(
+                document, documents_root, store, embedder, vector_store, raw_vector_store
+            )
             for document in payload.documents
         ]
     else:
@@ -183,6 +206,7 @@ def _index_one_real(
     store: dict[tuple[str, str], IndexReport],
     embedder: BedrockEmbedder,
     vector_store: VectorStore,
+    raw_vector_store: RawVectorStore,
     *,
     force: bool = False,
 ) -> IndexReport:
@@ -208,25 +232,34 @@ def _index_one_real(
     # Upsert por document_version: remove chunks antigos dessa versao antes
     # de gravar os novos, para o caso de reprocessar apos perda do cache em
     # memoria (ex.: restart do processo) com texto diferente - a contagem de
-    # chunks/pontuacoes nunca mistura resto de uma indexacao anterior.
+    # chunks/pontuacoes nunca mistura resto de uma indexacao anterior. O
+    # vetor bruto segue a mesma ordem (delete antes de upsert - ver
+    # app/raw_vectors.py sobre por que essa ordem e obrigatoria no formato
+    # append-only).
     vector_store.delete_document(index_name, document.document_version)
+    raw_vector_store.delete_document(document.document_version)
 
-    chunk_docs = [
-        ChunkDoc(
-            chunk_id=chunk.chunk_id,
-            document_version=document.document_version,
-            family_id=document.family_id,
-            corpus_version=document.corpus_version,
-            model_version=REAL_MODEL_VERSION,
-            section=chunk.section,
-            page_start=chunk.page_start,
-            page_end=chunk.page_end,
-            text=chunk.text,
-            embedding=embedder.embed_text(chunk.text).vector,
+    total_input_tokens = 0
+    chunk_docs: list[ChunkDoc] = []
+    for chunk in chunks:
+        embedding_result = embedder.embed_text(chunk.text)
+        total_input_tokens += embedding_result.input_token_count
+        chunk_docs.append(
+            ChunkDoc(
+                chunk_id=chunk.chunk_id,
+                document_version=document.document_version,
+                family_id=document.family_id,
+                corpus_version=document.corpus_version,
+                model_version=REAL_MODEL_VERSION,
+                section=chunk.section,
+                page_start=chunk.page_start,
+                page_end=chunk.page_end,
+                text=chunk.text,
+                embedding=embedding_result.vector,
+            )
         )
-        for chunk in chunks
-    ]
     vector_store.index_chunks(index_name, chunk_docs)
+    raw_vector_store.upsert_chunks(chunk_docs)
 
     extracted_path = _write_locator(document.document_version, document.text, documents_root)
 
@@ -235,6 +268,7 @@ def _index_one_real(
         extracted_text_locator=str(extracted_path),
         chunks_indexed=len(chunks),
         model_version=REAL_MODEL_VERSION,
+        total_input_tokens=total_input_tokens,
     )
     store[key] = report
     return report

@@ -32,6 +32,7 @@ from fastapi import APIRouter, Depends
 from app.config import get_settings
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
 from app.embeddings import BedrockEmbedder
+from app.raw_vectors import RawVectorStore
 from app.routes.index import (
     MODEL_VERSION,
     IndexReport,
@@ -42,6 +43,7 @@ from app.routes.index import (
     get_documents_root,
     get_embedder,
     get_index_store,
+    get_raw_vector_store,
     get_vector_store,
 )
 from app.vector_store import VectorStore, index_name_for_model_version
@@ -56,15 +58,25 @@ def reindex_documents(
     store: dict[tuple[str, str], IndexReport] = Depends(get_index_store),
     embedder: BedrockEmbedder = Depends(get_embedder),
     vector_store: VectorStore = Depends(get_vector_store),
+    raw_vector_store: RawVectorStore = Depends(get_raw_vector_store),
 ) -> IndexResponse:
     settings = get_settings()
 
     if settings.embedder == "bedrock":
         index_name = index_name_for_model_version(REAL_MODEL_VERSION)
         vector_store.delete_index(index_name)
+        raw_vector_store.delete_all()
         _clear_cache_for_model_version(store, REAL_MODEL_VERSION)
         reports = [
-            _index_one_real(document, documents_root, store, embedder, vector_store, force=True)
+            _index_one_real(
+                document,
+                documents_root,
+                store,
+                embedder,
+                vector_store,
+                raw_vector_store,
+                force=True,
+            )
             for document in payload.documents
         ]
     else:

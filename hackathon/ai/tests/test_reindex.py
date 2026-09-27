@@ -17,7 +17,13 @@ from app.config import get_settings
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
 from app.embeddings import BedrockEmbedder
 from app.main import create_app
-from app.routes.index import get_documents_root, get_embedder, get_vector_store
+from app.raw_vectors import RawVectorStore
+from app.routes.index import (
+    get_documents_root,
+    get_embedder,
+    get_raw_vector_store,
+    get_vector_store,
+)
 from app.vector_store import InMemoryVectorStore, index_name_for_model_version
 from tests.test_embeddings import FakeBedrockRuntimeClient
 
@@ -59,6 +65,9 @@ def _client(tmp_path: Path, store: InMemoryVectorStore) -> TestClient:
     app.dependency_overrides[get_documents_root] = lambda: tmp_path
     app.dependency_overrides[get_embedder] = lambda: BedrockEmbedder(FakeBedrockRuntimeClient())
     app.dependency_overrides[get_vector_store] = lambda: store
+    app.dependency_overrides[get_raw_vector_store] = lambda: RawVectorStore(
+        tmp_path / "_raw_vectors.jsonl"
+    )
     return TestClient(app)
 
 
@@ -90,6 +99,32 @@ def test_reindex_real_mode_rebuilds_index_from_scratch(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert store.count_chunks_for_document(index_name, "docver-a") >= 1
     assert store.count_chunks_for_document(index_name, "docver-b") == 0
+
+
+def test_reindex_real_mode_also_rebuilds_raw_vectors(tmp_path: Path) -> None:
+    """Os vetores brutos (fora do indice, issue #73/I7) seguem a mesma
+    reconstrucao do zero que o indice OpenSearch."""
+    store = InMemoryVectorStore()
+    client = _client(tmp_path, store)
+
+    doc_a = {
+        "document_version": "docver-a",
+        "text": "<!-- page:1 -->\ntexto do documento A\n",
+        "family_id": "fam-a",
+        "corpus_version": "corpus-v1",
+    }
+    doc_b = {
+        "document_version": "docver-b",
+        "text": "<!-- page:1 -->\ntexto do documento B\n",
+        "family_id": "fam-b",
+        "corpus_version": "corpus-v1",
+    }
+    client.post("/internal/v1/index", json={"documents": [doc_a, doc_b]})
+    client.post("/internal/v1/reindex", json={"documents": [doc_a]})
+
+    raw_store = RawVectorStore(tmp_path / "_raw_vectors.jsonl")
+    remaining = raw_store.load_all()
+    assert {c.document_version for c in remaining} == {"docver-a"}
 
 
 def test_reindex_real_mode_reprocesses_changed_text_despite_cache(tmp_path: Path) -> None:

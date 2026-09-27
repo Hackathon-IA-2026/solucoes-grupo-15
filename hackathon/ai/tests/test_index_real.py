@@ -15,7 +15,13 @@ from app.config import get_settings
 from app.embeddings import DIMENSIONS, BedrockEmbedder
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
 from app.main import create_app
-from app.routes.index import get_documents_root, get_embedder, get_vector_store
+from app.raw_vectors import RawVectorStore
+from app.routes.index import (
+    get_documents_root,
+    get_embedder,
+    get_raw_vector_store,
+    get_vector_store,
+)
 from app.vector_store import InMemoryVectorStore, index_name_for_model_version
 from tests.test_embeddings import FakeBedrockRuntimeClient
 
@@ -39,6 +45,9 @@ def client(tmp_path: Path, store: InMemoryVectorStore) -> TestClient:
     app.dependency_overrides[get_documents_root] = lambda: tmp_path
     app.dependency_overrides[get_embedder] = lambda: BedrockEmbedder(FakeBedrockRuntimeClient())
     app.dependency_overrides[get_vector_store] = lambda: store
+    app.dependency_overrides[get_raw_vector_store] = lambda: RawVectorStore(
+        tmp_path / "_raw_vectors.jsonl"
+    )
     return TestClient(app)
 
 
@@ -99,3 +108,28 @@ def test_index_writes_1024_dim_embeddings(client: TestClient, store: InMemoryVec
     index_name = index_name_for_model_version(REAL_MODEL_VERSION)
     hits = store.search(index_name, [0.0] * DIMENSIONS, top_k=1)
     assert len(hits) == 1
+
+
+def test_index_reports_total_input_tokens(client: TestClient) -> None:
+    text = "<!-- page:1 -->\nTexto de teste com um único chunk.\n"
+    response = client.post("/internal/v1/index", json=_payload("docver-4", text))
+
+    [report] = response.json()["reports"]
+    assert report["total_input_tokens"] is not None
+    assert report["total_input_tokens"] > 0
+
+
+def test_index_persists_raw_vectors_outside_the_index(
+    client: TestClient, tmp_path: Path
+) -> None:
+    """Issue #73/I7: os vetores brutos ficam gravados fora do indice
+    OpenSearch, para permitir reindex sem chamar o Bedrock de novo."""
+    text = "<!-- page:1 -->\nTexto de teste com um único chunk.\n"
+    response = client.post("/internal/v1/index", json=_payload("docver-5", text))
+    [report] = response.json()["reports"]
+
+    raw_store = RawVectorStore(tmp_path / "_raw_vectors.jsonl")
+    raw_chunks = raw_store.load_all()
+    assert len(raw_chunks) == report["chunks_indexed"]
+    assert all(c.document_version == "docver-5" for c in raw_chunks)
+    assert all(len(c.embedding) == DIMENSIONS for c in raw_chunks)

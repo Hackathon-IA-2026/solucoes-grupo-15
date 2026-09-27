@@ -16,6 +16,7 @@ from app.db import Base, get_db_session, make_engine, make_session_factory
 from app.fixtures.loader import load_demo_corpus
 from app.main import create_app
 from app.models import DocumentFamily, DocumentVersion
+from app.routes.ingestions import run_ingestion
 
 
 class _FakeAiClient:
@@ -137,3 +138,48 @@ def test_family_with_multiple_versions_and_shared_processo_are_ingested(
 
     assert len(auto_versions) >= 2
     assert len({v.family_id for v in same_processo}) >= 2
+
+
+class _RealModeAiClient:
+    """Fake que devolve total_input_tokens (issue #73, AC "custo de
+    embeddings"), como o ai real faz em EMBEDDER=bedrock."""
+
+    def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
+        return [
+            IndexReport(
+                document_version=doc.document_version,
+                extracted_text_locator=f"/data/documents/{doc.document_version}/extracted.txt",
+                chunks_indexed=1,
+                model_version="amazon.titan-embed-text-v2-us-east-1-1024d-normalized",
+                total_input_tokens=100,
+            )
+            for doc in documents
+        ]
+
+
+def test_run_ingestion_sums_total_input_tokens_across_documents(database_url: str) -> None:
+    engine = make_engine(database_url)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    session_factory = make_session_factory(engine)
+    corpus = load_demo_corpus()
+
+    with session_factory() as session:
+        result = run_ingestion(corpus, ai_client=_RealModeAiClient(), session=session)
+        session.commit()
+
+    assert result.total_input_tokens == 100 * len(corpus.documents)
+
+
+def test_run_ingestion_total_input_tokens_is_none_in_fake_mode(database_url: str) -> None:
+    engine = make_engine(database_url)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    session_factory = make_session_factory(engine)
+    corpus = load_demo_corpus()
+
+    with session_factory() as session:
+        result = run_ingestion(corpus, ai_client=_FakeAiClient(), session=session)
+        session.commit()
+
+    assert result.total_input_tokens is None

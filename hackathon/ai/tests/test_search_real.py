@@ -16,7 +16,13 @@ from app.config import get_settings
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
 from app.embeddings import BedrockEmbedder
 from app.main import create_app
-from app.routes.index import get_documents_root, get_embedder, get_vector_store
+from app.raw_vectors import RawVectorStore
+from app.routes.index import (
+    get_documents_root,
+    get_embedder,
+    get_raw_vector_store,
+    get_vector_store,
+)
 from app.vector_store import InMemoryVectorStore
 from tests.test_embeddings import FakeBedrockRuntimeClient
 
@@ -40,6 +46,9 @@ def client(tmp_path: Path, store: InMemoryVectorStore) -> TestClient:
     app.dependency_overrides[get_documents_root] = lambda: tmp_path
     app.dependency_overrides[get_embedder] = lambda: BedrockEmbedder(FakeBedrockRuntimeClient())
     app.dependency_overrides[get_vector_store] = lambda: store
+    app.dependency_overrides[get_raw_vector_store] = lambda: RawVectorStore(
+        tmp_path / "_raw_vectors.jsonl"
+    )
     return TestClient(app)
 
 

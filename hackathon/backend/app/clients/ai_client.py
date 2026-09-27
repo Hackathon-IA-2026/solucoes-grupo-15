@@ -53,6 +53,8 @@ class IndexReport(BaseModel):
     extracted_text_locator: str
     chunks_indexed: int
     model_version: str
+    # None no modo fake - ver ai/app/routes/index.py::IndexReport (issue #73).
+    total_input_tokens: int | None = None
 
 
 class AiSearchHit(BaseModel):

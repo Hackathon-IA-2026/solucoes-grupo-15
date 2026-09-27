@@ -36,6 +36,20 @@ NORMALIZE = True
 # (issue #69) - toma o lugar de "fixture-demo" quando EMBEDDER=bedrock.
 MODEL_VERSION = "amazon.titan-embed-text-v2-us-east-1-1024d-normalized"
 
+# Preco publico on-demand do Bedrock para Titan Text Embeddings V2 (issue
+# #73, AC "custo de embeddings"): USD 0.00002 por 1.000 tokens de entrada
+# = USD 0.02 por milhao de tokens, mesma convencao de
+# tools/pipeline/routes/pdf_llm_spec.py::PRICING_USD_PER_MILLION_TOKENS
+# (tabela publica da AWS Bedrock, "On-Demand" pricing, no momento em que
+# esta issue foi trabalhada - conferir a pagina de precos da AWS antes de
+# usar este numero para orcamento real). Titan Embeddings nao cobra por
+# tokens de saida.
+PRICING_USD_PER_MILLION_TOKENS = 0.02
+
+
+def estimate_cost_usd(input_tokens: int) -> float:
+    return (input_tokens / 1_000_000) * PRICING_USD_PER_MILLION_TOKENS
+
 
 @dataclass(frozen=True)
 class EmbeddingResult:
