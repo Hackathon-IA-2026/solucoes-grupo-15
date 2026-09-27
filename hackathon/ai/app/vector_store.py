@@ -95,6 +95,12 @@ class VectorStore(Protocol):
         self, index_name: str, query_vector: list[float], top_k: int
     ) -> list[ScoredChunk]: ...
 
+    def embeddings_by_family(self, index_name: str) -> dict[str, list[list[float]]]:
+        """Todos os embeddings de chunk do indice, agrupados por
+        ``family_id`` - insumo de ``similar_families`` (issue #92, ver
+        app/family_similarity.py). Indice inexistente -> ``{}``."""
+        ...
+
 
 class InMemoryVectorStore:
     """Dublê em memoria do indice vetorial - usado nos testes (issue #69).
@@ -148,6 +154,12 @@ class InMemoryVectorStore:
             )
             for score, chunk in scored[:top_k]
         ]
+
+    def embeddings_by_family(self, index_name: str) -> dict[str, list[list[float]]]:
+        grouped: dict[str, list[list[float]]] = {}
+        for chunk in self._indices.get(index_name, {}).values():
+            grouped.setdefault(chunk.family_id, []).append(chunk.embedding)
+        return grouped
 
 
 class OpenSearchVectorStore:
@@ -264,3 +276,20 @@ class OpenSearchVectorStore:
             )
             for hit in hits
         ]
+
+    def embeddings_by_family(self, index_name: str) -> dict[str, list[list[float]]]:
+        from opensearchpy import helpers
+
+        if not self._client.indices.exists(index=index_name):
+            return {}
+        grouped: dict[str, list[list[float]]] = {}
+        # scroll (helpers.scan) em vez de um search com ``size`` fixo: le o
+        # indice inteiro qualquer que seja o numero de chunks.
+        for hit in helpers.scan(
+            self._client,
+            index=index_name,
+            query={"query": {"match_all": {}}, "_source": ["family_id", "embedding"]},
+        ):
+            source = hit["_source"]
+            grouped.setdefault(source["family_id"], []).append(source["embedding"])
+        return grouped

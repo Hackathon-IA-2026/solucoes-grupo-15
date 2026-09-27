@@ -25,6 +25,10 @@ class _FakeAiClient:
     mesmo padrao de dependency override do teste de health (Ticket 1).
     """
 
+    def similar_families(self, family_id: str, top_k: int) -> list:
+        # issue #92: sem vetores neste dublê, sem candidatos de similar_a.
+        return []
+
     def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
         return [
             IndexReport(
@@ -144,6 +148,10 @@ def test_family_with_multiple_versions_and_shared_processo_are_ingested(
 class _RealModeAiClient:
     """Fake que devolve total_input_tokens (issue #73, AC "custo de
     embeddings"), como o ai real faz em EMBEDDER=bedrock."""
+
+    def similar_families(self, family_id: str, top_k: int) -> list:
+        # issue #92: sem vetores neste dublê, sem candidatos de similar_a.
+        return []
 
     def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
         return [

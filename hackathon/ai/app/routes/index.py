@@ -56,6 +56,7 @@ from app.embeddings import (
     MODEL_VERSION as REAL_MODEL_VERSION,
 )
 from app.raw_vectors import RawVectorStore
+from app.references import extract_references
 from app.vector_store import (
     ChunkDoc,
     OpenSearchVectorStore,
@@ -82,6 +83,14 @@ class IndexRequest(BaseModel):
     documents: list[IndexDocumentIn]
 
 
+class ReferenceOut(BaseModel):
+    """Candidato de aresta explicita (issue #92, ver app/references.py)."""
+
+    identifier_raw: str
+    relation_type: str | None = None
+    locator: str
+
+
 class IndexReport(BaseModel):
     document_version: str
     extracted_text_locator: str
@@ -92,6 +101,10 @@ class IndexReport(BaseModel):
     # documento - issue #73, AC "custo de embeddings" usa isso agregado
     # por corpus (ver app.embeddings.estimate_cost_usd).
     total_input_tokens: int | None = None
+    # Referencias explicitas encontradas no texto (issue #92) - so
+    # candidatos; resolucao de alvo e gravacao em document_relations sao
+    # do backend. Vazio no modo fake (sem extracao).
+    references: list[ReferenceOut] = []
 
 
 class IndexResponse(BaseModel):
@@ -273,6 +286,14 @@ def _index_one_real(
         chunks_indexed=len(chunks),
         model_version=REAL_MODEL_VERSION,
         total_input_tokens=total_input_tokens,
+        references=[
+            ReferenceOut(
+                identifier_raw=ref.identifier_raw,
+                relation_type=ref.relation_type,
+                locator=ref.locator,
+            )
+            for ref in extract_references(chunks)
+        ],
     )
     store[key] = report
     return report

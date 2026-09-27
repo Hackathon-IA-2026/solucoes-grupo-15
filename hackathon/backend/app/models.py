@@ -10,9 +10,11 @@ grafo de relacoes (peca->processo, familia->familia, norma->peca)
 declaradas literalmente pela fixture de relacoes
 (app/fixtures/demo_relations.json) - nenhum reconhecedor de padrao
 textual roda aqui. Nesta issue toda aresta nasce ``origin="explicit"``,
-``status="confirmed"``; sugestao de similaridade/fusao (``score``,
-``decided_by``, ``decided_at``) fica para o Ticket opcional #22, fora
-de escopo. O no ``processo`` nao ganha tabela propria nesta issue - seu
+``status="confirmed"``. A issue #92 acrescenta as arestas vindas do ai
+(app/ai_relations.py): ``referencia`` explicita e ``similar_a``
+``origin="similarity"``/``status="suggested"`` com ``score``; a curadoria
+(``decided_by``, ``decided_at``) e a sugestao de fusao seguem no Ticket
+opcional #22. O no ``processo`` nao ganha tabela propria nesta issue - seu
 ``id`` e o ``processo_numero`` cru ja gravado em ``DocumentVersion``
 (ver ``target_id``/``source_id`` com ``*_kind == "processo"`` em
 ``document_relations``).
@@ -20,7 +22,7 @@ de escopo. O no ``processo`` nao ganha tabela propria nesta issue - seu
 
 import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -111,6 +113,9 @@ class DocumentRelation(Base):
     status: Mapped[str] = mapped_column(String, nullable=False)
     evidence_document_version: Mapped[str | None] = mapped_column(String, nullable=True)
     evidence_locator: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Score da vizinhanca vetorial (issue #92) - so em ``similar_a``
+    # (``origin="similarity"``); nulo nas arestas explicitas.
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class Feedback(Base):

@@ -57,6 +57,8 @@ class GraphEdgeOut(BaseModel):
     neighbor_id: str
     neighbor_kind: str
     evidence: EvidenceOut | None
+    # Score da vizinhanca vetorial (issue #92) - so em ``similar_a``.
+    score: float | None = None
 
 
 class GraphOut(BaseModel):
@@ -211,6 +213,7 @@ def _to_graph_edge(edge: DocumentRelation, node_id: str) -> GraphEdgeOut:
         neighbor_id=neighbor_id,
         neighbor_kind=neighbor_kind,
         evidence=_evidence_out(edge),
+        score=edge.score,
     )
 
 

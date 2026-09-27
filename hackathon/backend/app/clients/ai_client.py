@@ -13,9 +13,10 @@ de ``index``, ver ``reindex`` abaixo) e passa a enviar ``family_id``/
 (``EMBEDDER=bedrock``) precisa dos dois para gravar/filtrar no indice
 vetorial (contrato: "family_id/document_version aparecem no indice so
 como atributos de filtro"). O adapter de fixture (``EMBEDDER=fake``)
-continua ignorando os dois campos, exatamente como antes. As demais
-operacoes (similar_families, reassign_family) ficam para tickets
-futuros.
+continua ignorando os dois campos, exatamente como antes. A issue #92
+adiciona ``similar_families`` e ``references[]`` no ``IndexReport`` -
+candidatos de arestas que app/ai_relations.py resolve e grava em
+``document_relations``. ``reassign_family`` fica para tickets futuros.
 """
 
 from dataclasses import dataclass
@@ -46,6 +47,15 @@ class IndexDocumentPayload:
     corpus_version: str | None = None
 
 
+class AiReference(BaseModel):
+    """Referencia explicita encontrada pelo ai no texto (issue #92):
+    identificador cru, tipo fino opcional e localizador (``chunk_id``)."""
+
+    identifier_raw: str
+    relation_type: str | None = None
+    locator: str
+
+
 class IndexReport(BaseModel):
     """Espelha o IndexReport devolvido por POST /internal/v1/index."""
 
@@ -55,6 +65,14 @@ class IndexReport(BaseModel):
     model_version: str
     # None no modo fake - ver ai/app/routes/index.py::IndexReport (issue #73).
     total_input_tokens: int | None = None
+    references: list[AiReference] = []
+
+
+class AiSimilarFamily(BaseModel):
+    """Um candidato de ``similar_families`` (issue #92)."""
+
+    family_id: str
+    score: float
 
 
 class AiSearchHit(BaseModel):
@@ -159,6 +177,21 @@ class AiClient:
         )
         response.raise_for_status()
         return AiSearchResponse(**response.json())
+
+    def similar_families(self, family_id: str, top_k: int) -> list[AiSimilarFamily]:
+        """Chama GET /internal/v1/families/{family_id}/similar (issue #92).
+
+        Devolve so candidatos crus (``family_id``, ``score``) - aplicar os
+        limiares e gravar arestas e de app/ai_relations.py. Propaga erros
+        HTTP/rede, como ``index``.
+        """
+        response = httpx.get(
+            f"{self._base_url}/internal/v1/families/{family_id}/similar",
+            params={"top_k": top_k},
+            timeout=self._timeout,
+        )
+        response.raise_for_status()
+        return [AiSimilarFamily(**item) for item in response.json()["similar"]]
 
 
 def _document_payload(doc: IndexDocumentPayload) -> dict[str, object]:

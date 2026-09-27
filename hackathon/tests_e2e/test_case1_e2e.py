@@ -18,6 +18,7 @@ import json
 import os
 import subprocess
 import sys
+from urllib.parse import quote
 
 import httpx
 import pytest
@@ -300,28 +301,120 @@ def test_reindex_from_raw_vectors_preserves_ranking(
 
 
 # ---------------------------------------------------------------------------
-# Divergencias conhecidas (xfail estrito - ver docstring do modulo)
+# Relacoes vindas do ai (issue #92)
 # ---------------------------------------------------------------------------
 
-
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "ai nao implementa similar_families (/internal/v1/families/{id}/similar) nem "
-        "references[] no IndexReport; backend nao grava arestas vindas do ai"
-    ),
+# Calibracao da #74 sobre os mesmos vetores brutos da #73 (versionada): os
+# vizinhos top-3 por familia e a classificacao de cada par com
+# limiar_relacao=0.80 / limiar_fusao=0.97.
+CALIBRATION_REPORT = (
+    HACKATHON_DIR
+    / "tools"
+    / "case1_recall"
+    / "similarity_calibration"
+    / "output"
+    / "calibration_report.json"
 )
+CASE1_FAMILIES = sorted(dv.rsplit("-", 1)[0] for dv in CASE1_DOCUMENT_VERSIONS)
+# Citacoes "Auto de Infração nº ..." do texto real que apontam para um auto
+# do proprio corpus (levantadas lendo os Markdown da #59), fonte -> alvo.
+EXPECTED_REFERENCE_EDGES = {
+    ("case1-cemig-recurso", "case1-cemig-auto"),
+    ("case1-cemig-voto", "case1-cemig-auto"),
+    ("case1-enel-recurso", "case1-enel-auto"),
+    ("case1-enel-voto", "case1-enel-auto"),
+    ("case1-coelba-recurso", "case1-coelba-auto"),
+    ("case1-coelba-complemento", "case1-coelba-auto"),
+    ("case1-coelba-voto", "case1-coelba-auto"),
+}
+
+
+def _calibration() -> dict:
+    return json.loads(CALIBRATION_REPORT.read_text(encoding="utf-8"))
+
+
+def _all_graph_edges(backend: httpx.Client) -> list[tuple[str, dict]]:
+    edges = []
+    for family_id in CASE1_FAMILIES:
+        response = backend.get(f"/v1/documents/{family_id}/graph")
+        assert response.status_code == 200, response.text
+        edges.extend((family_id, edge) for edge in response.json()["edges"])
+    return edges
+
+
+def test_similar_families_reproduces_issue_74_neighbors(stack: Stack, ingested: dict) -> None:
+    expected = _calibration()["top_k_neighbors"]
+
+    for family_id in CASE1_FAMILIES:
+        response = httpx.get(
+            f"{stack.ai_url}/internal/v1/families/{family_id}/similar", params={"top_k": 3}
+        )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["model_version"] == MODEL_VERSION
+        got = [(n["family_id"], n["score"]) for n in body["similar"]]
+        want = [(n["family_id"], n["score"]) for n in expected[family_id]]
+        assert [fid for fid, _ in got] == [fid for fid, _ in want], family_id
+        for (_, got_score), (_, want_score) in zip(got, want, strict=True):
+            assert got_score == pytest.approx(want_score, abs=1e-6)
+
+
 def test_relations_from_ai_appear_in_graph(
     stack: Stack, backend: httpx.Client, ingested: dict
 ) -> None:
-    similar = httpx.get(
-        f"{stack.ai_url}/internal/v1/families/case1-cemig-auto/similar", params={"top_k": 3}
-    )
-    assert similar.status_code == 200, similar.text
+    calibration = _calibration()
+    expected_similar = {
+        frozenset((p["family_a"], p["family_b"])): p["score"]
+        for p in calibration["pairs"]
+        if p["classification"] == "similar_a"
+    }
+    assert len(expected_similar) == calibration["counts_by_classification"]["similar_a"] == 11
 
-    graph = backend.get("/v1/documents/case1-cemig-auto/graph")
-    assert graph.status_code == 200, graph.text
-    assert any(edge["origin"] != "explicit" for edge in graph.json()["edges"])
+    edges = _all_graph_edges(backend)
+
+    similar = {
+        frozenset((node, e["neighbor_id"])): e for node, e in edges if e["type"] == "similar_a"
+    }
+    assert set(similar) == set(expected_similar)
+    for pair, edge in similar.items():
+        assert (edge["origin"], edge["status"]) == ("similarity", "suggested")
+        assert edge["score"] == pytest.approx(expected_similar[pair], abs=1e-6)
+        assert 0.80 <= edge["score"] < 0.97
+    positive = frozenset(calibration["known_positive_pair"]["families"])
+    assert positive in similar
+
+    references = {
+        (node, e["neighbor_id"]): e
+        for node, e in edges
+        if e["type"] == "referencia" and e["evidence"]["document_version"].startswith(node)
+    }
+    assert set(references) == EXPECTED_REFERENCE_EDGES
+    for edge in references.values():
+        assert (edge["origin"], edge["status"]) == ("explicit", "confirmed")
+        # o locator e o chunk_id ("<versao>#chunk-NNNN"): "#" precisa de escape na URL
+        chunk_id = quote(edge["evidence"]["locator"], safe="")
+        chunk = httpx.get(f"{stack.opensearch_url}/{INDEX_NAME}/_doc/{chunk_id}")
+        assert chunk.status_code == 200, chunk.text
+        assert "Infração" in chunk.json()["_source"]["text"]
+
+
+def test_ai_relations_survive_reingestion_without_duplicates(
+    backend: httpx.Client, ingested: dict, corpus_version: str
+) -> None:
+    before = sorted(
+        (node, e["type"], e["neighbor_id"]) for node, e in _all_graph_edges(backend)
+    )
+
+    ingest_case1(backend, corpus_version)
+
+    after = sorted((node, e["type"], e["neighbor_id"]) for node, e in _all_graph_edges(backend))
+    assert after == before
+    assert ingested["relations_count"] == 11 + len(EXPECTED_REFERENCE_EDGES)
+
+
+# ---------------------------------------------------------------------------
+# Divergencias conhecidas (xfail estrito - ver docstring do modulo)
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.xfail(

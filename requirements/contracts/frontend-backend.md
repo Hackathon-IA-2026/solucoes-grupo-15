@@ -188,11 +188,12 @@ Snapshot legível do contrato entre a aplicação de interface (`frontend`, F1) 
 
     export type GraphEdge = {
       type: string;        // ex: "pertence_ao_processo", "responde_a", "referencia", "similar_a"
-      origin: string;      // "explicit" | "inferred"
-      status: string;      // "confirmed" | "suggested"
+      origin: string;      // "explicit" | "similarity"
+      status: string;      // "confirmed" | "suggested" (similar_a vinda do ai nasce "suggested")
       neighbor_id: string;
       neighbor_kind: NodeKind;
-      evidence: RelationEvidence | null;
+      evidence: RelationEvidence | null;  // referencia vinda do ai: locator = chunk_id
+      score: number | null;              // só em similar_a (issue #92)
     };
 
     export type Graph = {

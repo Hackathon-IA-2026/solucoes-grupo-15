@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from app.chunking import chunk_document
 from app.config import get_settings
 from app.embeddings import DIMENSIONS, BedrockEmbedder
 from app.embeddings import MODEL_VERSION as REAL_MODEL_VERSION
@@ -133,3 +134,71 @@ def test_index_persists_raw_vectors_outside_the_index(
     assert len(raw_chunks) == report["chunks_indexed"]
     assert all(c.document_version == "docver-5" for c in raw_chunks)
     assert all(len(c.embedding) == DIMENSIONS for c in raw_chunks)
+
+
+# ---------------------------------------------------------------------------
+# references[] no IndexReport (issue #92)
+# ---------------------------------------------------------------------------
+
+
+def test_index_report_lists_auto_de_infracao_references_found_in_the_text(
+    client: TestClient,
+) -> None:
+    text = (
+        "<!-- page:1 -->\nI – DOS FATOS\n\n"
+        "A recorrente foi autuada pelo Auto de Infração nº 0017/2020-SFE/ANEEL, "
+        "e também responde ao Auto de Infração – AI – nº 0035/2025-SFT, conforme "
+        "fundamentação. Cita ainda o Auto de\nInfração nº 35/2025, lavrado pela SFT. "
+        "O AUTO DE INFRAÇÃO em questão não traz número nesta frase.\n"
+    )
+
+    [report] = client.post("/internal/v1/index", json=_payload("docver-ref", text)).json()[
+        "reports"
+    ]
+
+    assert report["references"] == [
+        {
+            "identifier_raw": "Auto de Infração nº 0017/2020-SFE",
+            "relation_type": None,
+            "locator": "docver-ref#chunk-0000",
+        },
+        {
+            "identifier_raw": "Auto de Infração – AI – nº 0035/2025-SFT",
+            "relation_type": None,
+            "locator": "docver-ref#chunk-0000",
+        },
+        {
+            "identifier_raw": "Auto de Infração nº 35/2025",
+            "relation_type": None,
+            "locator": "docver-ref#chunk-0000",
+        },
+    ]
+
+
+def test_reference_locator_is_the_chunk_where_the_citation_was_found(
+    client: TestClient,
+) -> None:
+    filler = "Texto narrativo longo sem nenhuma citação de autuação. " * 120
+    text = (
+        f"<!-- page:1 -->\nI – INTRODUÇÃO\n\n{filler}\n\n"
+        f"<!-- page:2 -->\nII – DO MÉRITO\n\n{filler}\n\n"
+        "<!-- page:3 -->\nIII – CONCLUSÃO\n\nMantém-se o Auto de Infração nº 0032/2018-SFE.\n"
+    )
+
+    [report] = client.post("/internal/v1/index", json=_payload("docver-long", text)).json()[
+        "reports"
+    ]
+
+    [reference] = report["references"]
+    assert reference["identifier_raw"] == "Auto de Infração nº 0032/2018-SFE"
+    assert reference["locator"] != "docver-long#chunk-0000"
+    citing = [c.chunk_id for c in chunk_document(text, "docver-long") if "0032/2018" in c.text]
+    assert reference["locator"] == citing[0]
+
+
+def test_index_report_without_citations_has_empty_references(client: TestClient) -> None:
+    [report] = client.post(
+        "/internal/v1/index", json=_payload("docver-sem-ref", "<!-- page:1 -->\nSem citações.\n")
+    ).json()["reports"]
+
+    assert report["references"] == []

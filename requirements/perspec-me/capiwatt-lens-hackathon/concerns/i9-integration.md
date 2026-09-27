@@ -12,6 +12,7 @@ topics:
   - issue-28 — Como a busca pagina resultados ordenados por relevância em lotes de 10 sem alterar a ordem entre páginas?
   - issue-64 — Ao remover o conceito de família de documentos, como versões e documentos passam a ser identificados, agrupados e exibidos na ingestão, busca e interface?
   - issue-96 — Como um hit de busca identifica de forma estável o chunk casado, para feedback e evidence_refs?
+  - issue-92 — Qual é a forma concreta de `similar_families` e de `references[]` no `IndexReport`, e como o backend transforma esses candidatos em arestas de `document_relations`?
 updated_at: 2026-09-27
 ---
 
@@ -26,6 +27,8 @@ updated_at: 2026-09-27
 **⚠️ E-mail: implementado mas não ativado (out of scope operacional).** O código do port `Mailer` e do adapter `PreviewMailer` (`app/mailer.py`) está completo e testado, incluindo o modelo `EmailDigest`, a rota `GET /v1/users/{user_id}/email-digests` e os eventos de telemetria (`email_digest_generated`, `notification_delivered_email`). No entanto, o canal de e-mail **não é usado operacionalmente** neste ciclo porque o SES não foi disponibilizado pela organização do hackathon (issue #8, [Ambiente AWS — serviços disponíveis](../../../../hackathon/docs/Ambiente%20AWS%20-%20serviços%20disponíveis.md)). A entrega de notificações acontece **apenas pela home** (`notification_delivered_home`). O código permanece como evidência do trabalho realizado e está pronto para ser ativado se o SES for liberado futuramente.
 
 **Revisão (issue-15, Eduardo, 2026-09-18):** o port continua sendo a fronteira `backend` → `ai`, em duas camadas (interface em processo no `ai` + HTTP `/internal/v1/*`), e o `backend` continua sem importar `ai`. O que muda é **o que atravessa**: o `ai` deixa de ser dono do armazenamento documental ([[i4-storage]]), então `get_document` **sai do port** — a leitura de documento e a montagem do grafo são locais ao backend. O port fica com `index`, `search`, `similar_families`, `delete`/`reindex` e `reassign_family`; `index` recebe do backend os `document_version`s com `family_id`, metadados e **localizador do original** (não o conteúdo inline), extrai o texto, escreve-o num localizador e devolve no `IndexReport`, por versão, `extracted_text_locator` + `references`. HTTP fica só onde é inerente: uma chamada por busca do usuário e uma por job de ingestão — o esboço original do plano (linhas 132–133).
+
+**Revisão (issue-92, 2026-09-27): `similar_families` e `references[]` implementados.** A suíte e2e da #88 mostrou que nenhuma das duas operações de candidatos de aresta existia (404; `IndexReport` sem `references`). Formas concretas, sem mudar a divisão de posse: (1) `GET /internal/v1/families/{family_id}/similar?top_k=3` devolve `{family_id, model_version, similar: [{family_id, score}]}`. O vetor de família é a média renormalizada dos embeddings de todos os chunks da família no índice, a mesma agregação calibrada nas issues #61/#74, e o score é o produto interno. A própria família nunca aparece, e uma família sem chunks no índice dá 404. No modo fixture não há vetores, então a resposta é `similar: []`. (2) Cada `IndexReport` carrega `references: [{identifier_raw, relation_type, locator}]`, com `locator` = `chunk_id` (issue-96) do chunk onde a citação foi achada. O reconhecedor é deliberadamente estreito: só "Auto de Infração [– AI –] nº N/AAAA[-SIGLA]", sempre com `relation_type: null`. No modo fixture a lista é vazia. O `backend` resolve e grava no fim do job de ingestão: ver [[d14-data-operations-modeling]] (limiares) e [[i4-storage]] (`document_relations.score`).
 
 **Revisão (issue-96, 2026-09-27): cada hit identifica o chunk de forma estável.** A suíte e2e da #88 mostrou que os hits de `search` não traziam identificador de chunk e que o `chunk_index` do `backend` era a posição do hit na lista do `ai` — que muda de consulta para consulta. Agora cada hit de `/internal/v1/search` carrega `chunk_id` (id do chunk no índice, `"<document_version>#chunk-NNNN"`) e `chunk_index` (índice real do chunk dentro do documento, 0-based, já resolvido pelo `ai`, que é dono do formato do `chunk_id`). O `backend` repassa os dois em cada resultado de `POST /v1/search`, persiste-os nos hits crus do `SearchExecution` e usa o `chunk_index` real no desempate final da ordem total `(-score, document_version, chunk_index)`. Com isso, `(document_version, chunk_index)` — a chave de chunk do feedback ([[i6-telemetry]], issue #82) — e os `evidence_refs` da #66 apontam para um chunk estável, que é o mesmo em qualquer consulta e em qualquer reindex do mesmo `model_version`.
 
@@ -78,7 +81,7 @@ Composição vigente do `VectorService`, depois das issues #3, #4 e #15:
 | `search` | `/internal/v1/search` | issue-2 |
 | `delete` / `reindex` | — | issue-2 |
 | `reassign_family` | `/internal/v1/documents/{id}/family` | issue-3 |
-| `similar_families` | `/internal/v1/families/{id}/similar` | issue-4 |
+| `similar_families` | `/internal/v1/families/{id}/similar` | issue-4 (forma concreta na issue-92) |
 
 **Superados pela issue-15:** a operação `get_document`, o adapter `DocumentStore` e a rota `/internal/v1/documents/{id}`.
 
@@ -96,6 +99,7 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 
 ## Decisions
 
+- 2026-09-27 (issue-92): `similar_families` responde `{family_id, model_version, similar: [{family_id, score}]}` com `top_k` padrão 3 e vetor de família = média renormalizada dos chunks (agregação da #74); `IndexReport` ganha `references[]` com `locator` = `chunk_id`. O `ai` não aplica limiar nenhum; o `backend` resolve ids, aplica `limiar_relacao`/`limiar_fusao` e grava as arestas ao fim da ingestão.
 - 2026-09-27 (issue-96): cada hit de `search` carrega `chunk_id` e `chunk_index` (índice real do chunk no documento, resolvido pelo `ai`); o `backend` usa esse `chunk_index`, nunca a posição do hit na lista, como identidade do chunk (feedback #82, `evidence_refs` #66) e como desempate final da ordem total.
 - 2026-09-26 (issue-64, Eduardo): `family_id`, a chave de identificação e `reassign_family` continuam **no contrato do port e no backend** — a #64 não remove nada do contrato, só do que a interface expõe. O atributo de filtro `family_id` em `search`/`index` e a operação `reassign_family` permanecem exatamente como especificados.
 - 2026-09-26 (issue-64, Eduardo): a unidade de paginação da busca passa de "família" para **chunk casado** — consequência de a visualização não agrupar nem deduplicar mais por peça ([[u4-visualization]], [[d11-consistency]]). O campo de desempate na ordem total (antes `family_id`) fica em aberto.
@@ -169,6 +173,8 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md` linhas 60, 102, 118, 128–133, 144, 154–162.
 
 ## Topic history
+
+- issue-92 (2026-09-27): deu forma concreta a `similar_families` (rota, envelope, agregação por média dos chunks) e a `references[]` (reconhecedor estreito de autos de infração, `locator` = `chunk_id`); ligou os candidatos às arestas de `document_relations` no fim da ingestão.
 
 - issue-64 (em andamento): confirmou que `family_id`/`reassign_family` continuam no contrato do port sem alteração; mudou a unidade de paginação de família para chunk casado, consequência da remoção do agrupamento visual; deixou em aberto só o campo de desempate.
 

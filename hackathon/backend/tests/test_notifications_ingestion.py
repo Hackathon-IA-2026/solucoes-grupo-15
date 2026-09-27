@@ -33,6 +33,10 @@ from app.models import EmailDigest, Notification, NotificationEvent
 
 
 class _FakeAiClient:
+    def similar_families(self, family_id: str, top_k: int) -> list:
+        # issue #92: sem vetores neste dublê, sem candidatos de similar_a.
+        return []
+
     def index(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
         return [
             IndexReport(

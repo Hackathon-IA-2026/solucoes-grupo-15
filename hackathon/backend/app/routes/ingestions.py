@@ -11,6 +11,10 @@ Ticket 5) e faz upsert de ``document_relations`` - nenhuma extracao de
 padrao textual roda aqui, as arestas vem literalmente da fixture (ver
 app/fixtures/relations_loader.py).
 
+Desde a issue #92, o fim do job tambem grava as arestas derivadas dos
+candidatos do ai (``references[]`` dos ``IndexReport``s e
+``similar_families`` por familia) - ver app/ai_relations.py.
+
 Idempotencia: reingerir a mesma fixture faz upsert por PK (nao duplica
 linhas de catalogo) e por chave natural
 ``(source_id, source_kind, target_id, target_kind, type)`` (nao
@@ -37,6 +41,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.ai_relations import run_ai_relations
 from app.clients.ai_client import AiClient, IndexDocumentPayload, IndexReport, get_ai_client
 from app.db import get_db_session
 from app.fixtures.case1_loader import CASE1_REAL_CORPUS_VERSION, load_case1_real_corpus
@@ -137,6 +142,11 @@ def run_ingestion(
     relations_count = 0
     if relations is not None:
         relations_count = run_relations_ingestion(relations, session=session)
+    # Candidatos do ai (references[] + similar_families, issue #92) - no
+    # modo fixture o ai nao devolve nenhum, entao so a fixture conta.
+    relations_count += run_ai_relations(
+        corpus, reports_by_version, ai_client=ai_client, session=session
+    )
 
     run_notifications(corpus, session=session, ingestion_job_id=ingestion_job_id)
 
