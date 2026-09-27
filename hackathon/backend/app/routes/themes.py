@@ -5,10 +5,13 @@ e retorna a taxonomia de temas com descricao oficial, tipos de processo
 e status.
 """
 
+import logging
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.clients.ai_client import AiClient, get_ai_client
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["themes"])
 
@@ -24,7 +27,12 @@ class ThemeOut(BaseModel):
 @router.get("/themes", response_model=list[ThemeOut])
 def list_themes(ai_client: AiClient = Depends(get_ai_client)) -> list[ThemeOut]:
     """Lista todos os temas regulatorios com suas descricoes."""
-    themes = ai_client.get_themes()
+    try:
+        themes = ai_client.get_themes()
+    except Exception as e:
+        logger.warning("Falha ao consultar temas do ai: %s", e)
+        themes = []
+
     return [
         ThemeOut(
             id=t.tema_id,

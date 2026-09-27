@@ -69,16 +69,23 @@ export class ApiAppRepository implements AppRepository {
   async getFamilies(): Promise<Family[]> {
     const tones = ["green", "orange", "blue", "purple", "red", "cyan"] as const;
     const icons = ["leaf", "coins", "chart", "landmark", "tower", "users"] as const;
-    const items = await fetchThemes();
-    return items.map((item, i) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      tipos_processo: item.tipos_processo,
-      status: item.status || "Disponível",
-      tone: tones[i % tones.length],
-      icon: icons[i % icons.length],
-    }));
+    try {
+      const items = await fetchThemes();
+      if (items && items.length > 0) {
+        return items.map((item, i) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          tipos_processo: item.tipos_processo,
+          status: item.status || "Disponível",
+          tone: tones[i % tones.length],
+          icon: icons[i % icons.length],
+        }));
+      }
+    } catch {
+      // Fallback para os temas base caso o backend/ai esteja indisponivel
+    }
+    return super.getFamilies();
   }
 
   getOpinion(): Promise<OpinionData> {

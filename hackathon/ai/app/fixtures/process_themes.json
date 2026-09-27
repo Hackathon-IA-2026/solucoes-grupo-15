@@ -1,0 +1,512 @@
+[
+  {
+    "tipo_processo": "Acordos e Convênios: Agências Estaduais",
+    "tema_id": "cooperacao-institucional",
+    "tema_nome": "Cooperação institucional",
+    "descricao": "Acordos e convênios com agências estaduais, órgãos judiciais, ministérios e defensorias.",
+    "macrotema_sei": "Acordos e Convênios",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983890Z"
+  },
+  {
+    "tipo_processo": "Assessoramento Jurídico: MPE/MPFF, PE/PF, Defensoria Pública e Poder Judiciário",
+    "tema_id": "recursos-e-disputas-regulatorias",
+    "tema_nome": "Recursos e disputas regulatórias",
+    "descricao": "Recursos administrativos, pedidos de efeito suspensivo, impugnações e medidas cautelares.",
+    "macrotema_sei": "Assessoramento Jurídico",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983912Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Geração: Análise - Implantação",
+    "tema_id": "implantacao-de-usinas",
+    "tema_nome": "Implantação de usinas",
+    "descricao": "Acompanhamento de cronograma, excludente de responsabilidade e fiscalização de implantação de geração.",
+    "macrotema_sei": "Fiscalização da Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983922Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Geração: Ação Fiscalizadora - Implantação",
+    "tema_id": "implantacao-de-usinas",
+    "tema_nome": "Implantação de usinas",
+    "descricao": "Acompanhamento de cronograma, excludente de responsabilidade e fiscalização de implantação de geração.",
+    "macrotema_sei": "Fiscalização da Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983930Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Geração: Ação Fiscalizadora - Operação e Manutenção",
+    "tema_id": "operacao-e-manutencao-de-usinas",
+    "tema_nome": "Operação e manutenção de usinas",
+    "descricao": "Acompanhamento de operação, desempenho e manutenção de usinas geradoras de energia.",
+    "macrotema_sei": "Fiscalização da Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983939Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Transmissão: Acompanhamento Diferenciado de Empreendimentos",
+    "tema_id": "expansao-da-transmissao",
+    "tema_nome": "Expansão da transmissão",
+    "descricao": "Leilões, concessões, reforços, melhorias e declaração de utilidade pública em transmissão.",
+    "macrotema_sei": "Fiscalização da Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983947Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Transmissão: Análise - Acompanhamento de Plano de Resultados",
+    "tema_id": "operacao-e-manutencao-da-transmissao",
+    "tema_nome": "Operação e manutenção da transmissão",
+    "descricao": "Fiscalização e monitoramento da disponibilidade e manutenção das instalações de transmissão.",
+    "macrotema_sei": "Fiscalização da Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983956Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Transmissão: Análise - Agentes Setoriais",
+    "tema_id": "operacao-e-manutencao-da-transmissao",
+    "tema_nome": "Operação e manutenção da transmissão",
+    "descricao": "Fiscalização e monitoramento da disponibilidade e manutenção das instalações de transmissão.",
+    "macrotema_sei": "Fiscalização da Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983964Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Transmissão: Ação Fiscalizadora - Operação e Manutenção",
+    "tema_id": "operacao-e-manutencao-da-transmissao",
+    "tema_nome": "Operação e manutenção da transmissão",
+    "descricao": "Fiscalização e monitoramento da disponibilidade e manutenção das instalações de transmissão.",
+    "macrotema_sei": "Fiscalização da Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983971Z"
+  },
+  {
+    "tipo_processo": "Fiscalização da Transmissão: Monitoramento",
+    "tema_id": "operacao-e-manutencao-da-transmissao",
+    "tema_nome": "Operação e manutenção da transmissão",
+    "descricao": "Fiscalização e monitoramento da disponibilidade e manutenção das instalações de transmissão.",
+    "macrotema_sei": "Fiscalização da Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983978Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Adimplência Obrigações Setoriais",
+    "tema_id": "saude-financeira-e-obrigacoes-setoriais",
+    "tema_nome": "Saúde financeira e obrigações setoriais",
+    "descricao": "Fiscalização econômico-financeira, adimplência setorial e sustentabilidade dos agentes outorgados.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.983987Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Anuência Prévia - Atos Constitutivos",
+    "tema_id": "controle-societario-e-titularidade",
+    "tema_nome": "Controle societário e titularidade",
+    "descricao": "Anuência prévia, transferências de controle societário e titularidade de concessões e autorizações.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984179Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Anuência Prévia - Transferência de Controle Societário",
+    "tema_id": "controle-societario-e-titularidade",
+    "tema_nome": "Controle societário e titularidade",
+    "descricao": "Anuência prévia, transferências de controle societário e titularidade de concessões e autorizações.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984215Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Conformidade Regulatória",
+    "tema_id": "saude-financeira-e-obrigacoes-setoriais",
+    "tema_nome": "Saúde financeira e obrigações setoriais",
+    "descricao": "Fiscalização econômico-financeira, adimplência setorial e sustentabilidade dos agentes outorgados.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984240Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Gestão da CCEE, CDE, CCC e RGR",
+    "tema_id": "encargos-e-fundos-setoriais",
+    "tema_nome": "Encargos e fundos setoriais",
+    "descricao": "Gestão e fiscalização de encargos setoriais, CDE, CCC, RGR e recursos da CCEE.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984258Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Monitoramento da Comercialização",
+    "tema_id": "comercializacao-de-energia",
+    "tema_nome": "Comercialização de energia",
+    "descricao": "Ambiente de contratação, comercialização, lastro e liquidação financeira no mercado de energia.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984278Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Monitoramento de Concorrência e Concentração Econômica",
+    "tema_id": "concorrencia-no-setor-eletrico",
+    "tema_nome": "Concorrência no setor elétrico",
+    "descricao": "Monitoramento de concorrência, estruturas de mercado e prevenção de concentração econômica.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984296Z"
+  },
+  {
+    "tipo_processo": "Fiscalização Econômica e Financeira: Sustentabilidade dos Outorgados de Serviço Público",
+    "tema_id": "saude-financeira-e-obrigacoes-setoriais",
+    "tema_nome": "Saúde financeira e obrigações setoriais",
+    "descricao": "Fiscalização econômico-financeira, adimplência setorial e sustentabilidade dos agentes outorgados.",
+    "macrotema_sei": "Fiscalização Econômica e Financeira",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984316Z"
+  },
+  {
+    "tipo_processo": "Gestão de Contrato: Outras Alterações Contratuais não Relacionadas",
+    "tema_id": "gestao-e-alteracoes-contratuais",
+    "tema_nome": "Gestão e alterações contratuais",
+    "descricao": "Acompanhamento, aditamentos e alterações contratuais de concessões e permissões.",
+    "macrotema_sei": "Gestão de Contrato",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984342Z"
+  },
+  {
+    "tipo_processo": "Gestão Tarifária: Transmissão - Reajuste Anual da Receita Anual Permitida - RAP",
+    "tema_id": "tarifas-e-receitas-reguladas",
+    "tema_nome": "Tarifas e receitas reguladas",
+    "descricao": "Metodologia tarifária, reajustes periódicos, revisões e homologação da Receita Anual Permitida (RAP).",
+    "macrotema_sei": "Gestão Tarifária",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984360Z"
+  },
+  {
+    "tipo_processo": "Leilão de Transmissão: Concessões",
+    "tema_id": "expansao-da-transmissao",
+    "tema_nome": "Expansão da transmissão",
+    "descricao": "Leilões, concessões, reforços, melhorias e declaração de utilidade pública em transmissão.",
+    "macrotema_sei": "Leilão de Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984379Z"
+  },
+  {
+    "tipo_processo": "Outorga de Comercialização: Autorização",
+    "tema_id": "comercializacao-de-energia",
+    "tema_nome": "Comercialização de energia",
+    "descricao": "Ambiente de contratação, comercialização, lastro e liquidação financeira no mercado de energia.",
+    "macrotema_sei": "Outorga de Comercialização",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984400Z"
+  },
+  {
+    "tipo_processo": "Outorga de Distribuição: Compartilhamento de Infraestrutura",
+    "tema_id": "compartilhamento-de-infraestrutura",
+    "tema_nome": "Compartilhamento de infraestrutura",
+    "descricao": "Regras sobre compartilhamento de postes, dutos, faixas de servidão e redes de distribuição.",
+    "macrotema_sei": "Outorga de Distribuição",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984418Z"
+  },
+  {
+    "tipo_processo": "Outorga de Geração: Alteração de Cronograma e/ou Excludente de Responsabilidade",
+    "tema_id": "implantacao-de-usinas",
+    "tema_nome": "Implantação de usinas",
+    "descricao": "Acompanhamento de cronograma, excludente de responsabilidade e fiscalização de implantação de geração.",
+    "macrotema_sei": "Outorga de Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984435Z"
+  },
+  {
+    "tipo_processo": "Outorga de Geração: Hídrica - Autorização",
+    "tema_id": "outorgas-de-geracao",
+    "tema_nome": "Outorgas de geração",
+    "descricao": "Autorizações, registros, alterações técnicas e revogações de outorgas de fontes hídricas e não hídricas.",
+    "macrotema_sei": "Outorga de Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984453Z"
+  },
+  {
+    "tipo_processo": "Outorga de Geração: Não Hídrica - Alteração de Características Técnicas",
+    "tema_id": "outorgas-de-geracao",
+    "tema_nome": "Outorgas de geração",
+    "descricao": "Autorizações, registros, alterações técnicas e revogações de outorgas de fontes hídricas e não hídricas.",
+    "macrotema_sei": "Outorga de Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984469Z"
+  },
+  {
+    "tipo_processo": "Outorga de Geração: Não Hídrica - Autorização",
+    "tema_id": "outorgas-de-geracao",
+    "tema_nome": "Outorgas de geração",
+    "descricao": "Autorizações, registros, alterações técnicas e revogações de outorgas de fontes hídricas e não hídricas.",
+    "macrotema_sei": "Outorga de Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984521Z"
+  },
+  {
+    "tipo_processo": "Outorga de Geração: Não Hídrica - Registro de Requerimento de Outorga - DRO",
+    "tema_id": "outorgas-de-geracao",
+    "tema_nome": "Outorgas de geração",
+    "descricao": "Autorizações, registros, alterações técnicas e revogações de outorgas de fontes hídricas e não hídricas.",
+    "macrotema_sei": "Outorga de Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984540Z"
+  },
+  {
+    "tipo_processo": "Outorga de Geração: Não Hídrica - Revogação de Autorizações",
+    "tema_id": "outorgas-de-geracao",
+    "tema_nome": "Outorgas de geração",
+    "descricao": "Autorizações, registros, alterações técnicas e revogações de outorgas de fontes hídricas e não hídricas.",
+    "macrotema_sei": "Outorga de Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984556Z"
+  },
+  {
+    "tipo_processo": "Outorga de Geração: Transferência de Titularidade",
+    "tema_id": "controle-societario-e-titularidade",
+    "tema_nome": "Controle societário e titularidade",
+    "descricao": "Anuência prévia, transferências de controle societário e titularidade de concessões e autorizações.",
+    "macrotema_sei": "Outorga de Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984573Z"
+  },
+  {
+    "tipo_processo": "Outorga de Transmissão: Declaração de Utilidade Pública - DUP",
+    "tema_id": "expansao-da-transmissao",
+    "tema_nome": "Expansão da transmissão",
+    "descricao": "Leilões, concessões, reforços, melhorias e declaração de utilidade pública em transmissão.",
+    "macrotema_sei": "Outorga de Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984590Z"
+  },
+  {
+    "tipo_processo": "Outorga de Transmissão: Demais Pleitos sobre Empreendimentos em Implantação",
+    "tema_id": "expansao-da-transmissao",
+    "tema_nome": "Expansão da transmissão",
+    "descricao": "Leilões, concessões, reforços, melhorias e declaração de utilidade pública em transmissão.",
+    "macrotema_sei": "Outorga de Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984606Z"
+  },
+  {
+    "tipo_processo": "Processo Decisório: Pedido de Efeito Suspensivo do Pedido de Impugnação em Face à Decisão da CCEE",
+    "tema_id": "recursos-e-disputas-regulatorias",
+    "tema_nome": "Recursos e disputas regulatórias",
+    "descricao": "Recursos administrativos, pedidos de efeito suspensivo, impugnações e medidas cautelares.",
+    "macrotema_sei": "Processo Decisório",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984625Z"
+  },
+  {
+    "tipo_processo": "Processo Decisório: Pedido de Medida Cautelar",
+    "tema_id": "recursos-e-disputas-regulatorias",
+    "tema_nome": "Recursos e disputas regulatórias",
+    "descricao": "Recursos administrativos, pedidos de efeito suspensivo, impugnações e medidas cautelares.",
+    "macrotema_sei": "Processo Decisório",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984645Z"
+  },
+  {
+    "tipo_processo": "Processo Decisório: Pedido de Medida Cautelar (Distribuição)",
+    "tema_id": "recursos-e-disputas-regulatorias",
+    "tema_nome": "Recursos e disputas regulatórias",
+    "descricao": "Recursos administrativos, pedidos de efeito suspensivo, impugnações e medidas cautelares.",
+    "macrotema_sei": "Processo Decisório",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984663Z"
+  },
+  {
+    "tipo_processo": "Processo Externo - Pendente de Classificação pela Unidade Destinatária",
+    "tema_id": "processos-externos-a-classificar",
+    "tema_nome": "Processos externos a classificar",
+    "descricao": "Processos e demandas externas pendentes de triagem e classificação temática.",
+    "macrotema_sei": "Processo Externo",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984684Z"
+  },
+  {
+    "tipo_processo": "Processo Migrado - Pendente de Classificação pela Unidade Gestora",
+    "tema_id": "processos-migrados-a-classificar",
+    "tema_nome": "Processos migrados a classificar",
+    "descricao": "Processos herdados de sistemas legados em fase de categorização regulatória.",
+    "macrotema_sei": "Processo Migrado",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984702Z"
+  },
+  {
+    "tipo_processo": "Programa de Pesquisa, Desenvolvimento e Inovação: Normatização",
+    "tema_id": "pesquisa-desenvolvimento-e-inovacao",
+    "tema_nome": "Pesquisa, desenvolvimento e inovação",
+    "descricao": "Regulamentação, aprovação e acompanhamento de programas de P&D e eficiência energética.",
+    "macrotema_sei": "Programa de Pesquisa, Desenvolvimento e Inovação",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984721Z"
+  },
+  {
+    "tipo_processo": "Regulação da Distribuição: Pleitos sobre Serviços de Distribuição",
+    "tema_id": "servicos-de-distribuicao",
+    "tema_nome": "Serviços de distribuição",
+    "descricao": "Qualidade do atendimento, conformidade de redes, pleitos e padrões dos serviços de distribuição.",
+    "macrotema_sei": "Regulação da Distribuição",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984739Z"
+  },
+  {
+    "tipo_processo": "Regulação da Geração: Demais pleitos sobre Serviços de Geração",
+    "tema_id": "operacao-e-manutencao-de-usinas",
+    "tema_nome": "Operação e manutenção de usinas",
+    "descricao": "Acompanhamento de operação, desempenho e manutenção de usinas geradoras de energia.",
+    "macrotema_sei": "Regulação da Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984759Z"
+  },
+  {
+    "tipo_processo": "Regulação da Geração: Normatização",
+    "tema_id": "operacao-e-manutencao-de-usinas",
+    "tema_nome": "Operação e manutenção de usinas",
+    "descricao": "Acompanhamento de operação, desempenho e manutenção de usinas geradoras de energia.",
+    "macrotema_sei": "Regulação da Geração",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984777Z"
+  },
+  {
+    "tipo_processo": "Regulação da Transmissão: Pleitos sobre Serviços de Transmissão",
+    "tema_id": "operacao-e-manutencao-da-transmissao",
+    "tema_nome": "Operação e manutenção da transmissão",
+    "descricao": "Fiscalização e monitoramento da disponibilidade e manutenção das instalações de transmissão.",
+    "macrotema_sei": "Regulação da Transmissão",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984797Z"
+  },
+  {
+    "tipo_processo": "Regulação do Mercado: Contrato de Comercialização de Energia de Licitação Pública - CCELP",
+    "tema_id": "comercializacao-de-energia",
+    "tema_nome": "Comercialização de energia",
+    "descricao": "Ambiente de contratação, comercialização, lastro e liquidação financeira no mercado de energia.",
+    "macrotema_sei": "Regulação do Mercado",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984815Z"
+  },
+  {
+    "tipo_processo": "Regulação do Mercado: Definição de Regras e Procedimentos de Comercialização",
+    "tema_id": "regras-do-mercado-de-energia",
+    "tema_nome": "Regras do mercado de energia",
+    "descricao": "Definição, aprimoramento e normatização das regras e procedimentos de comercialização.",
+    "macrotema_sei": "Regulação do Mercado",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984832Z"
+  },
+  {
+    "tipo_processo": "Regulação do Mercado: Demais Pleitos sobre o Mercado de Energia",
+    "tema_id": "regras-do-mercado-de-energia",
+    "tema_nome": "Regras do mercado de energia",
+    "descricao": "Definição, aprimoramento e normatização das regras e procedimentos de comercialização.",
+    "macrotema_sei": "Regulação do Mercado",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984848Z"
+  },
+  {
+    "tipo_processo": "Regulação do Mercado: Gestão de Contratos de Comercialização",
+    "tema_id": "comercializacao-de-energia",
+    "tema_nome": "Comercialização de energia",
+    "descricao": "Ambiente de contratação, comercialização, lastro e liquidação financeira no mercado de energia.",
+    "macrotema_sei": "Regulação do Mercado",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984897Z"
+  },
+  {
+    "tipo_processo": "Regulação do Mercado: Normatização",
+    "tema_id": "regras-do-mercado-de-energia",
+    "tema_nome": "Regras do mercado de energia",
+    "descricao": "Definição, aprimoramento e normatização das regras e procedimentos de comercialização.",
+    "macrotema_sei": "Regulação do Mercado",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984920Z"
+  },
+  {
+    "tipo_processo": "Regulação do Mercado: Pedidos de Impugnação de Decisões da CCEE",
+    "tema_id": "recursos-e-disputas-regulatorias",
+    "tema_nome": "Recursos e disputas regulatórias",
+    "descricao": "Recursos administrativos, pedidos de efeito suspensivo, impugnações e medidas cautelares.",
+    "macrotema_sei": "Regulação do Mercado",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984938Z"
+  },
+  {
+    "tipo_processo": "Regulação Econômica: Monitoramento",
+    "tema_id": "tarifas-e-receitas-reguladas",
+    "tema_nome": "Tarifas e receitas reguladas",
+    "descricao": "Metodologia tarifária, reajustes periódicos, revisões e homologação da Receita Anual Permitida (RAP).",
+    "macrotema_sei": "Regulação Econômica",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984953Z"
+  },
+  {
+    "tipo_processo": "Regulação Econômica: Normatização",
+    "tema_id": "tarifas-e-receitas-reguladas",
+    "tema_nome": "Tarifas e receitas reguladas",
+    "descricao": "Metodologia tarifária, reajustes periódicos, revisões e homologação da Receita Anual Permitida (RAP).",
+    "macrotema_sei": "Regulação Econômica",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984970Z"
+  },
+  {
+    "tipo_processo": "Relações Interinstitucionais: Judiciário, Ministérios Públicos, Defensorias e Polícias",
+    "tema_id": "cooperacao-institucional",
+    "tema_nome": "Cooperação institucional",
+    "descricao": "Acordos e convênios com agências estaduais, órgãos judiciais, ministérios e defensorias.",
+    "macrotema_sei": "Relações Interinstitucionais",
+    "temas_secundarios": [],
+    "origem_classificacao": "direta",
+    "atualizado_em": "2026-09-27T15:59:11.984987Z"
+  }
+]

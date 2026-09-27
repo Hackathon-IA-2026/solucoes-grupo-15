@@ -33,7 +33,7 @@ def parse_md_table(filepath: Path) -> list:
         
     for line in lines:
         line = line.strip()
-        if not line.startswith('|') or 'De -' in line or '---' in line:
+        if not line.startswith('|') or 'De —' in line or 'De -' in line or '---' in line:
             continue
             
         parts = [p.strip() for p in line.split('|')]
