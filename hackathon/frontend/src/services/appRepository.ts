@@ -2,6 +2,7 @@ import { fetchFamilies } from "../api/documents";
 import { fetchNotifications, loadDemoUser } from "../api/notifications";
 import { fetchOpinion } from "../api/opinion";
 import { fetchProcessos } from "../api/processos";
+import { fetchThemes } from "../api/themes";
 import { appendSearchPage, searchDocuments, type SearchEnvelope, type SearchResult } from "../api/search";
 import type {
   AppNotification,
@@ -9,7 +10,10 @@ import type {
   Family,
   OpinionData,
   ProcessDashboard,
+  RecentActivity,
+  TrackedProcess,
 } from "../types/product";
+
 
 export interface AppRepository {
   searchPrecedents(query: string): Promise<ExploreData>;
@@ -41,20 +45,47 @@ export class ApiAppRepository implements AppRepository {
   }
 
   async getProcessDashboard(): Promise<ProcessDashboard> {
-    return { processes: await fetchProcessos() };
+    const summaries = await fetchProcessos();
+    const processes: TrackedProcess[] = summaries.map((p) => ({
+      id: p.processo_id,
+      subject: p.latest_document_id,
+      agency: "ANEEL",
+      origin: "Corpus demonstrativo",
+      updatedAt: formatIsoDate(p.latest_movement_at),
+      unread: 0,
+      status: "Em análise" as const,
+      tags: p.document_types,
+      documents: p.document_types,
+    }));
+    const activity: RecentActivity[] = summaries.slice(0, 5).map((p, i) => ({
+      id: `activity-${i + 1}`,
+      label: `Andamento — ${p.latest_document_type}`,
+      processNumber: p.processo_id,
+      time: p.latest_movement_at,
+    }));
+    return { processes, activity };
   }
 
   async getFamilies(): Promise<Family[]> {
-    const families = await fetchFamilies();
-    return families.map((family) => ({
-      id: family.family_id,
-      name: family.document_id,
-      description: `${formatDocumentType(family.document_type)}${family.processo_numero ? ` · Processo ${family.processo_numero}` : ""}`,
-      documents: family.versions_count,
-      status: `Atualizado em ${family.latest_version_date}`,
-      tone: "blue" as const,
-      icon: "landmark",
-    }));
+    const tones = ["green", "orange", "blue", "purple", "red", "cyan"] as const;
+    const icons = ["leaf", "coins", "chart", "landmark", "tower", "users"] as const;
+    try {
+      const items = await fetchThemes();
+      if (items && items.length > 0) {
+        return items.map((item, i) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          tipos_processo: item.tipos_processo,
+          status: item.status || "Disponível",
+          tone: tones[i % tones.length],
+          icon: icons[i % icons.length],
+        }));
+      }
+    } catch {
+      // Fallback para os temas base caso o backend/ai esteja indisponivel
+    }
+    return super.getFamilies();
   }
 
   getOpinion(): Promise<OpinionData> {
@@ -156,6 +187,12 @@ function mapSearchEnvelope(query: string, envelope: SearchEnvelope): ExploreData
       detail: "A ausência de resultados não significa ausência de precedentes fora desta fixture.",
     }],
   };
+}
+
+function formatIsoDate(iso: string): string {
+  const [date] = iso.split("T");
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 function formatDocumentType(value: string) {

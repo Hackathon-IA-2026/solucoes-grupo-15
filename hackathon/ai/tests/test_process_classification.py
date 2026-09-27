@@ -1,6 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
-from moto import mock_aws
+try:
+    from moto import mock_aws
+except ImportError:
+    mock_aws = None
 import boto3
 
 from app.main import app
@@ -11,6 +14,8 @@ from app.models import ProcessClassification
 
 @pytest.fixture
 def mock_dynamodb():
+    if mock_aws is None:
+        pytest.skip("moto is not installed")
     with mock_aws():
         dynamodb = boto3.resource("dynamodb", region_name=settings.aws_region)
         table = dynamodb.create_table(
@@ -90,3 +95,19 @@ def test_http_get_theme_success(in_memory_store):
     data = response.json()
     assert data["tema_id"] == "compartilhamento-de-infraestrutura"
     assert data["tema_nome"] == "Compartilhamento de infraestrutura"
+
+def test_http_list_themes_with_descriptions(in_memory_store):
+    app.dependency_overrides[get_theme_store] = lambda: in_memory_store
+    client = TestClient(app)
+
+    response = client.get("/internal/v1/themes")
+    assert response.status_code == 200
+    themes = response.json()
+    assert len(themes) > 0
+    theme = themes[0]
+    assert "tema_id" in theme
+    assert "tema_nome" in theme
+    assert "descricao" in theme
+    assert len(theme["descricao"]) > 0
+    assert "tipos_processo" in theme
+    assert isinstance(theme["tipos_processo"], list)

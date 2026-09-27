@@ -238,3 +238,38 @@ def test_ingestion_client_waits_for_real_indexing_but_search_stays_short(monkeyp
     assert timeouts["index"] >= 900
     assert timeouts["reindex"] >= 900
     assert timeouts["search"] == 10.0
+
+
+def test_get_themes_calls_internal_endpoint(monkeypatch) -> None:
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        return httpx.Response(
+            200,
+            json=[
+                {
+                    "tema_id": "comercializacao-de-energia",
+                    "tema_nome": "Comercialização de energia",
+                    "descricao": "Ambiente de contratação, comercialização e lastro.",
+                    "tipos_processo": ["Outorga de Comercialização: Autorização"],
+                }
+            ],
+        )
+
+    def fake_get(url, *, params=None, timeout=None):
+        request = httpx.Request("GET", url, params=params)
+        with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
+            return http_client.send(request)
+
+    monkeypatch.setattr("app.clients.ai_client.httpx.get", fake_get)
+
+    client = AiClient(base_url="http://ai-test")
+    themes = client.get_themes()
+
+    assert captured["url"] == "http://ai-test/internal/v1/themes"
+    assert len(themes) == 1
+    assert themes[0].tema_id == "comercializacao-de-energia"
+    assert themes[0].tema_nome == "Comercialização de energia"
+    assert themes[0].descricao == "Ambiente de contratação, comercialização e lastro."
+    assert themes[0].tipos_processo == ["Outorga de Comercialização: Autorização"]

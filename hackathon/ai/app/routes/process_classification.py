@@ -39,6 +39,7 @@ def resolve_process_classification(
         )
     return classification
 
+@router.get("/themes", response_model=List[TemaTaxonomy])
 @router.get("/process-types/themes", response_model=List[TemaTaxonomy])
 def list_process_themes(
     store: ProcessThemeClassifier = Depends(get_theme_store)

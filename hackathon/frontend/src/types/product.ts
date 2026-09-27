@@ -98,7 +98,8 @@ export type Family = {
   id: string;
   name: string;
   description: string;
-  documents: number;
+  documents?: number;
+  tipos_processo?: string[];
   status: string;
   tone: "green" | "orange" | "blue" | "purple" | "red" | "cyan";
   icon: string;

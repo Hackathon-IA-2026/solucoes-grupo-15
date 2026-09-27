@@ -57,10 +57,22 @@ function renderPage(path = "/explorar") {
 }
 
 describe("ExplorePage integrada", () => {
-  it("abre em uma home sem ranking antes de uma pesquisa", () => {
+  it("abre em uma home sem ranking antes de uma pesquisa e sem contagem de documentos", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/v1/themes")) {
+        return jsonResponse([
+          { id: "tema-1", name: "Transição Energética", description: "Fontes renováveis", tipos_processo: [], status: "Disponível" },
+        ]);
+      }
+      return jsonResponse({}, 404);
+    }));
+
     renderPage();
     expect(screen.getByRole("heading", { name: /explore por família/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Buscar" })).toBeDisabled();
+    expect(await screen.findByText("Transição Energética")).toBeInTheDocument();
+    expect(screen.queryByText(/\d+\s+documentos/i)).not.toBeInTheDocument();
   });
 
   it("mostra resultados e metadados recebidos do backend", async () => {
