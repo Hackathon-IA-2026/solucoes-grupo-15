@@ -77,9 +77,9 @@ export function FamilyPage() {
     <div className="page detail-page document-record-page">
       <DemoBanner />
 
-      <section aria-label="página de família">
+      <section aria-label="página de documento">
         {state.kind === "loading" && <div className="loading-state"><span className="loading-spinner" aria-hidden="true" /> Carregando...</div>}
-        {state.kind === "not-found" && <div className="empty-state"><h2>Família não encontrada.</h2><Link to="/">Voltar à consulta</Link></div>}
+        {state.kind === "not-found" && <div className="empty-state"><h2>Documento não encontrado.</h2><Link to="/">Voltar à consulta</Link></div>}
         {state.kind === "error" && <div className="empty-state error-state"><h2>Não foi possível carregar o documento.</h2><p>Tente novamente em alguns instantes.</p></div>}
         {state.kind === "result" && (
           <FamilyContent
@@ -156,7 +156,7 @@ function FamilyContent({
       <div className="detail-primary">
         <header className="document-header">
           <Link className="back-link" to="/explorar">Voltar à pesquisa</Link>
-          <p className="eyebrow"><FileText size={15} /> Família documental</p>
+          <p className="eyebrow"><FileText size={15} /> Documento do processo</p>
           <h1>
             {formatDocumentType(detail.document_type)}
             <span className="sr-only">{detail.document_type}</span>

@@ -52,7 +52,7 @@ function renderPage(path = "/explorar") {
 describe("ExplorePage integrada", () => {
   it("abre em uma home sem ranking antes de uma pesquisa", () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: /ainda não há uma pesquisa/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /explore por tema/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Buscar" })).toBeDisabled();
   });
 
@@ -67,7 +67,7 @@ describe("ExplorePage integrada", () => {
       "href",
       "/processos/48500.001234%2F2024-11",
     );
-    expect(screen.getByText("auto-0007 · fam-auto-0007")).toBeInTheDocument();
+    expect(screen.getByText("auto-0007 · 1 documento localizado")).toBeInTheDocument();
     expect(screen.getByText("versao retificada com periodo corrigido")).toBeInTheDocument();
     expect(screen.getAllByText("91%").length).toBeGreaterThan(0);
   });

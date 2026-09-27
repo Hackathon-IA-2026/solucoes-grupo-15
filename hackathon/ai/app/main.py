@@ -18,6 +18,7 @@ from app.routes.health import router as health_router
 from app.routes.index import router as index_router
 from app.routes.reindex import router as reindex_router
 from app.routes.search import router as search_router
+from app.routes.process_classification import router as process_classification_router
 
 
 def create_app() -> FastAPI:
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
     app.include_router(index_router)
     app.include_router(search_router)
     app.include_router(reindex_router)
+    app.include_router(process_classification_router)
     return app
 
 

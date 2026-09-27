@@ -126,7 +126,7 @@ function ScopePicker({ onChoose }: { onChoose: (scope: NotificationScope) => Pro
       <fieldset>
         <legend className="sr-only">Escopo de notificações</legend>
         <label className="scope-option"><input type="radio" name="product-notification-scope" checked={selected === "estrita"} onChange={() => setSelected("estrita")} /><span><strong>Estrita</strong> Apenas documentos novos.</span></label>
-        <label className="scope-option"><input type="radio" name="product-notification-scope" checked={selected === "ampla"} onChange={() => setSelected("ampla")} /><span><strong>Ampla</strong> Inclui relações confirmadas com outras famílias.</span></label>
+        <label className="scope-option"><input type="radio" name="product-notification-scope" checked={selected === "ampla"} onChange={() => setSelected("ampla")} /><span><strong>Ampla</strong> Inclui documentos e processos relacionados.</span></label>
       </fieldset>
       <button className="yellow-button" type="button" disabled={!selected || submitting} onClick={() => void submit()}>
         {submitting ? "Ativando..." : "Ativar notificações"}

@@ -1,5 +1,14 @@
 """Geracao de notificacoes + digest de e-mail (TB1 Ticket 8, issue #24).
 
+⚠️ NOTA SOBRE E-MAIL (OUT OF SCOPE OPERACIONAL)
+===============================================
+O código de digest de e-mail (_send_digest, PreviewMailer) está completo
+e testado, mas o canal de e-mail NÃO É USADO operacionalmente neste ciclo
+porque o SES não foi disponibilizado (issue #8). A entrega acontece APENAS
+pela home (notification_delivered_home). O código de e-mail permanece como
+evidência do trabalho realizado.
+===============================================
+
 ``run_notifications`` roda a partir de ``app/routes/ingestions.py::run_ingestion``,
 sempre (nao e opcional como ``relations`` foi para os Tickets 2-4) -
 zero usuarios com escopo escolhido e um no-op seguro, ver

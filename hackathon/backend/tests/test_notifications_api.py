@@ -70,7 +70,7 @@ def test_list_notifications_returns_most_recent_first_enriched_with_catalog(
 
     assert response.status_code == 200
     body = response.json()
-    assert len(body) == 5
+    assert len(body) == 15
     # mais recente primeiro -> ids em ordem decrescente.
     ids = [item["id"] for item in body]
     assert ids == sorted(ids, reverse=True)
@@ -190,7 +190,7 @@ def test_list_email_digests_returns_rendered_preview(database_url: str) -> None:
     assert len(body) == 1
     assert body[0]["user_id"] == "carolina"
     assert body[0]["rendered_body"].strip() != ""
-    assert len(body[0]["notification_ids"]) == 5
+    assert len(body[0]["notification_ids"]) == 15
 
 
 def test_list_email_digests_empty_for_user_without_digests(database_url: str) -> None:

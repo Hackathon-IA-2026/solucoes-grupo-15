@@ -1,5 +1,19 @@
 """Port ``Mailer`` + adapter de previa (TB1 Ticket 8, issue #24).
 
+⚠️ IMPLEMENTADO MAS NÃO ATIVADO (OUT OF SCOPE OPERACIONAL)
+============================================================
+Este código está completo e testado, mas o canal de e-mail NÃO É USADO
+neste ciclo porque o SES não foi disponibilizado pela organização do
+hackathon (issue #8, docs/Ambiente AWS - serviços disponíveis.md).
+
+A entrega de notificações acontece APENAS pela home
+(notification_delivered_home). Este código permanece como evidência do
+trabalho realizado e pode ser ativado futuramente se o SES for liberado.
+
+Para desativar a geração de digests, comente a chamada a `_send_digest`
+em `app/notifications.py::run_notifications`.
+============================================================
+
 A conta do hackathon nao tem SES (ver i9-integration.md, issue-7); o
 que se especifica e a entrega de notificacao por e-mail atras de um
 port `Mailer`, independente do adapter - so um adapter existe nesta

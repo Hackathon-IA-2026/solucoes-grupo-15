@@ -124,7 +124,7 @@ describe("FamilyPage", () => {
     expect(fetchMock).toHaveBeenCalledWith("/v1/documents/fam-auto-0007");
   });
 
-  it("mostra mensagem clara quando a família não é encontrada (404)", async () => {
+  it("mostra mensagem clara quando o documento não é encontrado (404)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }),
@@ -133,7 +133,7 @@ describe("FamilyPage", () => {
     renderFamilyPage({ familyId: "fam-inexistente" });
 
     await waitFor(() =>
-      expect(screen.getByText(/família não encontrada/i)).toBeInTheDocument(),
+      expect(screen.getByText(/documento não encontrado/i)).toBeInTheDocument(),
     );
   });
 

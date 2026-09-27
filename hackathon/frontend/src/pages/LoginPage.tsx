@@ -2,6 +2,7 @@ import { Eye, EyeOff, LogIn, LockKeyhole, Mail, ShieldCheck } from "lucide-react
 import { useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
+import { CapiMark } from "../components/brand/CapiMark";
 import { useSession } from "../features/auth/SessionContext";
 
 export function LoginPage() {
@@ -27,19 +28,19 @@ export function LoginPage() {
 
   return (
     <main className="login-page">
-      <section className="login-brand-panel" aria-label="CapiWatt Lens, feito no Brasil, ligado no futuro"><img src="/assets/login-brand-panel.png" alt="CapiWatt Lens, energia, tecnologia e regulação no Brasil" /></section>
+      <section className="login-brand-panel" aria-label="CapiWatt Lens, feito no Brasil, ligado no futuro"><img src="/assets/login-brand-panel-v2.png" alt="CapiWatt Lens, energia, tecnologia e regulação no Brasil" /></section>
       <section className="login-form-panel">
         <form className="login-card" onSubmit={submit}>
-          <div className="login-heading"><span className="mobile-logo">Capi<span>Watt</span> Lens</span><h1>Entrar</h1><p>Acesse sua conta para continuar.</p></div>
+          <div className="login-heading"><span className="mobile-logo" aria-hidden="true"><span className="mobile-logo-mark"><CapiMark size={24} /></span>Capi<span>Watt</span> <small>Lens</small></span><h1>Entrar</h1><p>Acesse sua conta para continuar.</p></div>
           <label htmlFor="email">E-mail ou usuário</label>
-          <div className="field-control"><Mail size={20} /><input id="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="seu@email.com ou usuário" autoComplete="username" /></div>
+          <div className="field-control"><Mail size={20} aria-hidden="true" /><input id="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="seu@email.com ou usuário" autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} /></div>
           <label htmlFor="password">Senha</label>
-          <div className="field-control"><LockKeyhole size={20} /><input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Sua senha" autoComplete="current-password" /><button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button></div>
+          <div className="field-control"><LockKeyhole size={20} aria-hidden="true" /><input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Sua senha" autoComplete="current-password" /><button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button></div>
           <label className="remember-control"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> <span>Manter conectado</span></label>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <button className="yellow-button login-submit" type="submit"><LogIn size={21} /> Entrar</button>
+          {error && <p className="form-error" id="login-error" role="alert">{error}</p>}
+          <button className="yellow-button login-submit" type="submit"><LogIn size={21} aria-hidden="true" /> Entrar</button>
           <button type="button" className="text-button">Esqueci minha senha</button>
-          <div className="provision-note"><ShieldCheck size={19} /><p>Sem cadastro self-service.<br />O acesso é provisionado pela equipe.</p></div>
+          <div className="provision-note"><ShieldCheck size={19} aria-hidden="true" /><p>Sem cadastro self-service.<br />O acesso é provisionado pela equipe.</p></div>
         </form>
       </section>
     </main>

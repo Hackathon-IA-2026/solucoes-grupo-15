@@ -556,3 +556,1120 @@
     height: 182px;
   }
 }
+
+/* Profile selection is a distinct first-use moment: let the illustrated roles lead it. */
+.persona-page {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: 86px minmax(0, 1fr);
+  padding: 0 34px 18px;
+  overflow: auto;
+  background:
+    linear-gradient(180deg, #062646 0 86px, transparent 86px),
+    linear-gradient(135deg, #edf7fb 0%, #f8fbfd 52%, #e7f2f3 100%);
+}
+
+.persona-page::before,
+.persona-page::after {
+  display: none;
+}
+
+.persona-logo {
+  height: 86px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
+.persona-logo-symbol {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--yellow-500);
+  color: var(--navy-950);
+}
+
+.persona-logo-name {
+  color: #fff;
+  font-size: 28px;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.persona-logo-name > span {
+  color: var(--yellow-500);
+}
+
+.persona-logo-name small {
+  margin-left: 6px;
+  color: #fff;
+  font-size: 17px;
+  font-style: normal;
+}
+
+.persona-content {
+  width: min(1160px, 100%);
+  max-width: 1160px;
+  align-self: center;
+  margin: 0 auto;
+  padding: 20px 0 0;
+}
+
+.persona-kicker {
+  margin: 0 0 7px !important;
+  color: #24775a !important;
+  font-size: 12px !important;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.persona-content > h1 {
+  max-width: 710px;
+  margin: 0 auto 8px;
+  font-size: 42px;
+  line-height: 1.08;
+}
+
+.persona-content > .persona-lead {
+  max-width: 640px;
+  margin: 0 auto 24px;
+  color: #58728c;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.persona-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.persona-card {
+  height: 410px;
+  padding: 0;
+  display: block;
+  border: 1px solid #cadbe8;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 30px rgba(6, 38, 70, .11);
+  text-align: left;
+  isolation: isolate;
+}
+
+.persona-card:hover {
+  border-color: #6da5d9;
+  transform: translateY(-3px);
+  box-shadow: 0 20px 36px rgba(6, 38, 70, .16);
+}
+
+.persona-card.selected {
+  border: 3px solid var(--yellow-500);
+  box-shadow: 0 18px 38px rgba(224, 165, 0, .24);
+}
+
+.persona-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: #e7f0f2;
+}
+
+.persona-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 23%;
+  transform: none;
+  mix-blend-mode: normal;
+}
+
+.persona-image::after {
+  display: none;
+}
+
+.persona-copy {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 130px;
+  padding: 42px 22px 19px;
+  display: grid;
+  align-content: end;
+  gap: 5px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255,255,255,.94) 33%, #fff 55%);
+}
+
+.persona-copy small {
+  color: #28785d;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.persona-card .persona-copy strong {
+  color: var(--navy-950);
+  font-size: 22px;
+  line-height: 1.18;
+}
+
+.persona-copy > span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.42;
+}
+
+.persona-check {
+  top: 14px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #fff;
+  background: var(--yellow-500);
+  box-shadow: 0 5px 12px rgba(6, 38, 70, .2);
+}
+
+.persona-continue {
+  width: min(100%, 520px);
+  min-height: 48px;
+  margin-top: 18px;
+}
+
+.persona-back {
+  margin-top: 9px;
+}
+
+.notification-tema {
+  background: #fff3d1;
+  color: #bf8500;
+}
+
+@media (max-width: 820px) {
+  .persona-page {
+    display: block;
+    padding: 0 16px 24px;
+    background: linear-gradient(180deg, #062646 0 72px, #f4f9fb 72px);
+  }
+
+  .persona-logo {
+    height: 72px;
+  }
+
+  .persona-logo-symbol {
+    width: 38px;
+    height: 38px;
+  }
+
+  .persona-logo-name {
+    font-size: 23px;
+  }
+
+  .persona-logo-name small {
+    font-size: 14px;
+  }
+
+  .persona-content {
+    padding-top: 20px;
+  }
+
+  .persona-content > h1 {
+    font-size: 30px;
+  }
+
+  .persona-content > .persona-lead {
+    margin-bottom: 18px;
+    font-size: 14px;
+  }
+
+  .persona-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .persona-card {
+    height: 370px;
+  }
+}
+
+@media (max-height: 780px) and (min-width: 821px) {
+  .persona-page {
+    grid-template-rows: 66px minmax(0, 1fr);
+    padding-bottom: 10px;
+    background: linear-gradient(180deg, #062646 0 66px, transparent 66px), linear-gradient(135deg, #edf7fb 0%, #f8fbfd 52%, #e7f2f3 100%);
+  }
+
+  .persona-logo {
+    height: 62px;
+  }
+
+  .persona-logo-symbol {
+    width: 38px;
+    height: 38px;
+  }
+
+  .persona-logo-name {
+    font-size: 24px;
+  }
+
+  .persona-logo-name small {
+    font-size: 14px;
+  }
+
+  .persona-content {
+    padding-top: 8px;
+  }
+
+  .persona-content > h1 {
+    font-size: 34px;
+  }
+
+  .persona-content > .persona-lead {
+    margin-bottom: 14px;
+  }
+
+  .persona-card {
+    height: 320px;
+  }
+
+  .persona-copy {
+    min-height: 112px;
+    padding: 30px 18px 14px;
+  }
+
+  .persona-card .persona-copy strong {
+    font-size: 19px;
+  }
+}
+
+/* Keep the first-access experience flush and preserve the full illustration. */
+.login-page {
+  min-height: 0;
+  background: #03284a;
+}
+
+.login-brand-panel {
+  background: #03284a;
+}
+
+.login-brand-panel img {
+  object-fit: contain;
+  background: #03284a;
+}
+
+.login-form-panel {
+  border-radius: 0;
+}
+
+/* On desktop, keep profile selection within one notebook-height screen. */
+.persona-page {
+  height: 100svh;
+  min-height: 0;
+  grid-template-rows: 72px minmax(0, 1fr);
+  padding: 0 34px 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #062646 0 72px, transparent 72px), linear-gradient(135deg, #edf7fb 0%, #f8fbfd 52%, #e7f2f3 100%);
+}
+
+.persona-logo {
+  height: 72px;
+}
+
+.persona-content {
+  align-self: start;
+  padding-top: 12px;
+}
+
+.persona-content > h1 {
+  font-size: 36px;
+}
+
+.persona-content > .persona-lead {
+  margin-bottom: 14px;
+}
+
+.persona-grid {
+  gap: 16px;
+}
+
+.persona-card {
+  height: clamp(292px, 39svh, 360px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.persona-image {
+  position: static;
+  grid-row: 1;
+  width: 100%;
+  height: auto;
+}
+
+.persona-image img {
+  height: 100%;
+  object-position: center top;
+  transform: none;
+}
+
+.persona-copy {
+  position: static;
+  grid-row: 2;
+  min-height: 104px;
+  padding: 13px 18px 15px;
+  display: grid;
+  align-content: center;
+  background: #fff;
+}
+
+.persona-continue {
+  min-height: 44px;
+  margin-top: 12px;
+}
+
+.persona-back {
+  margin-top: 6px;
+}
+
+.explore-page-idle .explore-landing {
+  align-content: start;
+  padding-top: 16px;
+}
+
+.explore-page-idle .landing-families {
+  max-width: 980px;
+  padding: 18px;
+}
+
+.landing-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+@media (max-width: 820px) {
+  .persona-page {
+    height: auto;
+    min-height: 100svh;
+    overflow: auto;
+  }
+
+  .persona-card {
+    height: 330px;
+  }
+}
+
+@media (max-height: 820px) and (min-width: 821px) {
+  .persona-page {
+    grid-template-rows: 58px minmax(0, 1fr);
+    padding-bottom: 8px;
+    background: linear-gradient(180deg, #062646 0 58px, transparent 58px), linear-gradient(135deg, #edf7fb 0%, #f8fbfd 52%, #e7f2f3 100%);
+  }
+
+  .persona-logo {
+    height: 58px;
+  }
+
+  .persona-content {
+    padding-top: 6px;
+  }
+
+  .persona-content > h1 {
+    font-size: 31px;
+  }
+
+  .persona-content > .persona-lead {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .persona-card {
+    height: clamp(260px, 37svh, 300px);
+  }
+
+  .persona-copy {
+    min-height: 88px;
+    padding: 10px 15px;
+  }
+
+  .persona-card .persona-copy strong {
+    font-size: 18px;
+  }
+
+  .persona-copy > span {
+    font-size: 11px;
+  }
+
+  .persona-continue {
+    min-height: 40px;
+    margin-top: 8px;
+  }
+}
+
+/* Persona availability and complete image framing. */
+.persona-image {
+  display: grid;
+  place-items: center;
+  background: #edf7ff;
+}
+
+.persona-advocacia .persona-image {
+  background: #fff4cf;
+}
+
+.persona-pesquisa .persona-image {
+  background: #eaf8e9;
+}
+
+.persona-engenharia .persona-image {
+  background: #e6f4ff;
+}
+
+.persona-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.persona-card.is-unavailable {
+  cursor: not-allowed;
+}
+
+.persona-card.is-unavailable:disabled {
+  opacity: 1;
+}
+
+.persona-card.is-unavailable .persona-image img {
+  filter: grayscale(1) contrast(.82);
+}
+
+.persona-unavailable {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  left: 50%;
+  min-height: 32px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255,255,255,.75);
+  border-radius: 999px;
+  background: rgba(6,38,70,.82);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Desktop sidebar can collapse without losing accessible names or targets. */
+.sidebar-collapse {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.sidebar-collapse:hover {
+  background: #f1f6fb;
+  color: var(--navy-950);
+}
+
+@media (min-width: 1041px) {
+  .product-shell.sidebar-collapsed {
+    grid-template-columns: 76px minmax(0,1fr);
+  }
+
+  .product-sidebar.collapsed {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .product-sidebar.collapsed .sidebar-collapse {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .product-sidebar.collapsed .sidebar-link {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .product-sidebar.collapsed .sidebar-link span,
+  .product-sidebar.collapsed .persona-summary-row > div,
+  .product-sidebar.collapsed .persona-summary button > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .product-sidebar.collapsed .persona-summary {
+    padding: 10px;
+  }
+
+  .product-sidebar.collapsed .persona-summary-row,
+  .product-sidebar.collapsed .persona-summary button {
+    justify-content: center;
+  }
+
+  .product-sidebar.collapsed .persona-summary button {
+    width: 100%;
+    min-height: 40px;
+    margin-top: 10px;
+  }
+}
+
+/* WCAG 2.2-oriented interaction safety: keyboard focus stays visible and targets stay usable. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid #075fd8;
+  outline-offset: 3px;
+}
+
+.explore-page-idle .landing-families {
+  width: min(100%, 1180px);
+  max-width: 1180px;
+}
+
+.explore-page-idle .landing-family-card {
+  min-height: 82px;
+}
+
+@media (max-width: 820px) {
+  .sidebar-collapse {
+    display: none;
+  }
+
+  .persona-image img {
+    object-fit: contain;
+  }
+
+  .persona-unavailable {
+    top: 12px;
+  }
+
+  .explore-page-idle .landing-families {
+    width: 100%;
+  }
+}
+
+/* ===== Rodada de acabamento: personas, início, mobile e acessibilidade ===== */
+
+/* Contraste AA (4.5:1) para textos secundários pequenos. */
+:root {
+  --text-secondary: #56657b;
+  --text-muted: #5f6d83;
+}
+
+.page-kicker,
+.landing-heading .page-kicker {
+  color: #1d63c4;
+}
+
+.persona-avatar {
+  color: #33445c;
+}
+
+/* Personas: a imagem ocupa a área inteira e fica ancorada no topo (capacete visível). */
+.persona-image {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.persona-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0%;
+  transform: none;
+}
+
+.persona-card[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.persona-card[aria-disabled="true"]:hover {
+  transform: none;
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.persona-card[aria-disabled="true"] .persona-copy strong,
+.persona-card[aria-disabled="true"] .persona-copy > span {
+  color: #4b5a70;
+}
+
+/* Início: temas com ícone, descrição e contagem, preenchendo a altura disponível. */
+.explore-page-idle .explore-landing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0 0;
+}
+
+.explore-page-idle .landing-families {
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px 20px;
+}
+
+.landing-heading h2 {
+  font-size: 19px;
+}
+
+.landing-heading button {
+  min-height: 32px;
+  padding: 0 4px;
+  font-size: 13px;
+}
+
+.landing-family-grid {
+  flex: 1;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(112px, 1fr);
+  gap: 12px;
+}
+
+.landing-family-grid > li {
+  display: flex;
+  min-width: 0;
+}
+
+.explore-page-idle .landing-family-card,
+.landing-family-card {
+  width: 100%;
+  min-height: 118px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 18px;
+  align-items: center;
+  align-content: center;
+  gap: 12px;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.landing-family-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--navy-800);
+  box-shadow: 0 1px 0 rgba(7, 35, 70, .06);
+}
+
+.landing-family-text {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.landing-family-card strong {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.landing-family-card .landing-family-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.landing-family-card .landing-family-count {
+  color: #33445c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.landing-family-arrow {
+  color: #1d63c4;
+  transition: transform .15s ease;
+}
+
+.landing-family-card:hover .landing-family-arrow {
+  transform: translateX(3px);
+}
+
+.landing-family-card.red {
+  background: #fff4f3;
+}
+
+.landing-family-card.cyan {
+  background: #eefafc;
+}
+
+
+/* Alvos de toque e foco (WCAG 2.2: 2.5.8 e 2.4.7/2.4.11). */
+.sidebar-link,
+.persona-back {
+  min-height: 44px;
+}
+
+[aria-disabled="true"]:focus-visible,
+.persona-card:focus-visible,
+.landing-family-card:focus-visible {
+  outline: 3px solid #075fd8;
+  outline-offset: 3px;
+}
+
+/* Celular: personas compactas em linha (toque entra direto) e temas em 1 coluna. */
+@media (max-width: 820px) {
+  .persona-content > h1 {
+    font-size: 27px;
+  }
+
+  .persona-content > .persona-lead {
+    margin-bottom: 14px;
+  }
+
+  .persona-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .persona-card,
+  .persona-card.selected {
+    height: auto;
+    min-height: 124px;
+    padding: 0;
+    grid-template-columns: 112px minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    text-align: left;
+  }
+
+  .persona-image {
+    grid-row: 1;
+    grid-column: 1;
+    width: 112px;
+    height: 100%;
+    min-height: 124px;
+  }
+
+  .persona-copy {
+    grid-row: 1;
+    grid-column: 2;
+    min-height: 0;
+    padding: 12px 14px;
+    align-content: center;
+    text-align: left;
+  }
+
+  .persona-card .persona-copy strong {
+    font-size: 18px;
+  }
+
+  .persona-copy > span {
+    font-size: 13px;
+  }
+
+  .persona-unavailable {
+    top: auto;
+    bottom: 10px;
+    left: 56px;
+    min-height: 24px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .persona-continue {
+    display: none;
+  }
+
+  .explore-page-idle .landing-families {
+    padding: 16px;
+  }
+
+  .landing-family-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    gap: 10px;
+  }
+
+  .explore-page-idle .landing-family-card,
+  .landing-family-card {
+    min-height: 0;
+    padding: 14px;
+  }
+}
+
+/* Respeita quem prefere menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+
+  .persona-card:hover,
+  .landing-family-card:hover .landing-family-arrow {
+    transform: none;
+  }
+}
+
+/* Personas no desktop: cartão mais alto para mostrar capacete, rosto e traje. */
+@media (min-width: 821px) {
+  .persona-card,
+  .persona-card.selected {
+    height: clamp(300px, 50svh, 440px);
+  }
+}
+
+.landing-family-card strong {
+  color: var(--navy-950);
+}
+
+/* ===== Celular: login em coluna única e busca/filtros com tamanho de toque ===== */
+@media (max-width: 820px) {
+  .login-page {
+    display: block;
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .login-brand-panel {
+    display: none;
+  }
+
+  .login-form-panel {
+    width: 100%;
+    height: auto;
+    min-height: 100svh;
+    margin: 0;
+    padding: 0;
+    display: block;
+    border-radius: 0;
+    background: #fff;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 460px;
+    max-height: none;
+    margin: 0 auto;
+    padding: 0 20px 32px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .login-heading {
+    margin: 0 -20px 22px;
+    padding: 18px 20px 24px;
+    background: #03284a;
+    color: #fff;
+  }
+
+  .mobile-logo {
+    margin: 0 0 22px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    font-style: italic;
+  }
+
+  .mobile-logo > span:not(.mobile-logo-mark) {
+    margin-left: -9px;
+    color: var(--yellow-500);
+  }
+
+  .mobile-logo small {
+    font-size: 14px;
+    font-style: normal;
+  }
+
+  .mobile-logo-mark {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: var(--yellow-500);
+    color: var(--navy-950);
+  }
+
+  .login-heading h1 {
+    margin: 0;
+    color: #fff;
+    font-size: 34px;
+  }
+
+  .login-heading p {
+    margin: 6px 0 0;
+    color: #d6e3f2;
+    font-size: 16px;
+  }
+
+  .login-card > label:not(.remember-control) {
+    margin: 16px 0 8px;
+    display: block;
+    color: var(--navy-950);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .field-control {
+    min-height: 54px;
+    border-color: #b9c7d8;
+    background: #fff;
+  }
+
+  .field-control input {
+    font-size: 16px; /* evita zoom automático no iOS */
+  }
+
+  .field-control > button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .remember-control {
+    min-height: 44px;
+    margin: 12px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--navy-950);
+    font-size: 15px;
+  }
+
+  .remember-control input {
+    width: 22px;
+    height: 22px;
+  }
+
+  .login-submit {
+    width: 100%;
+    min-height: 54px;
+    font-size: 17px;
+  }
+
+  .text-button {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 8px;
+    font-size: 15px;
+  }
+
+  .provision-note {
+    margin-top: 18px;
+    padding-top: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .provision-note p {
+    color: var(--text-secondary);
+  }
+
+  /* Explorar: busca e filtros confortáveis ao toque. */
+  .explore-hero h1 {
+    font-size: 30px;
+  }
+
+  .explore-hero > p:not(.page-kicker) {
+    font-size: 15px;
+  }
+
+  .explore-search {
+    min-height: 0;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 8px;
+  }
+
+  .explore-search > svg {
+    margin-left: 6px;
+  }
+
+  .explore-search input {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .explore-search button {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 50px;
+    font-size: 17px;
+  }
+
+  .filter-row {
+    margin-right: -16px;
+    padding: 2px 16px 6px 0;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filter-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-row button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
+    scroll-snap-align: start;
+  }
+}
+
+/* Marca da capivara ocupa o selo amarelo inteiro. */
+.cw-brand-symbol,
+.persona-logo-symbol,
+.mobile-logo-mark {
+  overflow: hidden;
+  background: #031226;
+  box-shadow: 0 0 0 1px rgba(255, 196, 0, .55);
+}
+
+.cw-brand-symbol svg,
+.persona-logo-symbol svg,
+.mobile-logo-mark svg {
+  width: 100%;
+  height: 100%;
+}

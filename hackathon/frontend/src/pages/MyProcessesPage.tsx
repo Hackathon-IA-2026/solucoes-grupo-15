@@ -84,7 +84,7 @@ export function MyProcessesPage() {
                   </div>
                   <div><strong>ANEEL</strong><small>Corpus demonstrativo</small></div>
                   <div><strong>{formatDate(process.latest_movement_at)}</strong><small>{process.latest_document_id}</small></div>
-                  <div><strong>{process.pieces_count} peças documentais</strong><small>Famílias vinculadas</small></div>
+                  <div><strong>{process.pieces_count} peças documentais</strong><small>Documentos disponíveis</small></div>
                   <div className="row-actions">
                     <Link to={`/processos/${encodeURIComponent(process.processo_id)}`}>
                       <Eye size={15} /> Ver processo
@@ -100,7 +100,7 @@ export function MyProcessesPage() {
               <span><FolderKanban /><strong>{state.processes.length}</strong><small>processos</small></span>
               <span><FileText /><strong>{state.processes.reduce((total, process) => total + process.pieces_count, 0)}</strong><small>peças</small></span>
             </div>
-            <p>Estes dados vêm das famílias e relações declarativas carregadas pela fixture local.</p>
+            <p>Estes dados vêm de processos, documentos e relações declarativas carregadas pela fixture local.</p>
           </aside>
         </div>
       )}

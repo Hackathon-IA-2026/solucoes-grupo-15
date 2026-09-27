@@ -15,6 +15,8 @@ updated_at: 2026-09-20
 
 **Revisão da issue-7 (2026-09-20, aceita por Eduardo):** manter eventos em Postgres local. `notification_delivered_email` com `adapter: preview` comprova geração da prévia, não entrega em caixa postal; a interface deve preservar essa distinção. CloudWatch e demais serviços de observabilidade estão disponíveis conforme o documento, mas não foram selecionados para o primeiro ciclo.
 
+**⚠️ E-mail: implementado mas não ativado (out of scope operacional).** Os eventos `email_digest_generated` e `notification_delivered_email` estão implementados no código (`app/notifications.py`), mas **não são gerados operacionalmente** neste ciclo porque o canal de e-mail não está ativo (SES indisponível, issue #8). A telemetria ativa registra apenas `notification_generated`, `notification_suppressed`, `notification_delivered_home` e `notification_opened`. O código de telemetria de e-mail permanece como evidência do trabalho realizado.
+
 ### Base da issue-6
 
 O job de ingestão já emite os eventos de origem (documento indexado, aresta criada — [[d14-data-operations-modeling]]) que alimentam o disparo de notificação. Além desses, a própria notificação emite três eventos (decisão de Eduardo, 2026-09-18):
@@ -35,9 +37,9 @@ Eventos (issue-6, base; issue-7, complementos):
 |---|---|---|
 | `notification_generated` | backend, ao indexar versão nova | `notification_id`, `user_id`, `document_version_id`, `family_id`, `scope_effective` (estrita/ampla), `reasons[]` (família gatilho e, no escopo ampla, correlatos incluídos, com seus tipos/estados — mesmo vocabulário de [[i9-integration]]), `ingestion_job_id` |
 | `notification_suppressed` | backend, no ponto de dedup | `user_id`, `document_version_id`, `reason` ∈ {`duplicate`, `already_notified_by_other_scope`}, `existing_notification_id` |
-| `email_digest_generated` | backend, ao fim do job | `email_id`, `user_id`, `ingestion_job_id`, `notification_count` |
-| `notification_delivered_home` | backend | `notification_id`, `user_id` |
-| `notification_delivered_email` | backend, a partir do `DeliveryReport` do adapter `Mailer` | `email_id`, `adapter` ∈ {`preview`, `ses`}, `status`, `provider_message_id?`, `error?` (ex.: destinatário não verificado no sandbox) |
+| `email_digest_generated` | backend, ao fim do job | `email_id`, `user_id`, `ingestion_job_id`, `notification_count` | **⚠️ Implementado mas não ativado (SES indisponível)** |
+| `notification_delivered_home` | backend | `notification_id`, `user_id` | |
+| `notification_delivered_email` | backend, a partir do `DeliveryReport` do adapter `Mailer` | `email_id`, `adapter` ∈ {`preview`, `ses`}, `status`, `provider_message_id?`, `error?` (ex.: destinatário não verificado no sandbox) | **⚠️ Implementado mas não ativado (SES indisponível)** |
 | `notification_opened` / `notification_clicked` | backend, ao resolver o link com token | `notification_id`, `email_id?`, `origin` ∈ {`home`, `email`} |
 
 `scope_effective` registra o valor de `notification_scope` aplicado ao gerar a notificação; `reasons[]` preserva os correlatos incluídos. Esses campos concretizam o conteúdo exigido pela issue-6.

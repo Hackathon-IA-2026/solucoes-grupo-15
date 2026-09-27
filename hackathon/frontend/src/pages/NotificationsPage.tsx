@@ -216,7 +216,7 @@ function ScopePicker({
             onChange={() => setSelected("estrita")}
           />
           <span>
-            <strong>Estrita</strong> — só o processo/família do documento novo.
+            <strong>Estrita</strong> — só o processo e o documento novo.
           </span>
         </label>
         <label className="scope-option">
@@ -228,8 +228,8 @@ function ScopePicker({
             onChange={() => setSelected("ampla")}
           />
           <span>
-            <strong>Ampla</strong> — inclui correlatos (famílias/processos ligados por relação
-            confirmada).
+            <strong>Ampla</strong> — inclui documentos e processos correlatos ligados por relação
+            confirmada.
           </span>
         </label>
       </fieldset>

@@ -4,13 +4,13 @@ concern: skills/in-progress/perspec-me/catalog/concerns/o3-ml-functionality/READ
 perspective: system-objectives
 status: resolved
 topics:
-  - issue-27 — Qual é o contrato do parecer jurídico conclusivo de uma frase e como ele permanece verificável?
+  - issue-27 — Qual é o contrato do processo e como ele permanece verificável?
 updated_at: 2026-09-25
 ---
 
 ## Current resolution
 
-O parecer conclusivo do TB1 é um **objeto estruturado por processo** — não por documento individual, e não uma frase de texto livre. Um processo agrupa múltiplos documentos (movimentos, petições, decisões, etc.) em um **cluster**. A frase é derivada dos campos, nunca a fonte da verdade.
+O processo no TB1 é um **objeto estruturado** — não um documento individual, e não uma frase de texto livre. Um processo agrupa múltiplos documentos (movimentos, petições, decisões, etc.) em um **cluster**. A frase é derivada dos campos, nunca a fonte da verdade.
 
 O objeto tem **sete campos principais**:
 
@@ -69,8 +69,8 @@ A redação da peça jurídica completa continua fora do TB1 (decisão herdada d
 
 ## Confirmed facts
 
-- (2026-09-25, usuário) A classe principal do parecer é **discreta** (um Enum), chamada **status do processo**.
-- (2026-09-25, rodada 8, validação com Carolina) **Granularidade é por processo, não por documento.** Um processo agrupa múltiplos documentos (movimentos) em um cluster. O parecer retorna status, responsável e headline **por processo**.
+- (2026-09-25, usuário) A classe principal do processo é **discreta** (um Enum), chamada **status do processo**.
+- (2026-09-25, rodada 8, validação com Carolina) **Granularidade é por processo, não por documento.** Um processo agrupa múltiplos documentos (movimentos) em um cluster. O processo retorna status, responsável e headline **por cluster**.
 - Valores do Enum de status do processo: advertência mantida; advertência anulada; multa mantida; multa reduzida (de x para y); multa convertida em advertência; multa aumentada; processo arquivado; provimento parcial; abstenção (vazio — processo sem advertência nem multa).
 - O campo de texto livre existe, mas é **terciário** — um headline/resumo curto, não a conclusão formal.
 - (2026-09-25, rodada 5) **Um status, um responsável e um headline por processo.**
@@ -88,7 +88,7 @@ A redação da peça jurídica completa continua fora do TB1 (decisão herdada d
 - (2026-09-25, rodada 8) **Novo campo: número de documentos do cluster** — exibido no front para dar contexto sobre tamanho/complexidade do processo.
 - (2026-09-25, rodada 8) **Novo campo: metadados do cluster** — lista detalhada dos documentos do processo (document_id, tipo, data, etc.). Uso principal no backend para rastreabilidade e operações internas.
 - (2026-09-25, rodada 2) **TB1 cobre só processos punitivos** (caso Carolina/MMGD). Outros tipos ficam para iterações futuras.
-- (2026-09-25, rodada 2) A arquitetura de parecer deve ser **expansível**: novos Enums e campos para outros tipos de processo podem ser adicionados sem reescrever a estrutura base.
+- (2026-09-25, rodada 2) A arquitetura do processo deve ser **expansível**: novos Enums e campos para outros tipos de processo podem ser adicionados sem reescrever a estrutura base.
 - (2026-09-25, rodada 3) **Valores adicionais do Enum punitivo aprovados:** `multa_aumentada`, `processo_arquivado`, `provimento_parcial`. Nenhum valor adicional pode ser inserido sem consentimento explícito do usuário.
 - (2026-09-25, rodada 3) O headline é **texto mais livre**, capaz de expressar qualquer conclusão processual (inclusive não-punitivas), mas sempre derivado de evidência documental.
 - (2026-09-25, rodada 4) O headline (resumo do que o usuário quer ver no processo) é **gerado por LLM via Bedrock**, não por seleção de lista fixa.
@@ -97,7 +97,7 @@ A redação da peça jurídica completa continua fora do TB1 (decisão herdada d
 
 ## Decisions
 
-- 2026-09-25 (issue-27, usuário): o parecer é um objeto estruturado; a frase é derivada dos campos, não a fonte da verdade.
+- 2026-09-25 (issue-27, usuário): o processo é um objeto estruturado; a frase é derivada dos campos, não a fonte da verdade.
 - 2026-09-25 (issue-27, usuário): o campo primário é um Enum discreto chamado **status do processo**, com um valor de abstenção quando o processo não contém advertência nem multa.
 - 2026-09-25 (issue-27, usuário): o headline em texto livre é campo terciário, complementar ao status.
 - 2026-09-25 (issue-27, usuário, rodada 2): **escopo TB1 = processos punitivos apenas** no campo primário (Enum de advertência/multa). Headline pode acomodar outros tipos de conclusão, mas o campo discreto do TB1 não precisa cobrir concessão, leilão, outorga, etc.
@@ -132,7 +132,7 @@ A redação da peça jurídica completa continua fora do TB1 (decisão herdada d
   - `document_id`
   - `page` e/ou `chunk_id`
   - **trecho de texto** (chunk) que comprova a afirmação
-- O modelo de dados do parecer deve ser **genérico** o suficiente para acomodar novos tipos de processo: um campo `tipo_processo` ou `schema_version` pode selecionar qual Enum de status se aplica; em TB1 o único valor relevante é `punitivo`.
+- O modelo de dados do processo deve ser **genérico** o suficiente para acomodar novos tipos de processo: um campo `tipo_processo` ou `schema_version` pode selecionar qual Enum de status se aplica; em TB1 o único valor relevante é `punitivo`.
 - Deve ser possível estender os Enums sem quebrar compatibilidade retroativa (casos já rotulados seguem válidos).
 - **Enum centralizado:** todas as definições do Enum de status do processo vivem em um único módulo (ex.: `hackathon/backend/app/enums.py` ou `hackathon/ai/app/enums.py`). O restante do código importa e consome esse Enum de forma genérica — sem hard-code de valores fora do módulo.
 - Enum de status do processo TB1 (lista fechada, extensão requer aprovação explícita):
@@ -166,14 +166,14 @@ A redação da peça jurídica completa continua fora do TB1 (decisão herdada d
 
 ## Evidence
 
-- Issue #27 — pergunta original do contrato do parecer.
+- Issue #27 — pergunta original do contrato do processo.
 - `requirements/perspec-me/capiwatt-lens-hackathon/concerns/u8-cost.md` — erro material, exigência de evidência por campo e regra de abstenção; menção a PydanticAI (não escolhido).
 - `hackathon/data/case-1-carolina-mmgd/README.md` — "informações que tornam o resultado relevante" e "erro material".
 - Resposta do usuário em 2026-09-25 (rodada 1 do resolve #27) — definição do campo discreto primário e do headline secundário.
 
 ## Topic history
 
-- issue-27 (rodada 1): definiu a forma do parecer (objeto estruturado com Enum primário + headline secundário) e reformatou o headline.
+- issue-27 (rodada 1): definiu a forma do processo (objeto estruturado com Enum primário + headline secundário) e reformatou o headline.
 - issue-27 (rodada 2): fechou escopo TB1 = punitivo; arquitetura deve ser expansível.
 - issue-27 (rodada 3): adicionou `multa_aumentada`, `processo_arquivado`, `provimento_parcial` ao Enum; definiu headline como texto livre derivado de evidência; exigiu Enum centralizado em módulo único.
 - issue-27 (rodada 4): headline gerado por LLM (Bedrock), sem persistência no MVP; foco em funcionamento, não escalabilidade prematura; arquitetura deve permitir cache depois.

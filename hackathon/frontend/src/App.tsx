@@ -16,7 +16,6 @@ import { ProductNotificationsPage } from "./pages/ProductNotificationsPage";
 import { ProcessoPage } from "./pages/ProcessoPage";
 import { RelationsMapPage } from "./pages/RelationsMapPage";
 import { SearchPage } from "./pages/SearchPage";
-import { OpinionPage } from "./pages/OpinionPage";
 
 export function App() {
   return (
@@ -35,7 +34,6 @@ export function App() {
                   <Route path="/meus-processos" element={<MyProcessesPage />} />
                   <Route path="/familias" element={<FamiliesPage />} />
                   <Route path="/mapas-relacoes" element={<RelationsMapPage />} />
-                  <Route path="/parecer-conclusivo" element={<OpinionPage />} />
                   <Route path="/notificacoes" element={<ProductNotificationsPage />} />
                   <Route path="/documents/:familyId" element={<FamilyPage />} />
                   <Route path="/processos/:processoId" element={<ProcessoPage />} />

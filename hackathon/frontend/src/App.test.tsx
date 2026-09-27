@@ -20,9 +20,14 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: /como você quer usar/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /advogados/i })).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByRole("button", { name: /agências reguladoras/i })).toHaveTextContent(
+    expect(screen.getByRole("button", { name: /especialistas em regulação/i })).toHaveTextContent(
       /fiscalização, processos, normas e acompanhamento regulatório/i,
     );
+    const pesquisadores = screen.getByRole("button", { name: /pesquisadores/i });
+    expect(pesquisadores).toHaveAttribute("aria-disabled", "true");
+    expect(pesquisadores).toHaveTextContent(/em construção/i);
+    fireEvent.click(pesquisadores);
+    expect(screen.getByRole("button", { name: /continuar/i })).toBeDisabled();
     expect(screen.queryByText(/pareceres/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continuar/i })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /advogados/i }));
@@ -32,7 +37,7 @@ describe("App", () => {
     expect(screen.getByRole("navigation", { name: /navegação principal do produto/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /meus processos/i })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /notificações, 1 não lidas/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /ainda não há uma pesquisa/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /explore por tema/i })).toBeInTheDocument();
   });
 
   it("mantém sair dentro do menu da conta e encerra a sessão", async () => {

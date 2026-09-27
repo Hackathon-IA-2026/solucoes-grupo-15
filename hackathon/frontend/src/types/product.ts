@@ -3,9 +3,9 @@ export type PersonaId = "advocacia" | "pesquisa" | "engenharia";
 export type Persona = {
   id: PersonaId;
   title: string;
-  label: string;
   description: string;
   image: string;
+  available: boolean;
 };
 
 export type SessionUser = {
@@ -130,7 +130,7 @@ export type AppNotification = {
   title: string;
   reference: string;
   description: string;
-  category: "Processo SEI" | "Norma" | "Consulta Pública" | "Parecer" | "Família";
+  category: "Processo SEI" | "Norma" | "Consulta Pública" | "Parecer" | "Tema";
   createdAt: string;
   read: boolean;
 };
