@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita (2026-09-20).
+Aceita (2026-09-20). Parcialmente suplantada pela [ADR-0002](0002-implantacao-aws-ecs-fargate-cdk.md) (2026-09-27): no M4 o backend roda em ECS Fargate, não em Lambda via Mangum.
 
 ## Contexto
 
