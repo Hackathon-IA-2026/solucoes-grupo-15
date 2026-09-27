@@ -4,7 +4,7 @@ sources:
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i4-storage.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i9-integration.md
   - requirements/perspec-me/capiwatt-lens-hackathon/MAP.md
-last_synced_with_sources: 2026-09-27 (issue-64, issue-78, issue-96, issue-92)
+last_synced_with_sources: 2026-09-27 (issue-64, issue-78, issue-96, issue-92, issue-95)
 ---
 
 # Contrato de fronteira: backend ↔ serviço vetorial (`ai`)
@@ -16,8 +16,9 @@ Snapshot legível do contrato entre `backend` (F3) e o serviço vetorial (`ai`, 
 ## Divisão de posse (issue-15)
 
 - **Backend (F3)** é dono do **catálogo documental**: famílias, versões, metadados (checksum, data de coleta, origem, `version_date`), localizador do original e do texto extraído, nó `processo`, sugestões de fusão, `document_relations`, feedback. Grafo e leitura de documento são servidos em processo (`GET /v1/documents/{id}`, `GET /v1/documents/{id}/graph`), sem atravessar a fronteira interna.
-- **Serviço vetorial (`ai`, F2)** é dono só do **derivado**: extração de texto, chunking, embeddings, índice vetorial, `references`, `similar_families`. O índice **nunca é fonte de verdade** — é reconstruível a partir do catálogo via `reindex`. `family_id` e `document_version` aparecem no índice só como atributos de filtro.
-- Texto extraído: o `ai` extrai durante `index` e escreve num localizador (volume/S3) que o backend só registra no catálogo — não é devolvido inline no `IndexReport`.
+- **Serviço vetorial (`ai`, F2)** é dono só do **derivado**: chunking, embeddings, índice vetorial, `references`, `similar_families`. O índice **nunca é fonte de verdade** — é reconstruível a partir do catálogo via `reindex`. `family_id` e `document_version` aparecem no índice só como atributos de filtro.
+- **Extração de texto** (PDF/HTML → Markdown verbatim, D14) é do **pipeline de extração** e acontece **antes da fronteira**: a #59 para o caso 1, a #68 em lote (contrato em [`extraction-route.md`](extraction-route.md)). O `ai` não lê originais e não faz OCR nem parsing de PDF (issue-95).
+- Texto extraído: o `backend` envia o Markdown inline em `index`. O `ai` grava esse texto num localizador (volume/S3), que o backend só registra no catálogo. O texto não volta inline no `IndexReport`.
 
 ## Forma do boundary
 
@@ -35,7 +36,13 @@ Duas camadas: uma interface Python (`VectorService`) em processo dentro do módu
 
 Comportamento:
 
-- **`index`** recebe **localizador do original** (não conteúdo inline); o `ai` extrai o texto (etapa de extração por IA → Markdown verbatim, precisão da issue-13), escreve num localizador (volume/S3) e devolve por versão: `{document_version, extracted_text_locator, references[], chunks_indexed}`. Idempotente por `(document_version, model_version)`.
+- **`index`** recebe o **Markdown já extraído, inline** (issue-95): `POST /internal/v1/index` com `{documents: [{document_version, text, family_id?, corpus_version?}]}` (`IndexDocumentPayload` no cliente do backend).
+  - `text` é o Markdown completo da versão, produzido pelo pipeline #59/#68.
+  - `family_id` e `corpus_version` vão por documento. São obrigatórios no pipeline real (`EMBEDDER=bedrock`/`cached`): se faltar um deles, a resposta é 422. O modo fixture ignora os dois.
+  - O `ai` faz o chunking e os embeddings sobre `text`, grava os chunks no índice e grava `text` sem alterar em `<DOCUMENTS_DIR>/<document_version>/extracted.txt`.
+  - Devolve um `IndexReport` por versão: `{document_version, extracted_text_locator, chunks_indexed, model_version, total_input_tokens, references[]}`. `extracted_text_locator` é o caminho desse arquivo. `total_input_tokens` é `null` no modo fixture.
+  - Idempotente por `(document_version, model_version)`.
+  - `POST /internal/v1/reindex` usa a mesma forma: o backend reenvia o texto de cada versão.
 - **`search`** devolve **hits crus por chunk** (agrupamento por família saiu do serviço na issue-28, e a issue-64 removeu o agrupamento por família também da visualização; a issue-78 removeu o agrupamento visual por família na resposta do backend): cada hit com `family_id`, `document_version`, `chunk_id`, `chunk_index`, `excerpt`, localizador, score — `family_id` continua no envelope como atributo de filtro/dado, mas o `backend` não agrupa mais por ele. Envelope carrega `corpus_version` e `model_version`. Congelamento da lista ordenada e paginação (`cursor`/`limit`/`next_cursor`/`total`) são responsabilidade do **backend**; a unidade de paginação é o **chunk casado** (issue-64), não mais a família. **Ordenação determinística** (issue-78): o backend ordena os chunks por `(-score, document_version, chunk_index)` — score decrescente, desempate lexicográfico por `document_version`, desempate final pelo `chunk_index` real do chunk (issue-96).
 - **Identidade do chunk** (issue-96): `chunk_id` é o id do chunk no índice (`"<document_version>#chunk-NNNN"`, formato do `ai`) e `chunk_index` é o índice real do chunk dentro do documento (0-based), já resolvido pelo `ai` — o `backend` nunca faz parsing do `chunk_id` e nunca usa a posição do hit na lista. O `backend` repassa os dois em cada resultado de `POST /v1/search`; `(document_version, chunk_index)` é a chave de chunk do feedback (#82) e dos `evidence_refs` (#66), estável entre consultas e entre reindexações do mesmo `model_version`.
 - **`similar_families`** e `references` (dentro do `IndexReport`) entregam só **candidatos** de arestas do grafo — resolução de id, limiares, gravação e curadoria de `document_relations` são do backend (issue-92):
