@@ -1,39 +1,55 @@
-# Nome do Projeto
+# CapiWatt Lens
 
-> Descrição curta (1-2 frases): o que o projeto faz e qual problema ele resolve.
+> Copiloto regulatório inteligente para o setor elétrico brasileiro — busca semântica em documentos normativos com fontes verificáveis, ranking personalizado por perfil (advogado, engenheiro, pesquisador) e citações rastreáveis.
 
 ## Demo
 
-- **Link da demo:** (se houver, ex: Vercel, Netlify, etc.)
+- **Link da demo:** _Em desenvolvimento (hackathon presencial 25-27 de setembro de 2026)_
 
 ## Tecnologias utilizadas
 
-- Linguagem: (ex: Python, JavaScript, Go...)
-- Framework(s): (ex: React, Flask, Node...)
-- Banco de dados: 
-- APIs / Serviços externos: (se houver)
+- **Linguagens:** Python 3.12, TypeScript
+- **Frameworks:** FastAPI (backend e serviço de IA), React 18 + Vite (frontend)
+- **Banco de dados:** PostgreSQL 16 (catálogo), OpenSearch 2.17 (índice vetorial)
+- **APIs / Serviços externos:** AWS Bedrock (embeddings em produção), fake embedder para desenvolvimento local
 
 ## Como rodar o projeto
 
 ```bash
 # Clone o repositório
-git clone https://github.com/usuario/repo.git
-cd repo
+git clone https://github.com/Hackathon-IA-2026/solucoes-grupo-15.git
+cd solucoes-grupo-15/hackathon
 
-# Instale as dependências
-# (ex: npm install / pip install -r requirements.txt)
+# Suba todos os serviços com Docker Compose
+docker compose up
 
-# Rode o projeto
-# (ex: npm run dev / python app.py)
+# Acesse:
+# - Frontend: http://localhost:5173
+# - Backend API: http://localhost:8000
+# - AI Service: http://localhost:8001
 ```
 
 ## Pré-requisitos
 
-Liste aqui o que precisa estar instalado antes de rodar o projeto (ex: Node 18+, Python 3.10+, Docker, etc.)
+- Docker e Docker Compose
+- Para desenvolvimento local sem Docker:
+  - Python 3.12+
+  - Node.js 18+
+
+## Arquitetura
+
+```
+hackathon/
+├── frontend/    # React + Vite — interface de busca e visualização
+├── backend/     # FastAPI — API pública /v1/*, orquestra consultas e ingestão
+├── ai/          # FastAPI — serviço vetorial /internal/v1/*, embeddings e busca
+├── data/        # Documentos dos casos de uso
+└── docs/        # Plano de execução e ADRs
+```
 
 ## Metodologia de especificação
 
-Para especificar e executar este projeto, nos inspiramos no trabalho de Hugo Villamizar, o **PerspecML**, usando agentes de software engineering e os princípios de **Spec-Driven Development (SDD)**. A especificação — do levantamento de requisitos por múltiplas perspectivas até a execução do código — é conduzida por agentes.
+Para especificar e executar este projeto, nos inspiramos no trabalho de Hugo Villamizar, o **PerSpecML**, usando agentes de software engineering e os princípios de **Spec-Driven Development (SDD)**. A especificação — do levantamento de requisitos por múltiplas perspectivas até a execução do código — é conduzida por agentes.
 
 ## Licença
 
