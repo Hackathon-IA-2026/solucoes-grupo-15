@@ -3,7 +3,7 @@
 Cada teste exercita as rotas publicas ``/v1/*`` do backend via HTTP, com o
 ai real atras (sem dependency override do ``AiClient``), OpenSearch real e
 Postgres real - ver conftest.py. Os testes que mudam o estado
-compartilhado (``stale_corpus`` e reindex) restauram o estado que
+compartilhado (``stale_corpus``, reindex e delete) restauram o estado que
 encontraram, para que a ordem de execucao nao importe.
 
 Testes ``xfail(strict=True)`` documentam divergencias conhecidas entre o
@@ -298,6 +298,62 @@ def test_reindex_from_raw_vectors_preserves_ranking(
     assert _chunk_counts(stack) == counts_before
     after = _search(backend, top_k=10, limit=10)
     assert _ranking(after) == _ranking(before)
+
+
+# ---------------------------------------------------------------------------
+# delete(document_version) (#98)
+# ---------------------------------------------------------------------------
+
+
+def _ai_search_versions(stack: Stack) -> set[str]:
+    """document_versions devolvidas pelo ``ai`` numa busca larga (``top_k``
+    acima dos 342 chunks do caso 1). O k-NN (HNSW) e aproximado e nao
+    devolve todo chunk, entao isto so serve para presenca/ausencia de
+    versao; contagem exata vem de ``_chunk_counts``."""
+    response = httpx.post(
+        f"{stack.ai_url}/internal/v1/search",
+        json={"query": CAROLINA_QUERY, "top_k": 500},
+        timeout=60.0,
+    )
+    assert response.status_code == 200, response.text
+    return {hit["document_version"] for hit in response.json()["hits"]}
+
+
+def test_delete_document_version_removes_only_its_chunks_from_search(
+    stack: Stack, backend: httpx.Client, ingested: dict, corpus_version: str
+) -> None:
+    """Indexado o caso 1, apagar uma versao pelo ``ai`` tira da busca todos
+    os chunks dela e so dela. Restaura o estado reingerindo pelo backend: o
+    ``ai`` esqueceu a versao, entao a reingestao a reindexa de verdade."""
+    before = _search(backend, top_k=10, limit=10)
+    counts_before = _chunk_counts(stack)
+    target = before["results"][0]["document_version"]
+    assert _ai_search_versions(stack) == set(counts_before)
+
+    try:
+        response = httpx.delete(f"{stack.ai_url}/internal/v1/documents/{target}")
+        again = httpx.delete(f"{stack.ai_url}/internal/v1/documents/{target}")
+
+        assert response.status_code == 200, response.text
+        assert response.json() == {
+            "document_version": target,
+            "model_version": MODEL_VERSION,
+            "chunks_deleted": counts_before[target],
+        }
+        assert again.status_code == 200
+        assert again.json()["chunks_deleted"] == 0
+
+        others = {dv: n for dv, n in counts_before.items() if dv != target}
+        assert _ai_search_versions(stack) == set(others)
+        assert _chunk_counts(stack) == others
+        after = _search(backend, top_k=10, limit=10)
+        assert after["results"]
+        assert all(r["document_version"] != target for r in after["results"])
+    finally:
+        ingest_case1(backend, corpus_version)
+
+    assert _chunk_counts(stack) == counts_before
+    assert _ranking(_search(backend, top_k=10, limit=10)) == _ranking(before)
 
 
 # ---------------------------------------------------------------------------

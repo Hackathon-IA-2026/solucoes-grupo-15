@@ -14,6 +14,7 @@ topics:
   - issue-96 — Como um hit de busca identifica de forma estável o chunk casado, para feedback e evidence_refs?
   - issue-92 — Qual é a forma concreta de `similar_families` e de `references[]` no `IndexReport`, e como o backend transforma esses candidatos em arestas de `document_relations`?
   - issue-95 — `index` recebe o localizador do original (e o `ai` extrai o texto) ou o Markdown já extraído inline?
+  - issue-98 — `delete(document_version)` do port é exposto como rota no `ai` ou sai do contrato?
 updated_at: 2026-09-27
 ---
 
@@ -28,6 +29,16 @@ updated_at: 2026-09-27
 **⚠️ E-mail: implementado mas não ativado (out of scope operacional).** O código do port `Mailer` e do adapter `PreviewMailer` (`app/mailer.py`) está completo e testado, incluindo o modelo `EmailDigest`, a rota `GET /v1/users/{user_id}/email-digests` e os eventos de telemetria (`email_digest_generated`, `notification_delivered_email`). No entanto, o canal de e-mail **não é usado operacionalmente** neste ciclo porque o SES não foi disponibilizado pela organização do hackathon (issue #8, [Ambiente AWS — serviços disponíveis](../../../../hackathon/docs/Ambiente%20AWS%20-%20serviços%20disponíveis.md)). A entrega de notificações acontece **apenas pela home** (`notification_delivered_home`). O código permanece como evidência do trabalho realizado e está pronto para ser ativado se o SES for liberado futuramente.
 
 **Revisão (issue-15, Eduardo, 2026-09-18):** o port continua sendo a fronteira `backend` → `ai`, em duas camadas (interface em processo no `ai` + HTTP `/internal/v1/*`), e o `backend` continua sem importar `ai`. O que muda é **o que atravessa**: o `ai` deixa de ser dono do armazenamento documental ([[i4-storage]]), então `get_document` **sai do port** — a leitura de documento e a montagem do grafo são locais ao backend. O port fica com `index`, `search`, `similar_families`, `delete`/`reindex` e `reassign_family`; ~~`index` recebe do backend os `document_version`s com `family_id`, metadados e **localizador do original** (não o conteúdo inline), extrai o texto,~~ **Superado pela issue-95:** `index` recebe o Markdown já extraído inline (ver a revisão da issue-95 abaixo). Continua valendo que o `ai` escreve o texto num localizador e devolve no `IndexReport`, por versão, `extracted_text_locator` + `references`. HTTP fica só onde é inerente: uma chamada por busca do usuário e uma por job de ingestão — o esboço original do plano (linhas 132–133).
+
+**Revisão (issue-98, 2026-09-27): `delete(document_version)` exposto no `ai`.** A suíte e2e da #88 mostrou que o port listava `delete(document_version)` sem rota: remover uma versão só acontecia como efeito colateral de `reindex`. O dono do repo decidiu expor a operação. Forma vigente:
+
+- **Rota.** `DELETE /internal/v1/documents/{document_version}` → `{document_version, model_version, chunks_deleted}`. O path segue a convenção de `reassign_family` (`/internal/v1/documents/{id}/family`). Não reintroduz o `GET /internal/v1/documents/{id}` (`get_document`), que a issue-15 tirou do port.
+- **Pipeline real** (`EMBEDDER=bedrock`/`cached`): remove do índice OpenSearch do `model_version` corrente todos os chunks da versão. `chunks_deleted` é quantos havia. O `ai` também grava um tombstone da versão nos vetores brutos ([[i7-reproducibility]]) e esquece o `IndexReport` cacheado. Depois disso, a busca e `similar_families` deixam de ver a versão, o reindex offline a partir dos vetores brutos não a ressuscita, e um `index` seguinte da mesma versão grava os chunks de novo em vez de devolver o relatório antigo.
+- **Modo fixture** (`EMBEDDER=fake`): não há índice vetorial. O `ai` esquece o `IndexReport` cacheado da versão e devolve em `chunks_deleted` o `chunks_indexed` que ela tinha. A busca fixture é declarativa e não muda.
+- **Idempotente.** Uma versão desconhecida ou já apagada devolve 200 com `chunks_deleted: 0`, nunca 404, para que um retry do `backend` não vire erro.
+- **O texto em `extracted_text_locator` não é apagado.** Ele está registrado no catálogo do `backend`, que é dono do ciclo de vida da versão ([[i4-storage]]), e é o que a página do documento lê. `delete` só mexe no derivado: índice e vetores brutos.
+- **Vetores brutos.** A remoção é lógica. O arquivo é append-only, então as linhas antigas continuam no disco, mas o replay as descarta.
+- **Sem rota pública no `backend`.** O `backend` ainda não chama `delete` (não há `AiClient.delete`) e não mexe no catálogo, em `document_relations` nem nas listas congeladas de `SearchExecution` quando uma versão sai do índice. Ver Open questions.
 
 **Revisão (issue-95, 2026-09-27): `index` recebe o Markdown já extraído, inline.** A suíte e2e da #88 mostrou que o contrato (issue-15: "`index` recebe localizador do original, o `ai` extrai o texto") não batia com a implementação. O dono do repo decidiu atualizar o contrato para o comportamento real, sem mudar o código. A extração PDF/HTML → Markdown ([[d14-data-operations-modeling]]) é uma **etapa anterior à fronteira**, feita pelo pipeline de extração: a #59 para o caso 1, levada ao corpus completo em lote pela #68 (contrato em `requirements/contracts/extraction-route.md`). O `ai` não lê originais e não faz OCR nem parsing de PDF. Forma vigente:
 
@@ -88,7 +99,8 @@ Composição vigente do `VectorService`, depois das issues #3, #4 e #15:
 |---|---|---|
 | `index` | `/internal/v1/index` | issue-2 (entrada: Markdown já extraído, inline, desde a issue-95; a entrada por localizador da issue-15 foi superada) |
 | `search` | `/internal/v1/search` | issue-2 |
-| `delete` / `reindex` | — | issue-2 |
+| `delete` | `DELETE /internal/v1/documents/{document_version}` | issue-2 (rota na issue-98) |
+| `reindex` | `/internal/v1/reindex` | issue-2 (rota na issue #69) |
 | `reassign_family` | `/internal/v1/documents/{id}/family` | issue-3 |
 | `similar_families` | `/internal/v1/families/{id}/similar` | issue-4 (forma concreta na issue-92) |
 
@@ -108,6 +120,7 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 
 ## Decisions
 
+- 2026-09-27 (issue-98, decisão do dono do repo registrada na issue): `delete(document_version)` fica no port e é exposto em `DELETE /internal/v1/documents/{document_version}`. As escolhas abaixo foram do agente, pela opção mais conservadora, e estão pendentes de confirmação: (1) operação idempotente (200 com `chunks_deleted: 0`), sem 404; (2) o texto em `extracted_text_locator` fica; (3) os vetores brutos recebem tombstone (remoção lógica, retenção física); (4) nenhuma rota nem chamada nova no `backend`.
 - 2026-09-27 (issue-95, decisão do dono do repo registrada na issue): `index` recebe o Markdown já extraído inline em `documents[].text`. A extração é do pipeline (#59/#68), antes da fronteira, e o `ai` não lê originais. O `ai` grava o texto recebido num localizador e devolve só `extracted_text_locator`, nunca o texto. **Supersede**, da decisão de issue-15, a parte "`index` passa a receber localizadores de originais" e o requisito derivado "o `ai` precisa de acesso de leitura ao storage de originais".
 - 2026-09-27 (issue-97): o `corpus_version` "mais recente" que decide `stale_corpus` é o da última ingestão (`DocumentVersion.ingested_at`), nunca o maior em ordem lexicográfica. Decisão do agente pelo critério da própria issue, pendente de confirmação.
 - 2026-09-27 (issue-92): `similar_families` responde `{family_id, model_version, similar: [{family_id, score}]}` com `top_k` padrão 3 e vetor de família = média renormalizada dos chunks (agregação da #74); `IndexReport` ganha `references[]` com `locator` = `chunk_id`. O `ai` não aplica limiar nenhum; o `backend` resolve ids, aplica `limiar_relacao`/`limiar_fusao` e grava as arestas ao fim da ingestão.
@@ -151,6 +164,7 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 - 2026-09-18 (issue-15): rota `/internal/v1/documents/{id}` deixa de existir; `/internal/v1/documents/{id}/family` (`reassign_family`) e `/internal/v1/families/{id}/similar` permanecem.
 - 2026-09-18 (issue-15): `IndexReport` por versão: `{document_version, extracted_text_locator, references[], chunks_indexed}`. **Estendido** (issues #69, #73, #92, #95): hoje traz também `model_version` e `total_input_tokens`.
 - 2026-09-18 (issue-15): o `ai` precisa ~~de acesso de leitura ao storage de originais e~~ de escrita ao de texto extraído (mesmo volume local / bucket S3 do backend) — detalhe físico na issue #8. **Superado em parte pela issue-95:** o `ai` não lê originais.
+- 2026-09-27 (issue-98): `delete(document_version)` age só sobre o derivado do `model_version` corrente: os chunks no índice, os vetores brutos (tombstone) e o cache de idempotência de `index`. É idempotente. Depois de `delete`, `index` da mesma versão tem que reindexar de verdade.
 - 2026-09-27 (issue-95): o chunking e os embeddings rodam sobre o `text` recebido em `index`, e o arquivo em `extracted_text_locator` é exatamente esse `text`. Por isso a página do documento, os chunks do índice e os vetores brutos ([[i7-reproducibility]]) derivam do mesmo Markdown.
 
 - Nenhum tipo do SDK do Bedrock/OpenSearch atravessa o port; o backend depende só da interface.
@@ -166,6 +180,11 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 
 ## Open questions
 
+- (issue-98, aberta) Idempotência × 404: o agente escolheu 200 com `chunks_deleted: 0` para versão desconhecida ou já apagada. O 404 foi rejeitado porque transformaria um retry do `backend` em erro. Falta confirmação do dono.
+- (issue-98, aberta) Quem apaga o texto em `extracted_text_locator` quando uma versão sai do corpus? Decisão conservadora do agente: `delete` não apaga. O arquivo segue o ciclo de vida da linha `DocumentVersion` do catálogo do `backend`, que hoje não tem fluxo de remoção.
+- (issue-98, aberta) Vetores brutos: o tombstone preserva as linhas no disco e não há compactação. Falta decidir se remoção deve ser física, por exemplo por exigência de retenção de dado.
+- (issue-98, aberta) O `backend` ainda não chama `delete`. Não há `AiClient.delete` nem fluxo de remoção no catálogo. Quando houver, falta definir o que acontece com a linha `DocumentVersion`, com as arestas de `document_relations` derivadas dos chunks da versão (`similar_a`, `referencia`) e com os conjuntos congelados de `SearchExecution` que a citam.
+- (issue-98, aberta) `delete` só age sobre o índice do `model_version` corrente. Índices de outros `model_version`s, se existirem, não são tocados. Hoje o `ai` só tem um `model_version` ativo por modo.
 - (issue-95, aberta) A ingestão do `backend` ainda não lê a saída em lote da #68 (`hackathon/.pipeline-output/`, fora do git). O caso 1 usa o Markdown versionado da #59. Falta decidir como o Markdown da #68 chega ao `backend` para o corpus completo: um loader novo sobre o manifesto, ou a ingestão recebendo o caminho do lote. A forma de `index` não muda nas duas opções.
 - (issue-95, aberta) O Markdown passa a existir em dois lugares: na saída do pipeline (ou em `hackathon/data/`) e na cópia que o `ai` grava em `extracted_text_locator`. Falta decidir se o localizador deve apontar direto para a saída do pipeline, sem cópia. Isso mudaria quem escreve o localizador. Decisão conservadora do agente: manter o comportamento atual (o `ai` grava a cópia).
 - (issue-95, aberta) `original_locator` ([[i4-storage]]) não existe no modelo `DocumentVersion`. O PDF original é achado por `source_pdf_relpath` da fixture (`app/routes/documents.py`). Isso é assunto do catálogo, fora desta fronteira, e fica só registrado aqui.
@@ -189,6 +208,8 @@ A integração de e-mail está resolvida acima (issue-7); o adapter SES concreto
 - `hackathon/docs/CapiWatt_Lens_Plano_de_Execucao_Hackathon.md` linhas 60, 102, 118, 128–133, 144, 154–162.
 
 ## Topic history
+
+- issue-98 (2026-09-27): expôs `delete(document_version)` em `DELETE /internal/v1/documents/{document_version}`, por decisão do dono do repo. A operação é idempotente, remove chunks do índice e vetores brutos (tombstone) do `model_version` corrente e mantém o texto extraído. A tabela de operações passou a mostrar a rota de `reindex` (#69).
 
 - issue-95 (2026-09-27): alinhou o contrato de `index` à implementação, por decisão do dono do repo. A entrada é o Markdown já extraído inline (`documents[].text`), a extração fica no pipeline #59/#68 antes da fronteira, e o `ai` só grava o texto recebido no localizador. Superou a entrada por localizador do original da issue-15.
 

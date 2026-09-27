@@ -4,7 +4,7 @@ sources:
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i4-storage.md
   - requirements/perspec-me/capiwatt-lens-hackathon/concerns/i9-integration.md
   - requirements/perspec-me/capiwatt-lens-hackathon/MAP.md
-last_synced_with_sources: 2026-09-27 (issue-64, issue-78, issue-96, issue-92, issue-95)
+last_synced_with_sources: 2026-09-27 (issue-64, issue-78, issue-96, issue-92, issue-95, issue-98)
 ---
 
 # Contrato de fronteira: backend ↔ serviço vetorial (`ai`)
@@ -30,7 +30,8 @@ Duas camadas: uma interface Python (`VectorService`) em processo dentro do módu
 |---|---|
 | `index(corpus_version, documents[]) → IndexReport` | `/internal/v1/index` |
 | `search(query, filters, top_k, as_of?) → SearchResult` | `/internal/v1/search` |
-| `delete(document_version)` / `reindex(corpus_version)` | — |
+| `delete(document_version) → DeleteReport` | `DELETE /internal/v1/documents/{document_version}` |
+| `reindex(corpus_version)` | `/internal/v1/reindex` |
 | `reassign_family(document_version, family_id)` | `/internal/v1/documents/{id}/family` |
 | `similar_families(family_id, top_k) → [{family_id, score}]` | `GET /internal/v1/families/{id}/similar?top_k=` |
 
@@ -50,11 +51,17 @@ Comportamento:
   - `IndexReport.references: [{identifier_raw, relation_type, locator}]` — `identifier_raw` é o trecho citado (espaços normalizados), `relation_type` é `null` enquanto os tipos finos não tiverem padrão, `locator` é o `chunk_id` do chunk onde a citação foi achada. Hoje só "Auto de Infração [– AI –] nº N/AAAA[-SIGLA]" é reconhecido. Modo fixture: lista vazia.
   - O backend, no fim da ingestão, grava `similar_a` (`origin: similarity`, `status: suggested`, `score`) quando `0.80 <= score < 0.97` (`limiar_relacao`/`limiar_fusao` da #74), uma vez por par, e `referencia` (`origin: explicit`, `status: confirmed`, evidência `document_version` + `chunk_id`) quando o identificador resolve para uma única família do catálogo diferente da fonte.
 - **`delete` / `reindex`** existem porque troca de modelo de embeddings exige reindexar; vetores de modelos diferentes nunca se misturam.
+- **`delete`** (issue-98): `DELETE /internal/v1/documents/{document_version}` → `{document_version, model_version, chunks_deleted}`. O path segue a convenção de `reassign_family`; o `GET` nesse path (`get_document`) continua fora do port.
+  - Pipeline real (`EMBEDDER=bedrock`/`cached`): remove todos os chunks da versão do índice do `model_version` corrente (`chunks_deleted` = quantos havia), grava um tombstone da versão nos vetores brutos e esquece o `IndexReport` cacheado. Resultado: busca e `similar_families` deixam de ver a versão, o reindex offline a partir dos vetores brutos não a ressuscita, e um `index` seguinte da mesma versão reindexa de verdade.
+  - Modo fixture: esquece o `IndexReport` cacheado; `chunks_deleted` = `chunks_indexed` que a versão tinha. A busca fixture é declarativa e não muda.
+  - **Idempotente:** versão desconhecida ou já apagada → 200 com `chunks_deleted: 0`, nunca 404.
+  - **Não apaga** o texto em `extracted_text_locator`, que pertence ao ciclo de vida da versão no catálogo do backend. Os vetores brutos têm remoção lógica: as linhas antigas ficam no arquivo append-only, e o replay as descarta.
+  - O backend ainda não chama `delete` e não tem rota pública para isso. O efeito sobre catálogo, `document_relations` e `SearchExecution` está em aberto em `i9-integration`.
 - **`reassign_family`** move uma versão (e seus chunks/vetores) para outra família sem reembedding.
 
 ## Operação removida do port
 
-- **`get_document`** — removida pela issue-15. O backend lê documentos do próprio catálogo; não existe mais proxy `/internal/v1/documents/{id}`.
+- **`get_document`** — removida pela issue-15. O backend lê documentos do próprio catálogo; não existe mais proxy `GET /internal/v1/documents/{id}`. O mesmo path só aceita `DELETE`, a operação `delete` (issue-98).
 
 ## Teste de contrato
 

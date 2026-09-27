@@ -45,6 +45,7 @@ Pré-requisitos: Docker, e o arquivo de vetores brutos da #73. Ele fica fora do 
 | Feedback do frontend (#94) | o payload de `frontend/src/api/feedback.ts` (chave por chunk, sem `family_id`) é aceito com 200 |
 | Stale corpus (#79) | continuação após ingerir um `corpus_version` mais novo devolve `stale_corpus: true` |
 | Reindex (#73) | `tools/case1_recall/reindex_from_raw_vectors.py` reconstrói o índice sem AWS e o ranking não muda |
+| Delete (#98) | `DELETE /internal/v1/documents/{document_version}` no `ai` tira da busca todos os chunks daquela versão (e só dela; `chunks_deleted` = chunks que ela tinha no OpenSearch), um segundo delete devolve 200 com `chunks_deleted: 0`, e reingerir pelo backend restaura contagem e ranking |
 | Relações do `ai` (#92) | `GET /internal/v1/families/{id}/similar` reproduz os vizinhos top-3 e os scores da calibração da #74 (`tools/case1_recall/similarity_calibration/output/calibration_report.json`); o grafo tem exatamente os 11 pares `similar_a` da #74 (`similarity`/`suggested`, com score) e as 7 arestas `referencia` recurso/voto/complementação → auto de infração (`explicit`/`confirmed`, evidência = `chunk_id` existente no índice); reingestão não duplica |
 
 Testes marcados `xfail(strict=True)` documentam divergências ainda abertas entre contrato e comportamento real: hoje só o resultado do processo (#66). Quando a funcionalidade chegar, o xfail estrito falha e obriga a remover a marcação.
