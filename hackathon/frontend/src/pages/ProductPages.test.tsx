@@ -95,6 +95,22 @@ describe("páginas do produto", () => {
     expect(screen.getByRole("heading", { name: "Evidências" })).toBeInTheDocument();
   });
 
+  it("limita confiança e cobertura do parecer a 100% quando o backend retorna um valor maior", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      title: "Parecer demonstrativo", processNumber: "48500.901433/2024-53", family: "Caso 1", theme: "MMGD",
+      code: "DEMO-CASE1-MMGD", issuedAt: "2025-06-01", status: "Demonstração documental",
+      verdict: "Trechos de precedentes para revisão", verdictSummary: "Trecho do voto Coelba",
+      situation: "Trecho do voto Cemig", suggestedUnderstanding: "Trecho do voto Enel",
+      attentionPoints: ["Consultar PDF"], figures: [], confidence: 150, coverage: 120,
+    }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<OpinionPage />);
+    expect(await screen.findByText("Trechos de precedentes para revisão")).toBeInTheDocument();
+    expect(screen.getAllByText("100%").length).toBe(2);
+    expect(screen.queryByText("150%")).not.toBeInTheDocument();
+    expect(screen.queryByText("120%")).not.toBeInTheDocument();
+  });
+
   it("mostra nós do grafo retornados pelo backend", async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL) => {
       const path = String(input);

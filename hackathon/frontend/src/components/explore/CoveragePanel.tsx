@@ -10,8 +10,8 @@ export function CoveragePanel({ data }: { data: ExploreData }) {
       <blockquote>{data.query}</blockquote>
       <section className="coverage-card">
         <h3>Cobertura da pesquisa</h3>
-        <div className="coverage-summary"><div className="coverage-ring" style={{ "--coverage": `${data.coverage * 3.6}deg` } as CSSProperties}><strong>{data.coverage}%</strong></div><div><strong>Correspondência da fixture</strong><p>{data.coverageSummary}</p></div></div>
-        <div className="coverage-metrics">{data.metrics.map((metric) => <div className="coverage-metric" key={metric.label}><div><span>{metric.label} <small>({metric.detail})</small></span><strong>{metric.value}%</strong></div><div className="metric-track"><span className={metric.tone} style={{ width: `${metric.value}%` }} /></div></div>)}</div>
+        <div className="coverage-summary"><div className="coverage-ring" style={{ "--coverage": `${Math.min(data.coverage, 100) * 3.6}deg` } as CSSProperties}><strong>{Math.min(data.coverage, 100)}%</strong></div><div><strong>Correspondência da fixture</strong><p>{data.coverageSummary}</p></div></div>
+        <div className="coverage-metrics">{data.metrics.map((metric) => <div className="coverage-metric" key={metric.label}><div><span>{metric.label} <small>({metric.detail})</small></span><strong>{Math.min(metric.value, 100)}%</strong></div><div className="metric-track"><span className={metric.tone} style={{ width: `${Math.min(metric.value, 100)}%` }} /></div></div>)}</div>
       </section>
       <section className="gaps-card">
         <div className="gaps-heading"><h3>Limites desta pesquisa</h3><span>modo demo</span></div>

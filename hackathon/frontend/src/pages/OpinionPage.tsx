@@ -31,4 +31,4 @@ export function OpinionPage() {
 }
 
 function OpinionSection({ icon: Icon, title, text }: { icon: typeof FileText; title: string; text: string }) { return <article className="opinion-section"><Icon /><div><h2>{title}</h2><p>{text}</p></div></article>; }
-function MetricRing({ label, value }: { label: string; value: number }) { return <div><span className="metric-ring" style={{ "--metric": `${value*3.6}deg` } as CSSProperties}><strong>{value}%</strong></span><b>{label}</b></div>; }
+function MetricRing({ label, value }: { label: string; value: number }) { const clamped = Math.min(value, 100); return <div><span className="metric-ring" style={{ "--metric": `${clamped*3.6}deg` } as CSSProperties}><strong>{clamped}%</strong></span><b>{label}</b></div>; }
