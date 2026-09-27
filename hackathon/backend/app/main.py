@@ -49,6 +49,7 @@ from app.routes.opinion import router as opinion_router
 from app.routes.opinions import router as opinions_router
 from app.routes.relations import router as relations_router
 from app.routes.search import router as search_router
+from app.routes.themes import router as themes_router
 
 
 @asynccontextmanager
@@ -85,6 +86,7 @@ def create_app() -> FastAPI:
     app.include_router(feedback_router, dependencies=authenticated)
     app.include_router(notifications_router, dependencies=authenticated)
     app.include_router(opinion_router, dependencies=authenticated)
+    app.include_router(themes_router, dependencies=authenticated)
     return app
 
 

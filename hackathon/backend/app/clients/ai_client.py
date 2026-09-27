@@ -104,6 +104,15 @@ class AiSearchResponse(BaseModel):
     model_version: str
 
 
+class AiTheme(BaseModel):
+    """Espelha a taxonomia de tema devolvida por /internal/v1/themes."""
+
+    tema_id: str
+    tema_nome: str
+    descricao: str = ""
+    tipos_processo: list[str] = []
+
+
 class AiClient:
     """Cliente tipado a partir dos nomes de operacao do port VectorService."""
 
@@ -198,6 +207,15 @@ class AiClient:
         )
         response.raise_for_status()
         return [AiSimilarFamily(**item) for item in response.json()["similar"]]
+
+    def get_themes(self) -> list[AiTheme]:
+        """Chama GET /internal/v1/themes no ai e devolve a lista de temas."""
+        response = httpx.get(
+            f"{self._base_url}/internal/v1/themes",
+            timeout=self._timeout,
+        )
+        response.raise_for_status()
+        return [AiTheme(**item) for item in response.json()]
 
 
 def _document_payload(doc: IndexDocumentPayload) -> dict[str, object]:

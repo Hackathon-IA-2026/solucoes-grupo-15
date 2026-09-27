@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import settings
+from app.theme_descriptions import get_theme_description
 
 def slugify(text: str) -> str:
     text = text.lower()
@@ -50,6 +51,7 @@ def parse_md_table(filepath: Path) -> list:
                 "tipo_processo": tipo_processo,
                 "tema_id": tema_id,
                 "tema_nome": tema_nome,
+                "descricao": get_theme_description(tema_id, tema_nome),
                 "macrotema_sei": macrotema,
                 "temas_secundarios": [],
                 "origem_classificacao": "direta",

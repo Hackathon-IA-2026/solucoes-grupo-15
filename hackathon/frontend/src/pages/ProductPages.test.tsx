@@ -57,6 +57,24 @@ describe("páginas do produto", () => {
           coverage: 87,
         }), { status: 200 });
       }
+      if (url.includes("/v1/themes")) {
+        return new Response(JSON.stringify([
+          {
+            id: "transicao",
+            name: "Transição Energética",
+            description: "Fontes renováveis e descarbonização.",
+            tipos_processo: ["Outorga"],
+            status: "Alta atividade",
+          },
+          {
+            id: "tarifas",
+            name: "Tarifas e Encargos",
+            description: "Estrutura tarifária.",
+            tipos_processo: ["Gestão Tarifária"],
+            status: "Em alta",
+          },
+        ]), { status: 200 });
+      }
       if (url.includes("/v1/families")) {
         return new Response(JSON.stringify([
           { family_id: "transicao", document_type: "transição_energética", versions_count: 1284 },
@@ -92,18 +110,14 @@ describe("páginas do produto", () => {
     expect(screen.getByLabelText(/cadeia de respostas/i)).toHaveTextContent("fam-defesa-0007");
   });
 
-  it("lista famílias documentais do backend e abre o detalhe", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([
-      { family_id: "case1-enel-auto", document_id: "AI 0032/2018-SFE", document_type: "auto_de_infracao", processo_numero: "48500.004024/2017-80", versions_count: 1, latest_version_date: "2018-12-27" },
-      { family_id: "case1-cemig-voto", document_id: "Voto CEMIG", document_type: "voto", processo_numero: "48500.000639/2019-07", versions_count: 1, latest_version_date: "2023-05-30" },
-    ]), { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
-    render(<MemoryRouter><FamiliesPage /></MemoryRouter>);
-    expect(await screen.findByText("AI 0032/2018-SFE")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/pesquisar famílias/i), { target: { value: "CEMIG" } });
-    expect(screen.getAllByText("Voto CEMIG").length).toBeGreaterThan(0);
-    expect(screen.queryByText("AI 0032/2018-SFE")).not.toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("/v1/families");
+  it("lista e pesquisa temas regulatórios sem contagem de documentos", async () => {
+    render(<FamiliesPage />);
+    expect((await screen.findAllByText("Transição Energética", {}, { timeout: 1500 })).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/\d+\s+documentos/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+\s+docs/i)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/pesquisar temas/i), { target: { value: "tarifas" } });
+    expect(screen.getAllByText(/Tarifas e Encargos/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Consumidores e Distribuição")).not.toBeInTheDocument();
   });
 
   it("renderiza o parecer e alterna suas seções", async () => {

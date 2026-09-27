@@ -8,6 +8,7 @@ import os
 
 from .models import ProcessClassification, TemaTaxonomy
 from .theme_store import ProcessThemeClassifier
+from .theme_descriptions import get_theme_description
 from .config import settings
 
 class DynamoProcessThemeStore(ProcessThemeClassifier):
@@ -55,6 +56,7 @@ class DynamoProcessThemeStore(ProcessThemeClassifier):
                     themes[tema_id] = TemaTaxonomy(
                         tema_id=tema_id,
                         tema_nome=item.get("tema_nome", ""),
+                        descricao=item.get("descricao") or get_theme_description(tema_id, item.get("tema_nome", "")),
                         tipos_processo=[]
                     )
                 themes[tema_id].tipos_processo.append(item.get("tipo_processo"))
@@ -85,6 +87,8 @@ class InMemoryProcessThemeStore(ProcessThemeClassifier):
         self.store: Dict[str, ProcessClassification] = {}
         if data is not None:
             for item in data:
+                if not item.get("descricao"):
+                    item["descricao"] = get_theme_description(item.get("tema_id", ""), item.get("tema_nome", ""))
                 obj = ProcessClassification(**item)
                 self.store[obj.tipo_processo] = obj
 
@@ -93,6 +97,8 @@ class InMemoryProcessThemeStore(ProcessThemeClassifier):
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 for item in data:
+                    if not item.get("descricao"):
+                        item["descricao"] = get_theme_description(item.get("tema_id", ""), item.get("tema_nome", ""))
                     obj = ProcessClassification(**item)
                     self.store[obj.tipo_processo] = obj
 
@@ -107,6 +113,7 @@ class InMemoryProcessThemeStore(ProcessThemeClassifier):
                 themes[tema_id] = TemaTaxonomy(
                     tema_id=tema_id,
                     tema_nome=obj.tema_nome,
+                    descricao=getattr(obj, "descricao", "") or get_theme_description(tema_id, obj.tema_nome),
                     tipos_processo=[]
                 )
             themes[tema_id].tipos_processo.append(obj.tipo_processo)

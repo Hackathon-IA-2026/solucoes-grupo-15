@@ -2,6 +2,7 @@ import { fetchFamilies } from "../api/documents";
 import { fetchNotifications, loadDemoUser } from "../api/notifications";
 import { fetchOpinion } from "../api/opinion";
 import { fetchProcessos } from "../api/processos";
+import { fetchThemes } from "../api/themes";
 import { appendSearchPage, searchDocuments, type SearchEnvelope, type SearchResult } from "../api/search";
 import type {
   AppNotification,
@@ -66,15 +67,17 @@ export class ApiAppRepository implements AppRepository {
   }
 
   async getFamilies(): Promise<Family[]> {
-    const families = await fetchFamilies();
-    return families.map((family) => ({
-      id: family.family_id,
-      name: family.document_id,
-      description: `${formatDocumentType(family.document_type)}${family.processo_numero ? ` · Processo ${family.processo_numero}` : ""}`,
-      documents: family.versions_count,
-      status: `Atualizado em ${family.latest_version_date}`,
-      tone: "blue" as const,
-      icon: "landmark",
+    const tones = ["green", "orange", "blue", "purple", "red", "cyan"] as const;
+    const icons = ["leaf", "coins", "chart", "landmark", "tower", "users"] as const;
+    const items = await fetchThemes();
+    return items.map((item, i) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      tipos_processo: item.tipos_processo,
+      status: item.status || "Disponível",
+      tone: tones[i % tones.length],
+      icon: icons[i % icons.length],
     }));
   }
 

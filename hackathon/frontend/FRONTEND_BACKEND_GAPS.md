@@ -78,19 +78,10 @@ Exibe nomes e disponibilidade mockados. Os PDFs reais fornecidos para o corpus n
 
 Não alterado.
 
-## Famílias regulatórias
+## Famílias e temas regulatórios
 
-### Necessidade futura
-
-Fornecer famílias, contagem de documentos, atividade recente, metadados e documentos relacionados, com busca e ordenação.
-
-### Frontend atual
-
-Usa `mockFamilies`. Seleção, busca e destaques não são persistidos.
-
-### Backend
-
-Não alterado.
+### Situação atual
+Integrado com F2/F3 via `GET /v1/themes`: exibe os temas regulatórios reais da taxonomia ANEEL com descrições oficiais, tipos de processo associados e status, sem contagem mockada de documentos. `ExploreLanding` e `FamiliesPage` consom `appRepository.getFamilies()` mapeado para a rota real `/v1/themes`.
 
 ## Parecer conclusivo
 
