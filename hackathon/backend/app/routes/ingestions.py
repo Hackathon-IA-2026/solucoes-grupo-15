@@ -55,6 +55,10 @@ class IngestionResult:
     families_count: int
     versions_count: int
     relations_count: int
+    # Soma de IndexReport.total_input_tokens (issue #73, AC "custo de
+    # embeddings") - None no modo fixture (EMBEDDER=fake nao computa
+    # embeddings reais, ver ai/app/routes/index.py::IndexReport).
+    total_input_tokens: int | None = None
 
 
 @router.post("/ingestions")
@@ -111,11 +115,15 @@ def run_ingestion(
 
     session.flush()
 
+    token_counts = [r.total_input_tokens for r in reports_by_version.values()]
+    total_input_tokens = sum(token_counts) if all(t is not None for t in token_counts) else None
+
     return IngestionResult(
         ingestion_job_id=ingestion_job_id,
         families_count=len(family_ids),
         versions_count=len(version_ids),
         relations_count=relations_count,
+        total_input_tokens=total_input_tokens,
     )
 
 
@@ -161,8 +169,20 @@ def _upsert_relation(session: Session, rel: FixtureRelation) -> None:
 
 
 def _index_corpus(corpus: FixtureCorpus, ai_client: AiClient) -> dict[str, IndexReport]:
+    """Monta o payload de ``ai_client.index`` a partir do corpus.
+
+    ``family_id``/``corpus_version`` (issue #69) sao enviados junto do
+    texto para que o ai real (EMBEDDER=bedrock) tenha os atributos de
+    filtro que precisa gravar por chunk - o adapter de fixture
+    (EMBEDDER=fake) continua ignorando os dois, como antes.
+    """
     payload = [
-        IndexDocumentPayload(document_version=doc.document_version, text=doc.text)
+        IndexDocumentPayload(
+            document_version=doc.document_version,
+            text=doc.text,
+            family_id=doc.family_id,
+            corpus_version=corpus.corpus_version,
+        )
         for doc in corpus.documents
     ]
     reports = ai_client.index(payload)

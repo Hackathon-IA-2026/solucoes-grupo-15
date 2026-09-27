@@ -360,6 +360,79 @@ def test_search_persists_a_search_execution_with_all_fields(database_url: str) -
 
 
 # ---------------------------------------------------------------------------
+# Testes de data_mode dinamico (issue #69 — reconciliado com paginacao/#86)
+# ---------------------------------------------------------------------------
+
+def test_search_data_mode_is_real_when_embedder_is_bedrock(database_url: str, monkeypatch) -> None:
+    """Issue #69: ``data_mode`` deixa de ser fixo em ``"demo"`` - reflete
+    ``Settings.embedder`` (o mesmo toggle ``EMBEDDER`` do backend/ai).
+    """
+    from app.config import get_settings
+
+    monkeypatch.setenv("EMBEDDER", "bedrock")
+    get_settings.cache_clear()
+    try:
+        client = _client(database_url, hits=[])
+        response = client.post("/v1/search", json={"query": "qualquer consulta"})
+    finally:
+        get_settings.cache_clear()
+
+    assert response.status_code == 200
+    assert response.json()["data_mode"] == "real"
+
+
+def test_search_data_mode_real_is_preserved_across_cursor_continuation(
+    database_url: str, monkeypatch
+) -> None:
+    """Issue #86: a continuacao por cursor devolve o ``data_mode`` congelado
+    na primeira chamada (``execution.data_mode``), nao recalcula a partir do
+    ``Settings.embedder`` corrente - mesmo se o toggle mudar entre as duas
+    chamadas, a pagina 2 nao pode divergir da pagina 1.
+    """
+    from app.config import get_settings
+
+    hits = [
+        AiSearchHit(
+            family_id="fam-auto-0007",
+            document_version="docver-auto-0007-v1",
+            excerpt="trecho auto",
+            score=0.9,
+        ),
+        AiSearchHit(
+            family_id="fam-defesa-0007",
+            document_version="docver-defesa-0007-v1",
+            excerpt="trecho defesa",
+            score=0.7,
+        ),
+    ]
+    monkeypatch.setenv("EMBEDDER", "bedrock")
+    get_settings.cache_clear()
+    try:
+        client = _client(database_url, hits)
+        first_resp = client.post(
+            "/v1/search", json={"query": "data_mode real paginado", "limit": 1}
+        )
+        assert first_resp.status_code == 200
+        first_body = first_resp.json()
+        assert first_body["data_mode"] == "real"
+        cursor = first_body["next_cursor"]
+        assert cursor is not None
+
+        # Muda o toggle antes da continuacao - a pagina 2 nao deve refletir isso.
+        monkeypatch.setenv("EMBEDDER", "fake")
+        get_settings.cache_clear()
+
+        second_resp = client.post(
+            "/v1/search", json={"query": "qualquer", "cursor": cursor, "limit": 1}
+        )
+    finally:
+        get_settings.cache_clear()
+
+    assert second_resp.status_code == 200
+    assert second_resp.json()["data_mode"] == "real"
+
+
+# ---------------------------------------------------------------------------
 # Testes de paginacao lazy (issue #76)
 # ---------------------------------------------------------------------------
 

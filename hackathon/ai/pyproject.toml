@@ -15,3 +15,6 @@ ignore = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "no_bedrock_mode: mantem EMBEDDER=fake (default) mesmo num arquivo cujo autouse fixture liga EMBEDDER=bedrock (issue #69, tests/test_reindex.py).",
+]

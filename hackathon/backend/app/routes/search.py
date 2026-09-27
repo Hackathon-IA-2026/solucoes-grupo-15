@@ -13,6 +13,21 @@ Cada resultado carrega: ``family_id``, ``document_version``, ``excerpt``,
 ``processo_numero``, ``version_date`` e ``chunk_index`` (posicao do hit
 na lista original do ai, 0-based, para desempate deterministico).
 
+Envelope da resposta: ``request_id`` (uuid4 novo por chamada),
+``data_mode`` (issue #69: ``"demo"`` quando ``Settings.embedder ==
+"fake"`` - o mesmo toggle ``EMBEDDER`` do backend/ai, ver
+app/config.py -, ``"real"`` quando ``"bedrock"`` - nunca mais fixo em
+``"demo"``, ja que agora existe um modo com busca vetorial de
+verdade), ``corpus_version`` (lido do ``DocumentVersion.corpus_version``
+da primeira familia resolvida - cai para ``Settings.default_corpus_version``
+quando ``results`` fica vazio, pois nao ha nenhuma familia da qual
+derivar), ``model_version`` (a mesma constante devolvida pelo ai -
+``"fixture-demo"`` no modo fake, a constante real do Titan V2 no modo
+bedrock - nunca reinventada aqui), ``ranking_version`` (constante nova
+desta issue, ``RANKING_VERSION`` abaixo - nao ha ranking real, so
+identifica esta versao de codigo/agrupamento para reprodutibilidade
+futura, issue #16 secao "Versionamento e reprodutibilidade").
+
 Ordem total obrigatoria (issue #78): ``(-score, document_version,
 chunk_index)`` — score decrescente, desempate lexicografico por
 ``document_version``, desempate final por posicao original.
@@ -27,7 +42,11 @@ os hits em ``SearchExecution`` e devolve o primeiro lote. Com cursor valido:
 carrega os hits congelados do ``SearchExecution`` identificado pelo cursor
 sem chamar o ai, devolve o proximo lote. Cursor invalido/expirado → HTTP
 400. ``total`` e o numero de chunks (hits) do conjunto congelado inteiro;
-``next_cursor`` e nulo na ultima pagina.
+``next_cursor`` e nulo na ultima pagina. ``data_mode`` e derivado uma unica
+vez, na primeira chamada, e persistido em ``SearchExecution`` — a
+continuacao por cursor devolve ``execution.data_mode`` congelado, nunca
+recalcula a partir do ``Settings.embedder`` corrente (evita uma pagina 2
+com ``data_mode`` diferente da pagina 1 se o toggle mudar entre chamadas).
 
 Ticket 9 (issue #25, reprodutibilidade) acrescenta a persistencia de
 ``SearchExecution`` a cada chamada: alem do envelope final, grava os hits
@@ -56,6 +75,17 @@ router = APIRouter(prefix="/v1", tags=["search"])
 # Constante de versao de ranking (issue #19); identifica este comportamento
 # para reprodutibilidade futura (issue #16).
 RANKING_VERSION = "demo-ranking-v1"
+
+
+def _data_mode_for(embedder: str) -> str:
+    """Deriva ``data_mode`` do toggle ``EMBEDDER`` (issue #69).
+
+    ``"fake"`` (default) -> ``"demo"`` (nunca houve busca vetorial
+    real). ``"bedrock"`` -> ``"real"``. Qualquer outro valor cai em
+    ``"demo"`` por seguranca (nunca afirma "real" sem confirmar o modo
+    exato esperado).
+    """
+    return "real" if embedder == "bedrock" else "demo"
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +224,7 @@ def search(
 
     envelope = SearchEnvelope(
         request_id=request_id,
-        data_mode="demo",
+        data_mode=_data_mode_for(get_settings().embedder),
         corpus_version=corpus_version,
         model_version=ai_response.model_version,
         ranking_version=RANKING_VERSION,

@@ -1,0 +1,25 @@
+{
+  "families_with_motivacao_chunks": {
+    "case1-cemig-auto": 4,
+    "case1-coelba-auto": 8,
+    "case1-enel-auto": 64
+  },
+  "families_without_motivacao_chunks": [
+    "case1-cemig-recurso",
+    "case1-cemig-voto",
+    "case1-coelba-complemento",
+    "case1-coelba-recurso",
+    "case1-coelba-voto",
+    "case1-enel-recurso",
+    "case1-enel-voto"
+  ],
+  "known_positive_pair_computable": false,
+  "control_pair_comparison": {
+    "families": [
+      "case1-cemig-auto",
+      "case1-enel-auto"
+    ],
+    "score_mean_of_all_chunks": 0.8367895714585887,
+    "score_motivacao_only": 0.6881443556934677
+  }
+}

@@ -1,0 +1,603 @@
+{
+  "limiar_relacao": 0.8,
+  "limiar_fusao": 0.97,
+  "top_k": 3,
+  "n_pairs": 45,
+  "counts_by_classification": {
+    "sem_relacao": 34,
+    "similar_a": 11,
+    "sugestao_fusao": 0
+  },
+  "known_positive_pair": {
+    "families": [
+      "case1-coelba-complemento",
+      "case1-coelba-recurso"
+    ],
+    "score": 0.806151697583256,
+    "classification": "similar_a",
+    "bucket": "mesmo_processo"
+  },
+  "known_control_pair": {
+    "families": [
+      "case1-cemig-auto",
+      "case1-enel-auto"
+    ],
+    "score": 0.8367895714585887,
+    "classification": "similar_a",
+    "bucket": "mesmo_tema",
+    "note": "par de controle 'sem relacao conhecida' (dois autos de infracao, casos distintos); achado da issue #61 -- score ACIMA do par positivo conhecido -- reproduzido aqui com os embeddings reais (ver README)."
+  },
+  "max_score_between_distinct_families": 0.9278382742195567,
+  "distribution_by_bucket": {
+    "mesmo_processo": {
+      "n": 12,
+      "min": 0.76809661053467,
+      "max": 0.9278382742195567,
+      "mean": 0.8576158459976834,
+      "median": 0.8696114488160511
+    },
+    "mesmo_tema": {
+      "n": 7,
+      "min": 0.6023303786453368,
+      "max": 0.8367895714585887,
+      "mean": 0.7083967457530571,
+      "median": 0.7051277612053357
+    },
+    "temas_diferentes": {
+      "n": 26,
+      "min": 0.5319004119828493,
+      "max": 0.7880950083197631,
+      "mean": 0.6751609866993408,
+      "median": 0.6868207519591136
+    }
+  },
+  "pairs": [
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-cemig-voto",
+      "score": 0.9278382742195567,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-enel-auto",
+      "family_b": "case1-enel-voto",
+      "score": 0.9091278986534346,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-cemig-voto",
+      "score": 0.9068125066994929,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-cemig-recurso",
+      "score": 0.9009029334987336,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-coelba-voto",
+      "score": 0.8751614778669082,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.8725882490592578,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-coelba-voto",
+      "score": 0.8666346485728446,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-enel-auto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.8540197498392529,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-enel-auto",
+      "score": 0.8367895714585887,
+      "bucket": "mesmo_tema",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": true
+    },
+    {
+      "family_a": "case1-enel-recurso",
+      "family_b": "case1-enel-voto",
+      "score": 0.823469654908863,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.806151697583256,
+      "bucket": "mesmo_processo",
+      "classification": "similar_a",
+      "is_known_positive_pair": true,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7880950083197631,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.7805864505359307,
+      "bucket": "mesmo_processo",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-enel-voto",
+      "score": 0.7703881408087355,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-coelba-voto",
+      "score": 0.76809661053467,
+      "bucket": "mesmo_processo",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-enel-auto",
+      "score": 0.7668439465016621,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-enel-auto",
+      "score": 0.7647275860824992,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-auto",
+      "score": 0.7629558886036967,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7610447033532152,
+      "bucket": "mesmo_tema",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-enel-auto",
+      "score": 0.7421816328378676,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-voto",
+      "score": 0.7385439031113903,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7337492934369163,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-auto",
+      "score": 0.7304769881297309,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-voto",
+      "family_b": "case1-enel-voto",
+      "score": 0.7272026713919088,
+      "bucket": "mesmo_tema",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-voto",
+      "score": 0.7185708045491254,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-voto",
+      "score": 0.7051277612053357,
+      "bucket": "mesmo_tema",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-auto",
+      "score": 0.690745944644189,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-voto",
+      "family_b": "case1-enel-auto",
+      "score": 0.6870239747578777,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-enel-auto",
+      "score": 0.6869370528242944,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.6867044510939329,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-enel-voto",
+      "score": 0.6794020541189179,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.6789366183270569,
+      "bucket": "mesmo_tema",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6759100357936785,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6473455158899579,
+      "bucket": "mesmo_tema",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-recurso",
+      "score": 0.6453795568628978,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6388487229692388,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-enel-auto",
+      "score": 0.6182674056003508,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-recurso",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6023303786453368,
+      "bucket": "mesmo_tema",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-enel-voto",
+      "score": 0.6018936518469953,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-auto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.6016426594234665,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-auto",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.5960843390437657,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-recurso",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.5891964182899324,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-complemento",
+      "family_b": "case1-enel-recurso",
+      "score": 0.5557207918843583,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-coelba-voto",
+      "family_b": "case1-enel-recurso",
+      "score": 0.5519949906647271,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    },
+    {
+      "family_a": "case1-cemig-voto",
+      "family_b": "case1-coelba-complemento",
+      "score": 0.5319004119828493,
+      "bucket": "temas_diferentes",
+      "classification": "sem_relacao",
+      "is_known_positive_pair": false,
+      "is_known_control_pair": false
+    }
+  ],
+  "top_k_neighbors": {
+    "case1-enel-auto": [
+      {
+        "family_id": "case1-enel-voto",
+        "score": 0.9091278986534346
+      },
+      {
+        "family_id": "case1-enel-recurso",
+        "score": 0.8540197498392529
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.8367895714585887
+      }
+    ],
+    "case1-enel-recurso": [
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.8540197498392529
+      },
+      {
+        "family_id": "case1-enel-voto",
+        "score": 0.823469654908863
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.6759100357936785
+      }
+    ],
+    "case1-enel-voto": [
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.9091278986534346
+      },
+      {
+        "family_id": "case1-enel-recurso",
+        "score": 0.823469654908863
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.7880950083197631
+      }
+    ],
+    "case1-cemig-auto": [
+      {
+        "family_id": "case1-cemig-voto",
+        "score": 0.9068125066994929
+      },
+      {
+        "family_id": "case1-cemig-recurso",
+        "score": 0.9009029334987336
+      },
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.8367895714585887
+      }
+    ],
+    "case1-cemig-recurso": [
+      {
+        "family_id": "case1-cemig-voto",
+        "score": 0.9278382742195567
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.9009029334987336
+      },
+      {
+        "family_id": "case1-enel-voto",
+        "score": 0.7703881408087355
+      }
+    ],
+    "case1-cemig-voto": [
+      {
+        "family_id": "case1-cemig-recurso",
+        "score": 0.9278382742195567
+      },
+      {
+        "family_id": "case1-cemig-auto",
+        "score": 0.9068125066994929
+      },
+      {
+        "family_id": "case1-enel-auto",
+        "score": 0.7668439465016621
+      }
+    ],
+    "case1-coelba-auto": [
+      {
+        "family_id": "case1-coelba-voto",
+        "score": 0.8751614778669082
+      },
+      {
+        "family_id": "case1-coelba-recurso",
+        "score": 0.8725882490592578
+      },
+      {
+        "family_id": "case1-coelba-complemento",
+        "score": 0.7805864505359307
+      }
+    ],
+    "case1-coelba-voto": [
+      {
+        "family_id": "case1-coelba-auto",
+        "score": 0.8751614778669082
+      },
+      {
+        "family_id": "case1-coelba-recurso",
+        "score": 0.8666346485728446
+      },
+      {
+        "family_id": "case1-coelba-complemento",
+        "score": 0.76809661053467
+      }
+    ],
+    "case1-coelba-recurso": [
+      {
+        "family_id": "case1-coelba-auto",
+        "score": 0.8725882490592578
+      },
+      {
+        "family_id": "case1-coelba-voto",
+        "score": 0.8666346485728446
+      },
+      {
+        "family_id": "case1-coelba-complemento",
+        "score": 0.806151697583256
+      }
+    ],
+    "case1-coelba-complemento": [
+      {
+        "family_id": "case1-coelba-recurso",
+        "score": 0.806151697583256
+      },
+      {
+        "family_id": "case1-coelba-auto",
+        "score": 0.7805864505359307
+      },
+      {
+        "family_id": "case1-coelba-voto",
+        "score": 0.76809661053467
+      }
+    ]
+  }
+}

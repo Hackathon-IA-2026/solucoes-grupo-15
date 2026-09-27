@@ -1,0 +1,25 @@
+# Dependencies for hackathon/tools/pipeline/ (standalone script, not one of
+# the three ADR-0001 modules — this is the only file that pins its deps).
+#
+# Added by issue #70 (routes/html_sei.py): SEI's native HTML documents mix
+# real content tables with a signature/CRC boilerplate block; a robust HTML
+# parser is needed to walk that structure (tables, nested divs) reliably —
+# hand-rolled regex over raw HTML is too fragile for real-world SEI markup
+# (see routes/html_sei.py's module docstring for the alternatives considered).
+#
+# Install with: python3.12 -m pip install -r hackathon/tools/pipeline/requirements.txt
+beautifulsoup4>=4.12
+lxml>=5.0
+
+# Added by issue #71 (routes/pdf_llm_spec.py): calls Bedrock's Converse API
+# to generate a per-document verbatim-filtering spec. Credentials come from
+# the environment (source .env at the repo root before running) — this
+# module never logs or persists them, same convention as
+# hackathon/tools/prototypes/recall_baseline/embeddings.py.
+boto3>=1.34
+
+# Issue #72 (routes/pdf_ocr.py) reuses this same boto3 dependency for its
+# own Bedrock Converse *vision* call (OCR of scanned pages) — no new pip
+# package. It also shells out to `pdftoppm`/`pdfimages` (poppler-utils,
+# same system package as `pdftotext`/`pdfinfo` above — already present on
+# this machine, nothing to install).

@@ -7,8 +7,15 @@ VectorService, issue #16). Ticket 3 adiciona ``search`` (issue #19):
 o backend so repassa a ``query``/``top_k`` - o ai resolve sozinho
 contra o proprio fixture declarativo e devolve hits crus, ainda nao
 agrupados por familia (o agrupamento e feito em
-app/routes/search.py). As demais operacoes (similar_families,
-reassign_family, delete/reindex) ficam para tickets futuros.
+app/routes/search.py). A issue #69 adiciona ``reindex`` (mesma forma
+de ``index``, ver ``reindex`` abaixo) e passa a enviar ``family_id``/
+``corpus_version`` por documento em ``index``/``reindex`` - o ai real
+(``EMBEDDER=bedrock``) precisa dos dois para gravar/filtrar no indice
+vetorial (contrato: "family_id/document_version aparecem no indice so
+como atributos de filtro"). O adapter de fixture (``EMBEDDER=fake``)
+continua ignorando os dois campos, exatamente como antes. As demais
+operacoes (similar_families, reassign_family) ficam para tickets
+futuros.
 """
 
 from dataclasses import dataclass
@@ -23,13 +30,20 @@ from app.config import get_settings
 class IndexDocumentPayload:
     """Um documento a indexar: document_version + texto ja pronto.
 
-    Metadados de catalogo (family_id, datas, processo_numero) nao
-    fazem parte deste payload - o ``ai`` so processa texto/versao; o
-    catalogo e responsabilidade exclusiva do backend.
+    ``family_id``/``corpus_version`` (issue #69) sao redundantes por
+    documento dentro de um mesmo lote (o contrato fala em
+    ``index(corpus_version, documents[])``, mas o cliente HTTP daqui
+    nunca mudou de assinatura - ``index(documents)`` continua igual,
+    para nao quebrar os dublês de ``AiClient`` dos testes existentes) -
+    o ai real (EMBEDDER=bedrock) usa os dois so como atributos de
+    filtro/particionamento no indice vetorial, nunca como fonte de
+    verdade do catalogo (que continua exclusivamente do backend).
     """
 
     document_version: str
     text: str
+    family_id: str | None = None
+    corpus_version: str | None = None
 
 
 class IndexReport(BaseModel):
@@ -39,6 +53,8 @@ class IndexReport(BaseModel):
     extracted_text_locator: str
     chunks_indexed: int
     model_version: str
+    # None no modo fake - ver ai/app/routes/index.py::IndexReport (issue #73).
+    total_input_tokens: int | None = None
 
 
 class AiSearchHit(BaseModel):
@@ -93,12 +109,24 @@ class AiClient:
         """
         response = httpx.post(
             f"{self._base_url}/internal/v1/index",
-            json={
-                "documents": [
-                    {"document_version": doc.document_version, "text": doc.text}
-                    for doc in documents
-                ]
-            },
+            json={"documents": [_document_payload(doc) for doc in documents]},
+            timeout=self._timeout,
+        )
+        response.raise_for_status()
+        return [IndexReport(**report) for report in response.json()["reports"]]
+
+    def reindex(self, documents: list[IndexDocumentPayload]) -> list[IndexReport]:
+        """Chama POST /internal/v1/reindex no ai (issue #69).
+
+        Mesma forma de ``index``, mas o ai ignora qualquer cache de
+        idempotencia e reconstroi o indice do zero so com os
+        documentos enviados nesta chamada - quem chama precisa reenviar
+        o catalogo inteiro que quer preservado (o ai nunca le o
+        catalogo do backend por conta propria).
+        """
+        response = httpx.post(
+            f"{self._base_url}/internal/v1/reindex",
+            json={"documents": [_document_payload(doc) for doc in documents]},
             timeout=self._timeout,
         )
         response.raise_for_status()
@@ -124,6 +152,15 @@ class AiClient:
         )
         response.raise_for_status()
         return AiSearchResponse(**response.json())
+
+
+def _document_payload(doc: IndexDocumentPayload) -> dict[str, object]:
+    payload: dict[str, object] = {"document_version": doc.document_version, "text": doc.text}
+    if doc.family_id is not None:
+        payload["family_id"] = doc.family_id
+    if doc.corpus_version is not None:
+        payload["corpus_version"] = doc.corpus_version
+    return payload
 
 
 def get_ai_client() -> AiClient:
